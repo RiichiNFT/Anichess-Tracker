@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Final Results — Anichess Rising Stars Tournament #1</title>
+  <link rel="icon" id="favicon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .preview-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      background: rgba(16,185,129,0.10);
+      border-bottom: 1px solid rgba(16,185,129,0.30);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 8px 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #10b981;
+    }
+    .preview-bar a {
+      color: var(--text-2);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      padding: 3px 12px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .preview-bar a:hover { border-color: var(--accent); color: var(--accent); }
+    header { top: 37px; }
+    main   { padding-top: 42px; }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="page-loader">
+    <div class="page-loader-inner">
+      <div class="page-loader-spinner"></div>
+      <span class="page-loader-text">Loading…</span>
+    </div>
+  </div>
+
+  <div class="preview-bar">
+    <span>🏆 Admin Preview — Final Results</span>
+    <a href="/admin.html">← Back to Admin</a>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon" id="logo-icon">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+            <span class="logo-sub">Community Leaderboard</span>
+          </div>
+        </div>
+        <nav class="header-nav">
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+        </nav>
+      </div>
+      <div class="header-right">
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>Live</span>
+        </div>
+        <span id="last-updated" class="last-updated-text"></span>
+        <button id="refresh-btn" class="btn-refresh" onclick="forceRefresh()">
+          <span class="refresh-icon">↻</span><span class="refresh-text"> Refresh</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="error-banner" class="error-banner hidden">
+      Could not reach the server — showing last cached data.
+    </div>
+
+    <div id="finalized-banner" class="finalized-banner hidden">
+      <span class="finalized-icon">🏆</span>
+      <span class="finalized-text">FINAL RESULT</span>
+    </div>
+
+    <div class="section-heading-wrap">
+      <div class="section-heading-group">
+        <h2 class="section-heading">Anichess Rising Stars Tournament #1</h2>
+        <div class="prize-pool-tag">$600 USD Prize Pool</div>
+        <p class="section-heading-sub">16 players qualify for the playoff finals · May 10, 2026 · 13:00 UTC · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
+      </div>
+      <a class="tournament-cta-btn" href="/tournament.html">
+        <span>Tournament Details</span>
+        <span class="tournament-cta-arrow">↗</span>
+      </a>
+    </div>
+
+    <div class="eligibility-banner">
+      <div class="eligibility-row">
+        <span class="eligibility-item">
+          <span class="eligibility-label">New Players Only</span>
+        </span>
+        <span class="eligibility-sep"></span>
+        <span class="eligibility-item">
+          <span class="eligibility-label">REGISTER </span>
+          <a class="eligibility-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener">HERE</a>
+        </span>
+        <span class="eligibility-sep"></span>
+        <span class="eligibility-item">
+          <span class="eligibility-label">Submission Cutoff</span>
+          <span class="eligibility-value cutoff">MAY 8TH · UTC 00:00</span>
+        </span>
+      </div>
+    </div>
+
+    <div id="qualified-section" class="hidden"></div>
+
+    <div class="table-card">
+      <div class="table-card-header">
+        <div class="table-header-top">
+          <div>
+            <div class="table-card-title">Leaderboard</div>
+          </div>
+        </div>
+        <div class="table-card-title-row">
+          <div class="table-card-subtitle">Sorted by rating · Tracked wallets only</div>
+          <span class="qualify-badge">✦ TOP 8 QUALIFIES FOR PLAYOFF</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="lb-table" id="lb-table">
+          <thead>
+            <tr>
+              <th class="col-rank">#</th>
+              <th class="col-player">Player</th>
+              <th class="col-tier">Tier</th>
+              <th class="col-rating">Rating</th>
+              <th class="col-matches">Matches</th>
+              <th class="col-wins">Wins</th>
+              <th class="col-winrate">Win Rate</th>
+            </tr>
+          </thead>
+          <tbody id="lb-body">
+            <tr>
+              <td colspan="7" class="loading-cell">
+                <div class="loading-ring"></div>
+                <span>Loading players…</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Anichess Ranked Tracker</span>
+    <span class="sep">·</span>
+    <span>Auto-refreshes every 30 mins</span>
+  </footer>
+
+  <!-- Final results state: all post-cutoff logic + merged results card -->
+  <script>window.__RESULTS_FINAL__ = true;</script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament Details — Anichess Tracker</title>
+  <link rel="icon" id="favicon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="page-loader" class="page-loader">
+    <div class="page-loader-inner">
+      <div class="page-loader-spinner"></div>
+      <span class="page-loader-text">Loading…</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <div class="logo">
+          <span class="logo-icon" id="logo-icon">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+            <span class="logo-sub">Community Leaderboard</span>
+          </div>
+        </div>
+        <nav class="header-nav">
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+        </nav>
+      </div>
+      <div class="header-right">
+        <a class="tournament-back" href="/">← Leaderboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div id="error-banner" class="error-banner hidden" style="max-width:860px;margin:0 auto 16px;padding:0 28px">
+      Could not load tournament details.
+    </div>
+
+    <div class="tournament-layout">
+      <div class="tournament-hero">
+        <div class="tournament-logo-wrap" id="tournament-logo-wrap">
+          <span class="tournament-logo-icon">♟</span>
+        </div>
+        <h1 class="tournament-title" id="tournament-title">Anichess Rising Stars Tournament #1</h1>
+      </div>
+
+      <div class="tournament-card" id="tournament-card">
+        <div class="tournament-card-header">
+          <div class="tournament-card-title">About This Tournament</div>
+        </div>
+        <div id="tournament-content">
+          <div class="tournament-empty">Loading tournament information…</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Anichess Ranked Tracker</span>
+    <span class="sep">·</span>
+    <span>Tournament Details</span>
+  </footer>
+
+  <script>
+    // Apply logo with localStorage cache (same as main page)
+    async function applyLogo() {
+      const logoImg  = document.getElementById('logo-img');
+      const logoIcon = document.getElementById('logo-icon');
+      if (!logoImg || !logoIcon) return;
+
+      const cached = localStorage.getItem('anichess-logo');
+      if (cached) {
+        logoImg.src = cached;
+        logoImg.style.display = 'block';
+        logoIcon.style.display = 'none';
+      }
+
+      try {
+        const res = await fetch('/api/logo');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.exists && data.filename) {
+          const path = `/${data.filename}`;
+          localStorage.setItem('anichess-logo', path);
+          logoImg.src = `${path}?t=${Date.now()}`;
+          logoImg.style.display = 'block';
+          logoIcon.style.display = 'none';
+          const favicon = document.getElementById('favicon');
+          if (favicon) favicon.href = `/favicon.ico?t=${Date.now()}`;
+        } else {
+          localStorage.removeItem('anichess-logo');
+          logoImg.style.display = 'none';
+          logoIcon.style.display = '';
+        }
+      } catch {}
+    }
+
+    async function applyBackground() {
+      try {
+        const res = await fetch('/api/background');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.exists && data.filename) {
+          document.documentElement.style.setProperty('--bg-image', `url(/${data.filename})`);
+          requestAnimationFrame(() => requestAnimationFrame(() => {
+            document.body.classList.add('has-bg');
+          }));
+        } else {
+          document.documentElement.style.setProperty('--bg-image', 'none');
+          document.body.classList.remove('has-bg');
+        }
+      } catch {}
+    }
+
+    function dismissLoader() {
+      const loader = document.getElementById('page-loader');
+      if (!loader) return;
+      loader.classList.add('fading');
+      loader.addEventListener('transitionend', () => loader.remove(), { once: true });
+    }
+
+    async function loadTournament() {
+      try {
+        const res = await fetch('/api/tournament');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        // Tournament logo
+        const wrap = document.getElementById('tournament-logo-wrap');
+        if (data.logo && data.logo.exists && data.logo.filename) {
+          wrap.innerHTML = `<img src="/${data.logo.filename}?t=${Date.now()}" alt="Tournament Logo">`;
+        }
+
+        // Tournament details
+        const content = document.getElementById('tournament-content');
+        if (data.details && data.details.trim()) {
+          content.innerHTML = `<div class="tournament-details-body">${formatDetails(data.details)}</div>`;
+        } else {
+          content.innerHTML = `<div class="tournament-empty">No tournament details have been posted yet. Check back soon.</div>`;
+        }
+      } catch {
+        document.getElementById('error-banner').classList.remove('hidden');
+        document.getElementById('tournament-content').innerHTML =
+          `<div class="tournament-empty">Could not load tournament details.</div>`;
+      } finally {
+        dismissLoader();
+      }
+    }
+
+    function escapeHtml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Escape then wrap bare URLs in anchor tags, stripping trailing sentence punctuation
+    function linkify(str) {
+      return escapeHtml(str).replace(
+        /https?:\/\/[^\s&<>"]+/g,
+        url => {
+          // Strip trailing punctuation that belongs to the sentence, not the URL
+          const stripped = url.replace(/[.,;:!?)\]]+$/, '');
+          const tail = url.slice(stripped.length);
+          return `<a href="${stripped}" target="_blank" rel="noopener" class="td-link">${stripped}</a>${tail}`;
+        }
+      );
+    }
+
+    function formatDetails(raw) {
+      const lines = raw.split('\n');
+      let html = '';
+      let i = 0;
+      let prizeRowsSeen = 0;
+
+      // Skip leading blank lines
+      while (i < lines.length && !lines[i].trim()) i++;
+
+      // Skip first non-empty line — already shown in the <h1> above the card
+      while (i < lines.length && !lines[i].trim()) i++;
+      if (i < lines.length) i++;
+
+      while (i < lines.length) {
+        const line = lines[i].trim();
+        i++;
+        if (!line) continue;
+
+        // Numbered section: "1. General Information"
+        const secM = line.match(/^(\d+)\.\s+(.+)$/);
+        if (secM && line.length < 90) {
+          html += `<div class="td-section"><span class="td-section-num">${secM[1]}</span><span>${escapeHtml(secM[2])}</span></div>`;
+          continue;
+        }
+
+        // Prize row: pipe-separated entries with dollar values
+        if (line.includes(' | ') && /\$\d+/.test(line)) {
+          // Only the first prize row gets podium colours — subsequent rows are neutral
+          const tierCls = prizeRowsSeen === 0
+            ? ['td-prize-first', 'td-prize-second', 'td-prize-third']
+            : [];
+          prizeRowsSeen++;
+          const items = line.split(' | ').map((p, idx) => {
+            const extra = tierCls[idx] ? ` ${tierCls[idx]}` : ' td-prize-neutral';
+            const pm = p.match(/^(.+?):\s+(\$.+)$/);
+            if (pm) return `<div class="td-prize-item${extra}"><div class="td-prize-val">${escapeHtml(pm[2])}</div><div class="td-prize-label">${escapeHtml(pm[1])}</div></div>`;
+            return `<div class="td-prize-item${extra}" style="display:flex;align-items:center;justify-content:center;font-size:0.84rem;color:var(--text-2)">${escapeHtml(p)}</div>`;
+          }).join('');
+          html += `<div class="td-prize-row">${items}</div>`;
+          continue;
+        }
+
+        // Sub-section label (ends with colon, no value, short)
+        if (/^[^:]+:$/.test(line) && line.length < 45) {
+          html += `<div class="td-subheader">${escapeHtml(line.slice(0, -1))}</div>`;
+          continue;
+        }
+
+        // Key: value — with warning detection
+        const kvM = line.match(/^([^:]{1,65}):\s+(.+)$/);
+        if (kvM) {
+          const isWarn = /IMPORTANT!!!|TECHNICAL LOSS|BE ATTENTIVE/i.test(line);
+          if (isWarn) {
+            html += `<div class="td-warn"><span class="td-key">${escapeHtml(kvM[1])}:</span> <span>${linkify(kvM[2])}</span></div>`;
+          } else {
+            html += `<div class="td-item"><span class="td-key">${escapeHtml(kvM[1])}:</span> <span class="td-val">${linkify(kvM[2])}</span></div>`;
+          }
+          continue;
+        }
+
+        // Indented rotation items: "1st game — ...", "2nd game — ..."
+        if (/^(1st|2nd|3rd|\d+th) /.test(line)) {
+          html += `<div class="td-subitem">${escapeHtml(line)}</div>`;
+          continue;
+        }
+
+        // Plain text fallback
+        html += `<div class="td-plain">${linkify(line)}</div>`;
+      }
+
+      return html;
+    }
+
+    applyLogo();
+    applyBackground();
+    loadTournament();
+  </script>
+</body>
+</html>

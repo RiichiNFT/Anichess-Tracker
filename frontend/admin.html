@@ -1,0 +1,1459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — Anichess Tracker</title>
+  <link rel="icon" id="favicon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Admin-specific styles */
+    .admin-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .admin-layout { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .panel-body { padding: 20px; }
+
+    /* Upload zone */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+      padding: 36px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(168, 85, 247, 0.05);
+    }
+
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    .upload-icon { font-size: 2rem; margin-bottom: 10px; }
+
+    .upload-zone p {
+      color: var(--text-2);
+      font-size: 0.87rem;
+    }
+
+    .upload-zone p strong { color: var(--text); }
+
+    .upload-zone .hint {
+      margin-top: 8px;
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      color: var(--text-2);
+      opacity: 0.7;
+    }
+
+    /* Preview table */
+    .preview-wrap { margin-top: 20px; }
+
+    .preview-label {
+      font-size: 0.8rem;
+      color: var(--text-2);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preview-label .count {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 8px;
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: var(--accent);
+    }
+
+    .preview-table-wrap {
+      max-height: 260px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .preview-table th {
+      background: var(--surface-2);
+      padding: 9px 14px;
+      text-align: left;
+      font-size: 0.75rem;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      position: sticky;
+      top: 0;
+    }
+
+    .preview-table td {
+      padding: 8px 14px;
+      border-top: 1px solid var(--border);
+      font-family: var(--font-mono);
+      color: var(--text);
+    }
+
+    .preview-table tr:hover td { background: var(--surface-2); }
+
+    .badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .badge-valid   { background: rgba(52,211,153,0.12); color: #34d399; border: 1px solid rgba(52,211,153,0.3); }
+    .badge-invalid { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.87rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
+
+    .btn-ghost {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+
+    .btn-danger {
+      background: rgba(248,113,113,0.12);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #f87171;
+    }
+
+    .btn-danger:hover:not(:disabled) { background: rgba(248,113,113,0.2); }
+
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    /* Result banner */
+    .result-banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.86rem;
+      margin-top: 16px;
+    }
+
+    .result-success {
+      background: rgba(52,211,153,0.1);
+      border: 1px solid rgba(52,211,153,0.3);
+      color: #34d399;
+    }
+
+    .result-error {
+      background: rgba(248,113,113,0.1);
+      border: 1px solid rgba(248,113,113,0.3);
+      color: #f87171;
+    }
+
+    /* Wallet list */
+    .wallet-list { list-style: none; }
+
+    .wallet-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .wallet-item:last-child { border-bottom: none; }
+
+    .wallet-addr {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text);
+      word-break: break-all;
+    }
+
+    .wallet-remove {
+      background: none;
+      border: none;
+      color: var(--text-2);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      transition: color 0.15s;
+    }
+
+    .wallet-remove:hover { color: #f87171; }
+
+    .empty-list {
+      color: var(--text-2);
+      font-size: 0.87rem;
+      text-align: center;
+      padding: 28px 0;
+    }
+
+    .wallet-count-tag {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 9px;
+      font-size: 0.76rem;
+      font-family: var(--font-mono);
+      color: var(--text-2);
+    }
+
+    .wallet-list-wrap {
+      max-height: 420px;
+      overflow-y: auto;
+    }
+
+    /* Nav */
+    .nav-link {
+      font-size: 0.84rem;
+      color: var(--text-2);
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Badge grid */
+    .badge-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+      gap: 12px;
+    }
+
+    .badge-item {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 10px 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+    }
+
+    .badge-item.uploaded { border-color: var(--accent); }
+
+    .badge-item img {
+      width: 52px;
+      height: 52px;
+      object-fit: contain;
+    }
+
+    .badge-item .badge-name {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--text-2);
+    }
+
+    .badge-item .badge-status {
+      font-size: 0.66rem;
+      color: var(--text-3);
+    }
+
+    .badge-item.uploaded .badge-status { color: var(--green); }
+
+    .badge-delete {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      background: none;
+      border: none;
+      color: var(--text-3);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color 0.15s;
+      line-height: 1;
+    }
+    .badge-delete:hover { color: var(--red); }
+
+    .badge-placeholder {
+      width: 52px;
+      height: 52px;
+      border: 2px dashed var(--border-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--text-3);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Anichess <span class="accent">Admin</span></h1>
+      <div class="meta">
+        <a href="/preview.html" class="nav-link" style="border-color:rgba(237,199,41,0.4);color:#edc729">🔒 Preview Finalized</a>
+        <a href="/" class="nav-link">← Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="admin-layout">
+
+      <!-- LEFT: CSV Upload -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Import Wallets from CSV</h2>
+          </div>
+          <div class="panel-body">
+            <div class="upload-zone" id="drop-zone">
+              <input type="file" id="csv-input" accept=".csv,text/csv" />
+              <div class="upload-icon">📄</div>
+              <p><strong>Click to upload</strong> or drag &amp; drop</p>
+              <p>CSV with a <code>wallet address</code> header column</p>
+              <div class="hint">wallet address<br>0xabc...<br>0xdef...<br>...</div>
+            </div>
+
+            <div class="preview-wrap hidden" id="preview-wrap">
+              <div class="preview-label">
+                <span>Parsed wallets</span>
+                <span class="count" id="valid-count">0 valid</span>
+              </div>
+              <div class="preview-table-wrap">
+                <table class="preview-table">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Wallet Address</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="preview-body"></tbody>
+                </table>
+              </div>
+
+              <label class="replace-toggle" style="display:flex;align-items:center;gap:9px;margin-top:16px;cursor:pointer;user-select:none;width:fit-content">
+                <input type="checkbox" id="replace-mode" style="width:15px;height:15px;accent-color:var(--red);cursor:pointer;flex-shrink:0" />
+                <span style="font-size:0.84rem;color:var(--text-2)">Replace all existing wallets with this CSV</span>
+              </label>
+
+              <div class="action-row">
+                <button class="btn btn-primary" id="import-btn" onclick="importWallets()">
+                  Import Valid Wallets
+                </button>
+                <button class="btn btn-ghost" onclick="clearPreview()">Clear</button>
+              </div>
+
+              <div id="result-banner" class="result-banner hidden"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Current wallet list -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <h2>Tracked Wallets</h2>
+            <div style="display:flex;align-items:center;gap:8px">
+              <span class="wallet-count-tag" id="tracked-count">0</span>
+              <button class="btn btn-danger" id="clear-all-btn" style="padding:5px 13px;font-size:0.78rem" onclick="clearAllWallets()">Clear All</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="wallet-list-wrap">
+              <ul class="wallet-list" id="wallet-list">
+                <li class="empty-list">No wallets tracked yet.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Logo Image (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🏷️ Logo Image</h2>
+        <span class="wallet-count-tag" id="logo-status-tag">No logo</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Upload a custom logo image to replace the chess piece icon in the header.
+          Max file size: 2 MB · Supported: JPG, PNG, WebP, SVG
+        </p>
+
+        <div id="logo-current" style="margin-bottom:16px"></div>
+
+        <div class="upload-zone" id="logo-drop-zone">
+          <input type="file" id="logo-input" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" />
+          <div class="upload-icon">🏷️</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <p style="margin-top:4px">JPG · PNG · WebP · SVG · max 2 MB · recommended square</p>
+        </div>
+
+        <div id="logo-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Playoff Qualifier Results (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🏆 Playoff Qualifier Results</h2>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px">
+          Enter wallet addresses for players who automatically qualify for the playoffs via qualifier events.
+          Leave blank if a spot has not been filled yet.
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+          <!-- Qualifier 1 -->
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Qualifier 1</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">1st Place</label>
+                <input id="q1-first" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">2nd Place</label>
+                <input id="q1-second" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">3rd Place</label>
+                <input id="q1-third" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Qualifier 2 -->
+          <div>
+            <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Qualifier 2</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">1st Place</label>
+                <input id="q2-first" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">2nd Place</label>
+                <input id="q2-second" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div>
+                <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">3rd Place</label>
+                <input id="q2-third" type="text" placeholder="0x…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="saveQualifiers()">Save Qualifiers</button>
+          <button class="btn btn-ghost" onclick="clearQualifiers()">Clear All</button>
+        </div>
+        <div id="qualifiers-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Wild Card Exclusions (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🚫 Wild Card Exclusions</h2>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="wallet-count-tag" id="excluded-count">0</span>
+          <button class="btn btn-danger" style="padding:5px 13px;font-size:0.78rem" onclick="clearExcludedWallets()">Clear All</button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">
+          Wallet addresses listed here are excluded from the Wild Card (most matches played) calculation. Enter one address per line.
+        </p>
+        <textarea id="excluded-input"
+          placeholder="0x1234…&#10;0xabcd…&#10;one address per line"
+          style="width:100%;min-height:120px;background:var(--surface-2);border:1px solid var(--border);
+                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:var(--font-mono,monospace);
+                 font-size:0.82rem;line-height:1.7;resize:vertical;outline:none;transition:border-color 0.2s"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="saveExcludedWallets()">Save Exclusions</button>
+          <button class="btn btn-ghost" onclick="loadExcludedWallets()">Reset</button>
+        </div>
+        <div id="excluded-result" class="result-banner hidden" style="margin-top:12px"></div>
+
+        <div class="wallet-list-wrap" style="margin-top:20px">
+          <ul class="wallet-list" id="excluded-list">
+            <li class="empty-list">No wallets excluded.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tournament Logo (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🏆 Tournament Logo</h2>
+        <span class="wallet-count-tag" id="tournament-logo-status-tag">No logo</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Upload a logo image for the Tournament Details page.
+          Max file size: 2 MB · Supported: JPG, PNG, WebP, SVG
+        </p>
+
+        <div id="tournament-logo-current" style="margin-bottom:16px"></div>
+
+        <div class="upload-zone" id="tournament-logo-drop-zone">
+          <input type="file" id="tournament-logo-input" accept=".jpg,.jpeg,.png,.webp,.svg,image/*" />
+          <div class="upload-icon">🏆</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <p style="margin-top:4px">JPG · PNG · WebP · SVG · max 2 MB · recommended square</p>
+        </div>
+
+        <div id="tournament-logo-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Tournament Details (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>📋 Tournament Details</h2>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Write the tournament description shown on the Tournament Details page. Plain text — line breaks are preserved.
+        </p>
+
+        <textarea id="tournament-details-input"
+          placeholder="Enter tournament details here…&#10;&#10;e.g. Format, prize pool, schedule, rules…"
+          style="width:100%;min-height:220px;background:var(--surface-2);border:1px solid var(--border);
+                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
+                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
+                 transition:border-color 0.2s"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="saveTournamentDetails()">Save Details</button>
+          <button class="btn btn-ghost" onclick="clearTournamentDetails()">Clear</button>
+        </div>
+
+        <div id="tournament-details-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Page Background (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🖼️ Page Background</h2>
+        <span class="wallet-count-tag" id="bg-status-tag">No image</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Upload a background image for the leaderboard. A dark overlay and blur are applied automatically
+          to preserve text readability per the brand guidelines.
+          Max file size: 10 MB · Supported: JPG, PNG, WebP, GIF
+        </p>
+
+        <div id="bg-current" style="margin-bottom:16px"></div>
+
+        <div class="upload-zone" id="bg-drop-zone">
+          <input type="file" id="bg-input" accept=".jpg,.jpeg,.png,.webp,.gif,image/*" />
+          <div class="upload-icon">🌄</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <p style="margin-top:4px">JPG · PNG · WebP · GIF · max 10 MB</p>
+        </div>
+
+        <div id="bg-result" class="result-banner hidden" style="margin-top:12px"></div>
+
+        <div style="margin-top:16px;padding:14px 16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;font-size:0.79rem;color:var(--text-2);line-height:1.7">
+          <strong style="color:var(--text)">Applied effects (UIUX Designer spec):</strong><br>
+          Image layer: <code style="color:var(--accent);font-family:monospace">blur(2px) brightness(0.55) saturate(0.7)</code><br>
+          Colour overlay: <code style="color:var(--accent);font-family:monospace">rgba(16,25,50, 0.87→0.78→0.90)</code> gradient
+        </div>
+      </div>
+    </div>
+
+    <!-- Branding Kit (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🎨 Branding Kit</h2>
+        <span class="wallet-count-tag" id="branding-file-count">0 files</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Upload the project branding kit PDF. The <strong>UIUX Designer</strong> agent will study it and
+          coordinate with the <strong>Frontend Developer</strong> agent to apply the design system to the dashboard.
+          Max file size: 20 MB.
+        </p>
+
+        <div id="branding-file-list" style="margin-bottom:16px"></div>
+
+        <div class="upload-zone" id="branding-drop-zone">
+          <input type="file" id="branding-input" accept=".pdf,application/pdf" />
+          <div class="upload-icon">📋</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop</p>
+          <p style="margin-top:4px">PDF files only · max 20 MB</p>
+        </div>
+
+        <div id="branding-result" class="result-banner hidden" style="margin-top:12px"></div>
+
+        <div style="margin-top:20px;padding:16px;background:var(--surface-2);border:1px solid var(--border);border-radius:10px">
+          <p style="font-size:0.82rem;font-weight:600;color:var(--text);margin-bottom:8px">How to apply the branding:</p>
+          <ol style="font-size:0.8rem;color:var(--text-2);padding-left:1.2em;margin:0;line-height:1.9">
+            <li>Upload the branding PDF above</li>
+            <li>Open your Claude Code session</li>
+            <li>Say: <code style="font-family:monospace;color:var(--accent);background:var(--surface);padding:1px 6px;border-radius:4px">"Apply the branding kit to the dashboard"</code></li>
+            <li>The UIUX Designer agent will analyse the PDF and the Frontend Developer will implement the changes</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier Badge Management (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>Tier Badge Images</h2>
+        <span class="wallet-count-tag">pawn · knight · bishop · rook · queen · king · legend</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Upload PNG images named after each tier. They replace the text labels in the leaderboard.
+          File name must exactly match the tier (e.g. <code style="font-family:monospace;color:var(--accent)">rook.png</code>).
+        </p>
+
+        <div class="badge-grid" id="badge-grid"></div>
+
+        <div class="upload-zone" id="badge-drop-zone" style="margin-top:20px">
+          <input type="file" id="badge-input" accept=".png,.jpg,.jpeg,.webp,.gif,.svg" multiple />
+          <div class="upload-icon">🏅</div>
+          <p><strong>Click to upload</strong> or drag &amp; drop badge images</p>
+          <p style="margin-top:4px">Files must be named: pawn, knight, bishop, rook, queen, king, or legend</p>
+        </div>
+
+        <div id="badge-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <footer>
+    <span>Admin Panel</span>
+    <span class="separator">·</span>
+    <span>Anichess Ranked Tracker</span>
+  </footer>
+
+  <script>
+    let parsedRows = [];
+
+    // HTML-escape helper — prevents XSS when inserting server-sourced strings into innerHTML
+    function esc(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#x27;');
+    }
+
+    // ── CSV Parsing ───────────────────────────────────────────────────────────
+
+    function parseCSV(text) {
+      const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      if (lines.length < 2) return [];
+
+      // Find the wallet address column (case-insensitive, handle quotes)
+      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim().toLowerCase());
+      const colIndex = headers.findIndex(h =>
+        h === 'wallet address' || h === 'wallet_address' || h === 'walletaddress' || h === 'wallet'
+      );
+      if (colIndex === -1) return null; // header not found
+
+      return lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+        const addr = cols[colIndex] || '';
+        const valid = /^0x[0-9a-fA-F]{40}$/.test(addr);
+        return { addr, valid };
+      }).filter(r => r.addr);
+    }
+
+    function renderPreview(rows) {
+      const validCount = rows.filter(r => r.valid).length;
+      document.getElementById('valid-count').textContent = `${validCount} valid`;
+      document.getElementById('import-btn').disabled = validCount === 0;
+
+      const tbody = document.getElementById('preview-body');
+      tbody.innerHTML = rows.map((r, i) => `
+        <tr>
+          <td style="color:var(--text-2)">${i + 1}</td>
+          <td>${esc(r.addr)}</td>
+          <td><span class="badge ${r.valid ? 'badge-valid' : 'badge-invalid'}">${r.valid ? 'Valid' : 'Invalid'}</span></td>
+        </tr>
+      `).join('');
+
+      document.getElementById('preview-wrap').classList.remove('hidden');
+      document.getElementById('result-banner').classList.add('hidden');
+    }
+
+    function handleFile(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const result = parseCSV(e.target.result);
+        if (result === null) {
+          showResult('error', 'Could not find a "wallet address" column. Check your CSV header.');
+          document.getElementById('preview-wrap').classList.remove('hidden');
+          document.getElementById('preview-body').innerHTML = '';
+          document.getElementById('valid-count').textContent = '0 valid';
+          document.getElementById('import-btn').disabled = true;
+          return;
+        }
+        parsedRows = result;
+        renderPreview(parsedRows);
+      };
+      reader.readAsText(file);
+    }
+
+    document.getElementById('csv-input').addEventListener('change', e => {
+      handleFile(e.target.files[0]);
+    });
+
+    // Drag & drop
+    const dropZone = document.getElementById('drop-zone');
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    // ── Import ────────────────────────────────────────────────────────────────
+
+    async function importWallets() {
+      const valid = parsedRows.filter(r => r.valid).map(r => r.addr);
+      if (valid.length === 0) return;
+
+      const replace = document.getElementById('replace-mode').checked;
+      const btn = document.getElementById('import-btn');
+      btn.disabled = true;
+      btn.textContent = replace ? 'Replacing...' : 'Importing...';
+
+      try {
+        const res = await fetch('/api/wallets/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addresses: valid, replace }),
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Unknown error');
+
+        const msg = replace
+          ? `Replaced — now tracking ${data.added} wallet${data.added !== 1 ? 's' : ''}.${data.invalid > 0 ? ` ${data.invalid} invalid skipped.` : ''}`
+          : `Done! Added ${data.added} wallet${data.added !== 1 ? 's' : ''}.${data.skipped > 0 ? ` ${data.skipped} already tracked.` : ''}${data.invalid > 0 ? ` ${data.invalid} invalid.` : ''}`;
+        showResult('success', msg);
+        loadWalletList();
+      } catch (err) {
+        showResult('error', `Import failed: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Import Valid Wallets';
+      }
+    }
+
+    function clearPreview() {
+      parsedRows = [];
+      document.getElementById('preview-wrap').classList.add('hidden');
+      document.getElementById('csv-input').value = '';
+    }
+
+    function showResult(type, msg) {
+      const el = document.getElementById('result-banner');
+      el.className = `result-banner result-${type}`;
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    // ── Wallet List ───────────────────────────────────────────────────────────
+
+    async function loadWalletList() {
+      const res = await fetch('/api/wallets');
+      const wallets = await res.json();
+      const list = document.getElementById('wallet-list');
+      const countEl = document.getElementById('tracked-count');
+
+      countEl.textContent = wallets.length;
+
+      if (wallets.length === 0) {
+        list.innerHTML = '<li class="empty-list">No wallets tracked yet.</li>';
+        return;
+      }
+
+      list.innerHTML = wallets.map(w => `
+        <li class="wallet-item">
+          <span class="wallet-addr">${esc(w)}</span>
+          <button class="wallet-remove" title="Remove" onclick="removeWallet('${esc(w)}')">✕</button>
+        </li>
+      `).join('');
+    }
+
+    async function removeWallet(address) {
+      await fetch(`/api/wallets/${encodeURIComponent(address)}`, { method: 'DELETE' });
+      loadWalletList();
+    }
+
+    async function clearAllWallets() {
+      if (!confirm('Remove all tracked wallets? This cannot be undone.')) return;
+      const btn = document.getElementById('clear-all-btn');
+      btn.disabled = true;
+      await fetch('/api/wallets', { method: 'DELETE' });
+      btn.disabled = false;
+      loadWalletList();
+    }
+
+    loadWalletList();
+
+    // ── Badge Management ──────────────────────────────────────────────────────
+
+    const TIERS = ['pawn','knight','bishop','rook','queen','king','legend'];
+    const TIER_SYMBOLS = { pawn:'♟', knight:'♞', bishop:'♝', rook:'♜', queen:'♛', king:'♚', legend:'✦' };
+
+    async function loadBadgeGrid() {
+      const res = await fetch('/api/badges');
+      const uploaded = res.ok ? await res.json() : [];
+      const uploadedSet = new Set(uploaded.map(f => f.toLowerCase()));
+      const grid = document.getElementById('badge-grid');
+      grid.innerHTML = TIERS.map(tier => {
+        const filename = tier + '.png';
+        const has = uploadedSet.has(filename);
+        const imgEl = has
+          ? `<img src="/badges/${filename}?t=${Date.now()}" alt="${tier}">`
+          : `<div class="badge-placeholder">${TIER_SYMBOLS[tier]}</div>`;
+        const delBtn = has
+          ? `<button class="badge-delete" title="Remove" onclick="deleteBadge('${filename}')">✕</button>`
+          : '';
+        return `<div class="badge-item${has ? ' uploaded' : ''}" id="badge-item-${tier}">
+          ${delBtn}
+          ${imgEl}
+          <span class="badge-name">${tier.charAt(0).toUpperCase() + tier.slice(1)}</span>
+          <span class="badge-status">${has ? '✓ Uploaded' : 'Not set'}</span>
+        </div>`;
+      }).join('');
+    }
+
+    async function uploadBadge(file) {
+      const formData = new FormData();
+      formData.append('badge', file);
+      const res = await fetch('/api/badges', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Upload failed');
+      return data.filename;
+    }
+
+    async function deleteBadge(filename) {
+      await fetch(`/api/badges/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      loadBadgeGrid();
+    }
+
+    async function handleBadgeFiles(files) {
+      const resultEl = document.getElementById('badge-result');
+      resultEl.classList.add('hidden');
+      const results = [];
+      for (const file of files) {
+        try {
+          const name = await uploadBadge(file);
+          results.push({ name, ok: true });
+        } catch (err) {
+          results.push({ name: file.name, ok: false, err: err.message });
+        }
+      }
+      await loadBadgeGrid();
+      const ok = results.filter(r => r.ok);
+      const fail = results.filter(r => !r.ok);
+      let msg = ok.length ? `Uploaded: ${ok.map(r => r.name).join(', ')}.` : '';
+      if (fail.length) msg += ` Failed: ${fail.map(r => r.err).join(', ')}.`;
+      resultEl.className = `result-banner ${fail.length && !ok.length ? 'result-error' : 'result-success'}`;
+      resultEl.textContent = msg.trim();
+      resultEl.classList.remove('hidden');
+    }
+
+    document.getElementById('badge-input').addEventListener('change', e => {
+      if (e.target.files.length) handleBadgeFiles([...e.target.files]);
+    });
+
+    const badgeDropZone = document.getElementById('badge-drop-zone');
+    badgeDropZone.addEventListener('dragover', e => { e.preventDefault(); badgeDropZone.classList.add('dragover'); });
+    badgeDropZone.addEventListener('dragleave', () => badgeDropZone.classList.remove('dragover'));
+    badgeDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      badgeDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length) handleBadgeFiles([...e.dataTransfer.files]);
+    });
+
+    loadBadgeGrid();
+
+    // ── Branding Kit ──────────────────────────────────────────────────────────
+
+    function fmtBytes(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    async function loadBrandingList() {
+      const res = await fetch('/api/branding/pdf');
+      const files = res.ok ? await res.json() : [];
+      const countEl = document.getElementById('branding-file-count');
+      const listEl  = document.getElementById('branding-file-list');
+      countEl.textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+
+      if (files.length === 0) {
+        listEl.innerHTML = '';
+        return;
+      }
+
+      listEl.innerHTML = files.map(f => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;
+                    background:var(--surface-2);border:1px solid var(--border);border-radius:8px;
+                    padding:12px 16px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0">
+            <span style="font-size:1.4rem">📄</span>
+            <div style="min-width:0">
+              <div style="font-family:var(--font-mono);font-size:0.83rem;color:var(--text);
+                          white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(f.filename)}</div>
+              <div style="font-size:0.73rem;color:var(--text-2);margin-top:2px">
+                ${fmtBytes(f.size)} · Uploaded ${new Date(f.uploaded).toLocaleString()}
+              </div>
+            </div>
+          </div>
+          <button class="btn btn-danger" style="padding:6px 14px;font-size:0.78rem;flex-shrink:0"
+                  onclick="deleteBrandingPdf('${esc(f.filename)}')">Remove</button>
+        </div>
+      `).join('');
+    }
+
+    async function uploadBrandingPdf(file) {
+      const resultEl = document.getElementById('branding-result');
+      resultEl.classList.add('hidden');
+      const formData = new FormData();
+      formData.append('pdf', file);
+      try {
+        const res = await fetch('/api/branding/pdf', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = `✓ Uploaded: ${data.filename}`;
+        resultEl.classList.remove('hidden');
+        loadBrandingList();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Upload failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function deleteBrandingPdf(filename) {
+      await fetch(`/api/branding/pdf/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      loadBrandingList();
+    }
+
+    document.getElementById('branding-input').addEventListener('change', e => {
+      if (e.target.files[0]) uploadBrandingPdf(e.target.files[0]);
+    });
+
+    const brandingDropZone = document.getElementById('branding-drop-zone');
+    brandingDropZone.addEventListener('dragover', e => { e.preventDefault(); brandingDropZone.classList.add('dragover'); });
+    brandingDropZone.addEventListener('dragleave', () => brandingDropZone.classList.remove('dragover'));
+    brandingDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      brandingDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) uploadBrandingPdf(e.dataTransfer.files[0]);
+    });
+
+    loadBrandingList();
+
+    // ── Page Background ───────────────────────────────────────────────────────
+
+    async function loadBgStatus() {
+      const res = await fetch('/api/background');
+      const data = res.ok ? await res.json() : { exists: false };
+      const tag     = document.getElementById('bg-status-tag');
+      const current = document.getElementById('bg-current');
+
+      if (data.exists && data.filename) {
+        tag.textContent = '✓ Image set';
+        tag.style.color = 'var(--green)';
+        current.innerHTML = `
+          <div style="position:relative;border-radius:10px;overflow:hidden;border:1px solid var(--border);max-height:200px">
+            <img src="/${esc(data.filename)}?t=${Date.now()}" alt="Background preview"
+                 style="width:100%;height:200px;object-fit:contain;object-position:center;display:block;background:#101932;filter:brightness(0.55) saturate(0.7)">
+            <div style="position:absolute;inset:0;background:linear-gradient(160deg,rgba(16,25,50,0.87) 0%,rgba(16,25,50,0.78) 50%,rgba(16,25,50,0.90) 100%)"></div>
+            <div style="position:absolute;bottom:10px;left:14px;right:60px;color:#e8f0fe;font-size:0.82rem;font-weight:600">${esc(data.filename)}</div>
+            <div style="position:absolute;bottom:10px;right:14px;font-size:0.75rem;color:#7a9abf">${fmtBytes(data.size)}</div>
+          </div>
+          <div style="margin-top:10px;text-align:right">
+            <button class="btn btn-danger" style="padding:7px 16px;font-size:0.8rem" onclick="deleteBgImage()">Remove Background</button>
+          </div>`;
+      } else {
+        tag.textContent = 'No image';
+        tag.style.color = '';
+        current.innerHTML = '';
+      }
+    }
+
+    async function uploadBgImage(file) {
+      const resultEl = document.getElementById('bg-result');
+      resultEl.classList.add('hidden');
+      const formData = new FormData();
+      formData.append('background', file);
+      try {
+        const res = await fetch('/api/background', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = `✓ Background set: ${data.filename}`;
+        resultEl.classList.remove('hidden');
+        loadBgStatus();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Upload failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function deleteBgImage() {
+      await fetch('/api/background', { method: 'DELETE' });
+      document.getElementById('bg-result').classList.add('hidden');
+      loadBgStatus();
+    }
+
+    document.getElementById('bg-input').addEventListener('change', e => {
+      if (e.target.files[0]) uploadBgImage(e.target.files[0]);
+    });
+
+    const bgDropZone = document.getElementById('bg-drop-zone');
+    bgDropZone.addEventListener('dragover', e => { e.preventDefault(); bgDropZone.classList.add('dragover'); });
+    bgDropZone.addEventListener('dragleave', () => bgDropZone.classList.remove('dragover'));
+    bgDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      bgDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) uploadBgImage(e.dataTransfer.files[0]);
+    });
+
+    loadBgStatus();
+
+    // ── Logo Image ────────────────────────────────────────────────────────────
+
+    async function loadLogoStatus() {
+      const res = await fetch('/api/logo');
+      const data = res.ok ? await res.json() : { exists: false };
+      const tag     = document.getElementById('logo-status-tag');
+      const current = document.getElementById('logo-current');
+
+      if (data.exists && data.filename) {
+        tag.textContent = '✓ Logo set';
+        tag.style.color = 'var(--green)';
+        current.innerHTML = `
+          <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;
+                      background:var(--surface-2);border:1px solid var(--border);border-radius:10px">
+            <img src="/${esc(data.filename)}?t=${Date.now()}" alt="Logo preview"
+                 style="width:52px;height:52px;object-fit:contain;border-radius:8px;background:#101932">
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-mono,monospace);font-size:0.83rem;color:var(--text)">${esc(data.filename)}</div>
+              <div style="font-size:0.73rem;color:var(--text-2);margin-top:2px">${fmtBytes(data.size)}</div>
+            </div>
+            <button class="btn btn-danger" style="padding:6px 14px;font-size:0.78rem;flex-shrink:0"
+                    onclick="deleteLogoImage()">Remove</button>
+          </div>`;
+      } else {
+        tag.textContent = 'No logo';
+        tag.style.color = '';
+        current.innerHTML = '';
+      }
+    }
+
+    async function uploadLogoImage(file) {
+      const resultEl = document.getElementById('logo-result');
+      resultEl.classList.add('hidden');
+      const formData = new FormData();
+      formData.append('logo', file);
+      try {
+        const res = await fetch('/api/logo', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = `✓ Logo set: ${data.filename}`;
+        resultEl.classList.remove('hidden');
+        loadLogoStatus();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Upload failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function deleteLogoImage() {
+      await fetch('/api/logo', { method: 'DELETE' });
+      document.getElementById('logo-result').classList.add('hidden');
+      loadLogoStatus();
+    }
+
+    document.getElementById('logo-input').addEventListener('change', e => {
+      if (e.target.files[0]) uploadLogoImage(e.target.files[0]);
+    });
+
+    const logoDropZone = document.getElementById('logo-drop-zone');
+    logoDropZone.addEventListener('dragover', e => { e.preventDefault(); logoDropZone.classList.add('dragover'); });
+    logoDropZone.addEventListener('dragleave', () => logoDropZone.classList.remove('dragover'));
+    logoDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      logoDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) uploadLogoImage(e.dataTransfer.files[0]);
+    });
+
+    loadLogoStatus();
+
+    // ── Playoff Qualifiers ────────────────────────────────────────────────────
+
+    async function loadQualifiers() {
+      const res = await fetch('/api/qualifiers');
+      if (!res.ok) return;
+      const data = await res.json();
+      document.getElementById('q1-first').value  = data.qualifier1?.first  || '';
+      document.getElementById('q1-second').value = data.qualifier1?.second || '';
+      document.getElementById('q1-third').value  = data.qualifier1?.third  || '';
+      document.getElementById('q2-first').value  = data.qualifier2?.first  || '';
+      document.getElementById('q2-second').value = data.qualifier2?.second || '';
+      document.getElementById('q2-third').value  = data.qualifier2?.third  || '';
+    }
+
+    async function saveQualifiers() {
+      const resultEl = document.getElementById('qualifiers-result');
+      resultEl.classList.add('hidden');
+      const body = {
+        qualifier1: {
+          first:  document.getElementById('q1-first').value.trim(),
+          second: document.getElementById('q1-second').value.trim(),
+          third:  document.getElementById('q1-third').value.trim(),
+        },
+        qualifier2: {
+          first:  document.getElementById('q2-first').value.trim(),
+          second: document.getElementById('q2-second').value.trim(),
+          third:  document.getElementById('q2-third').value.trim(),
+        },
+      };
+      try {
+        const res = await fetch('/api/qualifiers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Qualifier results saved.';
+        resultEl.classList.remove('hidden');
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Save failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function clearQualifiers() {
+      ['q1-first','q1-second','q1-third','q2-first','q2-second','q2-third']
+        .forEach(id => { document.getElementById(id).value = ''; });
+      const resultEl = document.getElementById('qualifiers-result');
+      resultEl.classList.add('hidden');
+      await fetch('/api/qualifiers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          qualifier1: { first: '', second: '', third: '' },
+          qualifier2: { first: '', second: '', third: '' },
+        }),
+      });
+      resultEl.className = 'result-banner result-success';
+      resultEl.textContent = '✓ Qualifiers cleared.';
+      resultEl.classList.remove('hidden');
+    }
+
+    loadQualifiers();
+
+    // ── Tournament Logo ───────────────────────────────────────────────────────
+
+    async function loadTournamentLogoStatus() {
+      const res = await fetch('/api/tournament');
+      const data = res.ok ? await res.json() : { logo: { exists: false } };
+      const tag     = document.getElementById('tournament-logo-status-tag');
+      const current = document.getElementById('tournament-logo-current');
+      const logo    = data.logo;
+
+      if (logo && logo.exists && logo.filename) {
+        tag.textContent = '✓ Logo set';
+        tag.style.color = 'var(--green)';
+        current.innerHTML = `
+          <div style="display:flex;align-items:center;gap:16px;padding:14px 16px;
+                      background:var(--surface-2);border:1px solid var(--border);border-radius:10px">
+            <img src="/${esc(logo.filename)}?t=${Date.now()}" alt="Tournament Logo"
+                 style="width:52px;height:52px;object-fit:contain;border-radius:8px;background:#101932">
+            <div style="flex:1;min-width:0">
+              <div style="font-family:var(--font-mono,monospace);font-size:0.83rem;color:var(--text)">${esc(logo.filename)}</div>
+            </div>
+            <button class="btn btn-danger" style="padding:6px 14px;font-size:0.78rem;flex-shrink:0"
+                    onclick="deleteTournamentLogo()">Remove</button>
+          </div>`;
+      } else {
+        tag.textContent = 'No logo';
+        tag.style.color = '';
+        current.innerHTML = '';
+      }
+
+      // Also populate details textarea
+      if (data.details !== undefined) {
+        const textarea = document.getElementById('tournament-details-input');
+        if (textarea && !textarea._loaded) {
+          textarea.value = data.details;
+          textarea._loaded = true;
+        }
+      }
+    }
+
+    async function uploadTournamentLogo(file) {
+      const resultEl = document.getElementById('tournament-logo-result');
+      resultEl.classList.add('hidden');
+      const formData = new FormData();
+      formData.append('logo', file);
+      try {
+        const res = await fetch('/api/tournament/logo', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Upload failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = `✓ Tournament logo set: ${data.filename}`;
+        resultEl.classList.remove('hidden');
+        loadTournamentLogoStatus();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Upload failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function deleteTournamentLogo() {
+      await fetch('/api/tournament/logo', { method: 'DELETE' });
+      document.getElementById('tournament-logo-result').classList.add('hidden');
+      const tag = document.getElementById('tournament-logo-status-tag');
+      tag.textContent = 'No logo';
+      tag.style.color = '';
+      document.getElementById('tournament-logo-current').innerHTML = '';
+    }
+
+    document.getElementById('tournament-logo-input').addEventListener('change', e => {
+      if (e.target.files[0]) uploadTournamentLogo(e.target.files[0]);
+    });
+
+    const tournamentLogoDropZone = document.getElementById('tournament-logo-drop-zone');
+    tournamentLogoDropZone.addEventListener('dragover', e => { e.preventDefault(); tournamentLogoDropZone.classList.add('dragover'); });
+    tournamentLogoDropZone.addEventListener('dragleave', () => tournamentLogoDropZone.classList.remove('dragover'));
+    tournamentLogoDropZone.addEventListener('drop', e => {
+      e.preventDefault();
+      tournamentLogoDropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) uploadTournamentLogo(e.dataTransfer.files[0]);
+    });
+
+    loadTournamentLogoStatus();
+
+    // ── Wild Card Exclusions ──────────────────────────────────────────────────
+
+    async function loadExcludedWallets() {
+      const res = await fetch('/api/excluded-wallets');
+      const list = res.ok ? await res.json() : [];
+      const countEl  = document.getElementById('excluded-count');
+      const listEl   = document.getElementById('excluded-list');
+      const inputEl  = document.getElementById('excluded-input');
+
+      countEl.textContent = list.length;
+      inputEl.value = list.join('\n');
+
+      if (list.length === 0) {
+        listEl.innerHTML = '<li class="empty-list">No wallets excluded.</li>';
+        return;
+      }
+      listEl.innerHTML = list.map(w => `
+        <li class="wallet-item">
+          <span class="wallet-addr">${esc(w)}</span>
+          <button class="wallet-remove" title="Remove" onclick="removeExcludedWallet('${esc(w)}')">✕</button>
+        </li>
+      `).join('');
+    }
+
+    async function saveExcludedWallets() {
+      const resultEl = document.getElementById('excluded-result');
+      resultEl.classList.add('hidden');
+      const raw = document.getElementById('excluded-input').value;
+      const addresses = raw.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+      try {
+        const res = await fetch('/api/excluded-wallets', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ addresses }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = `✓ Saved ${data.count} exclusion${data.count !== 1 ? 's' : ''}.`;
+        resultEl.classList.remove('hidden');
+        loadExcludedWallets();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Save failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function clearExcludedWallets() {
+      if (!confirm('Remove all excluded wallets?')) return;
+      await fetch('/api/excluded-wallets', { method: 'DELETE' });
+      loadExcludedWallets();
+    }
+
+    async function removeExcludedWallet(wallet) {
+      const res  = await fetch('/api/excluded-wallets');
+      const list = res.ok ? await res.json() : [];
+      const updated = list.filter(w => w.toLowerCase() !== wallet.toLowerCase());
+      await fetch('/api/excluded-wallets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ addresses: updated }),
+      });
+      loadExcludedWallets();
+    }
+
+    loadExcludedWallets();
+
+    // ── Tournament Details ────────────────────────────────────────────────────
+
+    async function saveTournamentDetails() {
+      const resultEl = document.getElementById('tournament-details-result');
+      const details  = document.getElementById('tournament-details-input').value;
+      resultEl.classList.add('hidden');
+      try {
+        const res = await fetch('/api/tournament/details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ details }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Tournament details saved.';
+        resultEl.classList.remove('hidden');
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Save failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function clearTournamentDetails() {
+      const resultEl = document.getElementById('tournament-details-result');
+      resultEl.classList.add('hidden');
+      try {
+        const res = await fetch('/api/tournament/details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ details: '' }),
+        });
+        if (!res.ok) throw new Error('Clear failed');
+        document.getElementById('tournament-details-input').value = '';
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Tournament details cleared.';
+        resultEl.classList.remove('hidden');
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Error: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+  </script>
+</body>
+</html>
