@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
   <title>Tournament Details — Anichess Tracker</title>
   <link rel="icon" id="favicon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,20 +28,19 @@
   <header>
     <div class="header-inner">
       <div class="header-left">
-        <div class="logo">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
           <span class="logo-icon" id="logo-icon">♟</span>
           <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
                onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
           <div class="logo-text-group">
             <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
-            <span class="logo-sub">Community Leaderboard</span>
           </div>
-        </div>
+        </a>
         <nav class="header-nav">
-          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
-          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
-          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
-          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="Discord Nav" data-track-category="navigation">Discord</a>
         </nav>
       </div>
       <div class="header-right">

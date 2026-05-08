@@ -3,6 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
   <title>Finalized Preview — Anichess Tracker</title>
   <link rel="icon" id="favicon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,12 +17,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
-    .preview-bar {
+    .admin-bar {
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(237,199,41,0.12);
-      border-bottom: 1px solid rgba(237,199,41,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -25,21 +30,40 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #edc729;
     }
-    .preview-bar a {
-      color: var(--text-2);
+    .admin-bar.state-leaderboard { background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); }
+    .admin-bar.state-finalizing  { background: rgba(237,199,41,0.12); border-bottom: 1px solid rgba(237,199,41,0.35); color: #edc729; }
+    .admin-bar.state-confirmed   { background: rgba(0,174,250,0.08); border-bottom: 1px solid rgba(0,174,250,0.25); color: #00aefa; }
+    .admin-bar-btn {
+      background: rgba(255,255,255,0.08);
+      color: currentColor;
+      border: 1px solid currentColor;
+      opacity: 0.8;
+      border-radius: 7px;
+      padding: 3px 13px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .admin-bar-btn:hover:not(:disabled) { opacity: 1; }
+    .admin-bar-btn:disabled { opacity: 0.3; cursor: default; }
+    .admin-bar a {
+      color: currentColor;
+      opacity: 0.6;
       text-decoration: none;
-      border: 1px solid var(--border);
+      border: 1px solid currentColor;
       padding: 3px 12px;
       border-radius: 6px;
       font-size: 0.72rem;
-      transition: border-color 0.2s, color 0.2s;
+      transition: opacity 0.2s;
     }
-    .preview-bar a:hover { border-color: var(--accent); color: var(--accent); }
-    /* push content below the preview bar */
-    header { top: 37px; }
-    main   { padding-top: 42px; }
+    .admin-bar a:hover { opacity: 1; }
+    body.has-admin-bar header { top: 37px; }
+    body.has-admin-bar main   { padding-top: 42px; }
   </style>
 </head>
 <body>
@@ -50,28 +74,29 @@
     </div>
   </div>
 
-  <div class="preview-bar">
-    <span>⚠ Admin Preview — Finalized State</span>
-    <a href="/admin.html">← Back to Admin</a>
+  <div class="admin-bar" id="admin-bar" style="display:none">
+    <span id="admin-bar-text">Loading…</span>
+    <button class="admin-bar-btn" id="btn-prev-state" onclick="changeSiteState('prev')">← Leaderboard</button>
+    <button class="admin-bar-btn" id="btn-next-state" onclick="changeSiteState('next')">Confirmed →</button>
+    <a href="/admin.html">← Admin</a>
   </div>
 
   <header>
     <div class="header-inner">
       <div class="header-left">
-        <div class="logo">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
           <span class="logo-icon" id="logo-icon">♟</span>
           <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
                onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
           <div class="logo-text-group">
             <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
-            <span class="logo-sub">Community Leaderboard</span>
           </div>
-        </div>
+        </a>
         <nav class="header-nav">
-          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
-          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
-          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
-          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="Discord Nav" data-track-category="navigation">Discord</a>
         </nav>
       </div>
       <div class="header-right">
@@ -103,7 +128,7 @@
         <div class="prize-pool-tag">$600 USD Prize Pool</div>
         <p class="section-heading-sub">16 players qualify for the playoff finals · May 10, 2026 · 13:00 UTC · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
       </div>
-      <a class="tournament-cta-btn" href="/tournament.html">
+      <a class="tournament-cta-btn" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">
         <span>Tournament Details</span>
         <span class="tournament-cta-arrow">↗</span>
       </a>
@@ -117,12 +142,13 @@
         <span class="eligibility-sep"></span>
         <span class="eligibility-item">
           <span class="eligibility-label">REGISTER </span>
-          <a class="eligibility-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener">HERE</a>
+          <a class="eligibility-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener" data-track="Register" data-track-category="conversion">HERE</a>
         </span>
         <span class="eligibility-sep"></span>
         <span class="eligibility-item">
           <span class="eligibility-label">Submission Cutoff</span>
           <span class="eligibility-value cutoff">MAY 8TH · UTC 00:00</span>
+          <span class="eligibility-note">(SUBMISSIONS AFTER CUTOFF APPLIES FOR NEXT TOURNAMENT)</span>
         </span>
       </div>
     </div>
@@ -176,5 +202,53 @@
   <!-- Force finalized state before app.js initialises -->
   <script>window.__PREVIEW_FINALIZED__ = true;</script>
   <script src="app.js"></script>
+  <script>
+    const STATE_ORDER = ['leaderboard', 'finalizing', 'confirmed'];
+    const STATE_LABELS = { leaderboard: 'Leaderboard', finalizing: 'Finalizing', confirmed: 'Confirmed' };
+    const STATE_TEXT = {
+      leaderboard: '● Site: Leaderboard — preview.html is admin-only',
+      finalizing:  '⚠ Site: Finalizing — root redirects here (public)',
+      confirmed:   '✓ Site: Confirmed — results.html is at root',
+    };
+    let siteState = null;
+
+    (async function initAdminBar() {
+      try {
+        const [sessionRes, stateRes] = await Promise.all([fetch('/api/session'), fetch('/api/site-state')]);
+        if (!sessionRes.ok) return;
+        const { admin } = await sessionRes.json();
+        if (!admin) return;
+        const { state } = stateRes.ok ? await stateRes.json() : { state: 'leaderboard' };
+        siteState = state;
+        renderAdminBar();
+      } catch {}
+    })();
+
+    function renderAdminBar() {
+      const bar = document.getElementById('admin-bar');
+      bar.className = 'admin-bar state-' + siteState;
+      bar.style.display = '';
+      document.body.classList.add('has-admin-bar');
+      const idx = STATE_ORDER.indexOf(siteState);
+      document.getElementById('admin-bar-text').textContent = STATE_TEXT[siteState] || siteState;
+      document.getElementById('btn-prev-state').disabled = idx <= 0;
+      document.getElementById('btn-next-state').disabled = idx >= STATE_ORDER.length - 1;
+    }
+
+    async function changeSiteState(dir) {
+      const idx = STATE_ORDER.indexOf(siteState);
+      const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+      if (newIdx < 0 || newIdx >= STATE_ORDER.length) return;
+      const newState = STATE_ORDER[newIdx];
+      if (!confirm(`Set site state to "${STATE_LABELS[newState]}"?`)) return;
+      const res = await fetch('/api/site-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ state: newState }),
+      });
+      if (res.ok) { siteState = newState; renderAdminBar(); }
+    }
+  </script>
 </body>
 </html>

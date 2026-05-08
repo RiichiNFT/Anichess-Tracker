@@ -15,6 +15,20 @@ function esc(str) {
 function isPastCutoff() { return window.__PREVIEW_FINALIZED__ || window.__RESULTS_FINAL__ || Date.now() >= CUTOFF_MS; }
 function isResultsFinal() { return !!window.__RESULTS_FINAL__; }
 
+function trackClick(label, category = 'engagement') {
+  if (typeof gtag === 'function') gtag('event', 'click', { event_category: category, event_label: label });
+}
+
+// Single delegated listener for all tracked clicks
+document.addEventListener('click', e => {
+  // data-track elements (nav links, buttons)
+  const tracked = e.target.closest('[data-track]');
+  if (tracked) trackClick(tracked.dataset.track, tracked.dataset.trackCategory || 'engagement');
+  // Player profile links in leaderboard and qualifier sections
+  const playerLink = e.target.closest('a.player-link');
+  if (playerLink) trackClick(playerLink.textContent.trim() || playerLink.title, 'player_profile');
+});
+
 // Chess piece tier system — rating range based
 const TIER_CONFIG = {
   LEGEND: { label: 'Legend', symbol: '✦', cls: 'tier-LEGEND' },
@@ -373,8 +387,31 @@ async function fetchPlayers() {
       .sort((a, b) => totalMatchCount(b) - totalMatchCount(a))
       .slice(0, 2);
 
-    // Render qualifier section
-    renderQualifiedSection(qualifiers, playerMap, wildcards, byRating.slice(0, 8));
+    // When showing final results, use manually-overridden finalists data
+    let renderedQualified = false;
+    if (isResultsFinal()) {
+      try {
+        const rd = await fetch('/api/results-data').then(r => r.ok ? r.json() : null);
+        if (rd) {
+          const toObj = arr => ({
+            first:  (arr[0] || {}).wallet || '',
+            second: (arr[1] || {}).wallet || '',
+            third:  (arr[2] || {}).wallet || '',
+          });
+          const overrideQuals = {
+            qualifier1: toObj(rd.qualifier1 || []),
+            qualifier2: toObj(rd.qualifier2 || []),
+          };
+          rd.top8.forEach(p => { if (p.wallet) playerMap[p.wallet.toLowerCase()] = p; });
+          rd.wildcards.forEach(p => { if (p.wallet) playerMap[p.wallet.toLowerCase()] = p; });
+          renderQualifiedSection(overrideQuals, playerMap, rd.wildcards, rd.top8);
+          renderedQualified = true;
+        }
+      } catch { /* fall through to auto-calc */ }
+    }
+
+    // Render qualifier section (auto-calc if not already rendered via results-data)
+    if (!renderedQualified) renderQualifiedSection(qualifiers, playerMap, wildcards, byRating.slice(0, 8));
 
     if (active.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="loading-cell"><span>No players with matches yet.</span></td></tr>`;
@@ -410,6 +447,7 @@ async function fetchPlayers() {
 
 async function forceRefresh() {
   if (isPastCutoff()) return;
+  trackClick('Refresh', 'engagement');
   const btn = document.getElementById('refresh-btn');
   btn.classList.add('spinning');
   btn.disabled = true;

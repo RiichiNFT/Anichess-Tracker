@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bracket Manager — Anichess Admin</title>
+  <link rel="icon" id="favicon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .panel-header h2 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .panel-body { padding: 20px; }
+
+    .btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      font-size: 0.87rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.88; }
+    .btn-ghost { background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+    .btn-ghost:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
+    .btn-danger:hover:not(:disabled) { background: rgba(248,113,113,0.2); }
+    .btn-sm { padding: 6px 12px; font-size: 0.78rem; }
+    .btn-gold { background: rgba(237,199,41,0.12); border: 1px solid rgba(237,199,41,0.35); color: var(--gold); }
+    .btn-gold:hover:not(:disabled) { background: rgba(237,199,41,0.22); }
+    .btn-green { background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #10b981; }
+    .btn-green:hover:not(:disabled) { background: rgba(16,185,129,0.22); }
+
+    .nav-link {
+      font-size: 0.84rem;
+      color: var(--text-2);
+      text-decoration: none;
+      padding: 6px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .nav-link:hover { border-color: var(--accent); color: var(--accent); }
+
+    .result-banner {
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 0.86rem;
+      margin-top: 16px;
+    }
+    .result-success { background: rgba(52,211,153,0.1); border: 1px solid rgba(52,211,153,0.3); color: #34d399; }
+    .result-error { background: rgba(248,113,113,0.1); border: 1px solid rgba(248,113,113,0.3); color: #f87171; }
+
+    .player-pool-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: flex-start;
+      align-content: flex-start;
+      margin-bottom: 20px;
+      min-height: 60px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .player-pool-empty {
+      color: var(--text-3);
+      font-size: 0.82rem;
+      align-self: center;
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--text-2);
+    }
+    .radio-label input[type=radio] {
+      accent-color: var(--accent);
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .radio-label.selected { color: var(--text); }
+
+    .collapsible-section { margin-bottom: 20px; }
+    .collapsible-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 12px 16px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+    .collapsible-header:hover { border-color: var(--border-light); }
+    .collapsible-header.open { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-color: var(--border-light); }
+    .collapsible-title { font-size: 0.9rem; font-weight: 600; color: var(--text); }
+    .collapsible-arrow { color: var(--text-3); transition: transform 0.2s; }
+    .collapsible-header.open .collapsible-arrow { transform: rotate(90deg); }
+    .collapsible-body {
+      border: 1px solid var(--border-light);
+      border-top: none;
+      border-radius: 0 0 8px 8px;
+      padding: 16px;
+      display: none;
+    }
+    .collapsible-body.open { display: block; }
+
+    .champion-display {
+      background: linear-gradient(135deg, rgba(237,199,41,0.08), rgba(237,199,41,0.03));
+      border: 1px solid rgba(237,199,41,0.35);
+      border-radius: var(--radius);
+      padding: 20px 28px;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .champion-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.8;
+    }
+    .champion-name {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-top: 4px;
+      font-family: var(--font-mono, monospace);
+      word-break: break-all;
+    }
+
+    .bracket-seed-slot.duplicate-error {
+      border-color: rgba(248,113,113,0.7);
+      background: rgba(248,113,113,0.06);
+    }
+    .bracket-seed-slot.duplicate-error .bracket-seed-num { color: #f87171; border-color: rgba(248,113,113,0.4); }
+    .chip-used { opacity: 0.3 !important; pointer-events: none !important; filter: grayscale(1); }
+
+    .hidden { display: none !important; }
+
+    #msg-banner { margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div style="background: rgba(237,199,41,0.08); border-bottom: 1px solid rgba(237,199,41,0.25); padding: 10px 0;">
+    <div style="max-width: 1100px; margin: 0 auto; padding: 0 28px; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 0.82rem; font-weight: 700; color: var(--gold); letter-spacing: 0.05em;">⚙ Bracket Manager</span>
+      <span style="font-size: 0.78rem; color: var(--text-3);">Admin only</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <h1>Anichess <span class="accent">Brackets</span></h1>
+      <div class="meta">
+        <a href="/admin.html" class="nav-link">← Dashboard</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+
+    <!-- SECTION 1: Seed Setup -->
+    <div id="section-setup">
+      <div class="panel" style="margin-bottom: 28px;">
+        <div class="panel-header">
+          <h2>Bracket Setup</h2>
+          <div id="bracket-status-tag" style="font-size:0.75rem;padding:3px 10px;border-radius:5px;background:var(--surface-2);border:1px solid var(--border);color:var(--text-2);">SETUP</div>
+        </div>
+        <div class="panel-body">
+          <!-- Tournament Display Name -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Tournament Display Name</p>
+          <input type="text" id="bracket-name-input"
+            placeholder="e.g. SEASON 8 · RISING STARS"
+            style="width:100%;padding:9px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.88rem;margin-bottom:20px;box-sizing:border-box;outline:none;transition:border-color 0.2s;"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor=''"
+            oninput="debouncedSaveName()" />
+
+          <!-- Bracket Background Image -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Bracket Background Image</p>
+          <div style="display:flex;gap:10px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
+            <input type="file" id="bracket-bg-input" accept="image/*" style="display:none;" onchange="uploadBracketBg(this)" />
+            <button class="btn btn-ghost btn-sm" onclick="document.getElementById('bracket-bg-input').click()">Upload Image</button>
+            <span id="bracket-bg-status" style="font-size:0.78rem;color:var(--text-3);"></span>
+            <button id="btn-remove-bracket-bg" class="btn btn-danger btn-sm hidden" onclick="removeBracketBg()">Remove</button>
+          </div>
+
+          <!-- Player Count -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:12px;font-weight:600;">Player Count</p>
+          <div class="radio-group">
+            <label class="radio-label" id="lbl-8">
+              <input type="radio" name="playerCount" value="8" checked onchange="onPlayerCountChange()" /> 8 Players
+            </label>
+            <label class="radio-label" id="lbl-16">
+              <input type="radio" name="playerCount" value="16" onchange="onPlayerCountChange()" /> 16 Players
+            </label>
+          </div>
+
+          <!-- Player Pool -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Player Pool <span style="font-weight:400;opacity:0.7;">— Qualified players shown first · drag to seed slot</span></p>
+          <div class="player-pool-wrap" id="player-pool">
+            <span class="player-pool-empty">Loading players…</span>
+          </div>
+
+          <!-- Seed Grid -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Seed Order</p>
+          <div class="bracket-seed-grid" id="seed-grid"></div>
+
+          <!-- Actions -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
+            <button class="btn btn-primary" id="btn-generate" onclick="generateBracket()" disabled>Generate Bracket</button>
+            <button class="btn btn-danger" onclick="resetBracket()">Reset Bracket</button>
+          </div>
+          <div id="msg-banner" class="hidden"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SECTION 2: Match Manager (shown when bracket is active) -->
+    <div id="section-matches" class="hidden">
+      <div id="champion-display" class="champion-display hidden">
+        <div class="champion-label">🏆 Tournament Champion</div>
+        <div class="champion-name" id="champion-name"></div>
+      </div>
+
+      <div id="rounds-container"></div>
+    </div>
+
+  </main>
+
+  <footer>
+    <span>Anichess Bracket Manager</span>
+    <span class="sep">·</span>
+    <span>Admin only</span>
+  </footer>
+
+  <script>
+    let bracketData = null;
+    let playerMap = {}; // wallet -> alias
+    let playerMeta = {}; // wallet.toLowerCase() -> { country }
+    let saveTimer = null;
+    let refreshTimer = null;
+
+    // ── Init ──────────────────────────────────────────────────────────────────
+
+    async function init() {
+      await loadPlayers();   // must finish first so playerMap is ready for name tags
+      await loadBracket();
+    }
+
+    async function loadPlayers() {
+      try {
+        const [playersRes, qualsRes, metaRes] = await Promise.all([
+          fetch('/api/players', { credentials: 'include' }),
+          fetch('/api/qualifiers'),
+          fetch('/api/player-meta', { credentials: 'include' }),
+        ]);
+        const players = await playersRes.json();
+        const quals = await qualsRes.json();
+        playerMeta = metaRes.ok ? await metaRes.json() : {};
+        playerMap = {};
+        players.forEach(p => { if (p.wallet) playerMap[p.wallet.toLowerCase()] = p; });
+        renderPlayerPool(players, computeQualified(players, quals));
+      } catch {
+        document.getElementById('player-pool').innerHTML = '<span class="player-pool-empty">Could not load players</span>';
+      }
+    }
+
+    function computeQualified(players, quals) {
+      const norm = w => (w || '').trim().toLowerCase();
+      const q1Wallets = [quals.qualifier1?.first, quals.qualifier1?.second, quals.qualifier1?.third].map(norm).filter(Boolean);
+      const q2Wallets = [quals.qualifier2?.first, quals.qualifier2?.second, quals.qualifier2?.third].map(norm).filter(Boolean);
+      const lichessSet = new Set([...q1Wallets, ...q2Wallets]);
+      const sortedByRating = [...players].sort((a, b) => (b.rating || 0) - (a.rating || 0));
+      const top8 = sortedByRating.filter(p => !lichessSet.has(norm(p.wallet))).slice(0, 8);
+      const top8Set = new Set(top8.map(p => norm(p.wallet)));
+      const counted = new Set([...lichessSet, ...top8Set]);
+      const sortedByMatches = [...players].sort((a, b) => (b.matches || 0) - (a.matches || 0));
+      const wildcards = sortedByMatches.filter(p => !counted.has(norm(p.wallet))).slice(0, 2);
+      return { q1Wallets, q2Wallets, top8, wildcards };
+    }
+
+    async function loadBracket() {
+      try {
+        const res = await fetch('/api/brackets', { credentials: 'include' });
+        if (!res.ok) { showMsg(`Load failed (${res.status})`, 'error'); return; }
+        bracketData = await res.json();
+      } catch (err) {
+        console.error('[loadBracket] fetch:', err);
+        showMsg('Could not reach server.', 'error');
+        return;
+      }
+      try {
+        applyBracketState();
+      } catch (err) {
+        console.error('[loadBracket] render:', err);
+        showMsg('Render error: ' + err.message, 'error');
+      }
+    }
+
+    function applyBracketState() {
+      const data = bracketData;
+
+      // Tournament name
+      const nameInput = document.getElementById('bracket-name-input');
+      if (nameInput && data.bracketName !== undefined) {
+        nameInput.value = data.bracketName || '';
+      }
+
+      // Set player count radio
+      document.querySelectorAll('input[name=playerCount]').forEach(r => {
+        r.checked = (parseInt(r.value) === data.playerCount);
+      });
+      updateRadioLabels();
+
+      // Populate seed grid
+      buildSeedGrid(data.playerCount, data.seeds || []);
+
+      // Update status tag
+      const tag = document.getElementById('bracket-status-tag');
+      const statusText = { setup: 'SETUP', active: 'ACTIVE', complete: 'COMPLETE' };
+      tag.textContent = statusText[data.status] || data.status.toUpperCase();
+      const statusColors = {
+        setup: 'color:var(--text-2)',
+        active: 'color:#10b981;border-color:rgba(16,185,129,0.3);background:rgba(16,185,129,0.08)',
+        complete: 'color:var(--gold);border-color:rgba(237,199,41,0.35);background:rgba(237,199,41,0.08)'
+      };
+      tag.style.cssText = `font-size:0.75rem;padding:3px 10px;border-radius:5px;border:1px solid var(--border);${statusColors[data.status] || ''}`;
+
+      if (data.status === 'active' || data.status === 'complete') {
+        document.getElementById('section-matches').classList.remove('hidden');
+        renderMatchManager();
+      } else {
+        document.getElementById('section-matches').classList.add('hidden');
+      }
+
+      if (data.champion) {
+        const disp = document.getElementById('champion-display');
+        disp.classList.remove('hidden');
+        document.getElementById('champion-name').textContent = getDisplayName(data.champion);
+      } else {
+        document.getElementById('champion-display').classList.add('hidden');
+      }
+
+      checkGenerateBtn();
+    }
+
+    // ── Player Pool ───────────────────────────────────────────────────────────
+
+    function renderPlayerPool(players, qualified) {
+      const pool = document.getElementById('player-pool');
+      pool.innerHTML = '';
+      if (!players || players.length === 0) {
+        pool.innerHTML = '<span class="player-pool-empty">No players tracked</span>';
+        return;
+      }
+
+      const norm = w => (w || '').trim().toLowerCase();
+      const shown = new Set();
+
+      function makeChip(wallet, badgeText, badgeStyle) {
+        const nw = norm(wallet);
+        shown.add(nw);
+        const p = playerMap[nw];
+        const name = (p && p.username && !isEVMAddress(p.username)) ? p.username : shortenWallet(wallet);
+        const chip = document.createElement('div');
+        chip.className = 'bracket-player-chip';
+        chip.draggable = true;
+        chip.dataset.wallet = wallet;
+        const badge = badgeText
+          ? `<span style="font-size:0.58rem;font-weight:700;letter-spacing:0.07em;padding:1px 5px;border-radius:3px;flex-shrink:0;${badgeStyle}">${badgeText}</span>`
+          : '';
+        chip.innerHTML = `${badge}<span>${escChip(name)}</span>`;
+        chip.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', wallet);
+          e.dataTransfer.effectAllowed = 'copy';
+        });
+        return chip;
+      }
+
+      function addLabel(text) {
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'width:100%;font-size:0.62rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:2px;';
+        lbl.textContent = text;
+        pool.appendChild(lbl);
+      }
+
+      const greenBadge = 'background:rgba(16,185,129,0.15);color:#10b981;border:1px solid rgba(16,185,129,0.35);';
+      const blueBadge  = 'background:rgba(0,174,250,0.12);color:var(--accent);border:1px solid rgba(0,174,250,0.3);';
+      const goldBadge  = 'background:rgba(237,199,41,0.12);color:var(--gold);border:1px solid rgba(237,199,41,0.3);';
+
+      const places = ['1ST', '2ND', '3RD'];
+
+      if (qualified.q1Wallets.length) {
+        addLabel('Lichess Qualifiers I');
+        qualified.q1Wallets.forEach((w, i) => { if (w) pool.appendChild(makeChip(w, places[i], greenBadge)); });
+      }
+
+      if (qualified.q2Wallets.length) {
+        addLabel('Lichess Qualifiers II');
+        qualified.q2Wallets.forEach((w, i) => { if (w) pool.appendChild(makeChip(w, places[i], greenBadge)); });
+      }
+
+      if (qualified.top8.length) {
+        addLabel('Top 8 · Highest Rating');
+        qualified.top8.forEach(p => { if (p.wallet) pool.appendChild(makeChip(p.wallet, 'RATED', blueBadge)); });
+      }
+
+      if (qualified.wildcards.length) {
+        addLabel('Top 2 · Most Matches');
+        qualified.wildcards.forEach(p => { if (p.wallet) pool.appendChild(makeChip(p.wallet, 'WC', goldBadge)); });
+      }
+
+      const others = players.filter(p => p.wallet && !shown.has(norm(p.wallet)));
+      if (others.length) {
+        addLabel('All Tracked Players');
+        others.forEach(p => pool.appendChild(makeChip(p.wallet, null, null)));
+      }
+
+      if (pool.children.length === 0) {
+        pool.innerHTML = '<span class="player-pool-empty">No players tracked</span>';
+      }
+    }
+
+    function escChip(str) {
+      return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function normWallet(w) { return (w || '').trim().toLowerCase(); }
+
+    function checkDuplicate(wallet, excludeSlotIndex) {
+      const nw = normWallet(wallet);
+      if (!nw) return false;
+      let found = false;
+      document.querySelectorAll('.bracket-seed-slot').forEach((slot, i) => {
+        if (i === excludeSlotIndex) return;
+        if (normWallet(slot.querySelector('.bracket-seed-input').value) === nw) found = true;
+      });
+      return found;
+    }
+
+    function syncPoolChips() {
+      const used = new Set();
+      document.querySelectorAll('.bracket-seed-slot').forEach(slot => {
+        const w = normWallet(slot.querySelector('.bracket-seed-input').value);
+        if (w) used.add(w);
+      });
+      document.querySelectorAll('#player-pool .bracket-player-chip').forEach(chip => {
+        chip.classList.toggle('chip-used', used.has(normWallet(chip.dataset.wallet)));
+      });
+    }
+
+    // ── Seed Grid ─────────────────────────────────────────────────────────────
+
+    function buildSeedGrid(count, existingSeeds) {
+      const grid = document.getElementById('seed-grid');
+      grid.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const seed = existingSeeds[i] || { seed: i + 1, wallet: '' };
+        const slot = document.createElement('div');
+        slot.className = 'bracket-seed-slot' + (seed.wallet ? ' filled' : '');
+        slot.dataset.index = i;
+
+        const numBadge = document.createElement('div');
+        numBadge.className = 'bracket-seed-num';
+        numBadge.textContent = '#' + (i + 1);
+
+        const inputWrap = document.createElement('div');
+        inputWrap.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;';
+
+        const nameTag = document.createElement('div');
+        nameTag.style.cssText = 'font-size:0.88rem;color:var(--text);font-weight:600;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+
+        const input = document.createElement('input');
+        input.className = 'bracket-seed-input';
+        input.type = 'text';
+        input.placeholder = 'Wallet address or drag player…';
+        input.value = seed.wallet || '';
+        input.style.cssText = 'font-size:0.7rem;color:var(--text-3);';
+
+        // Country input + flag preview
+        const countryWrap = document.createElement('div');
+        countryWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+
+        const flagImg = document.createElement('img');
+        flagImg.style.cssText = 'width:20px;height:15px;border-radius:2px;object-fit:cover;flex-shrink:0;';
+        flagImg.setAttribute('onerror', "this.style.display='none'");
+
+        const countryInput = document.createElement('input');
+        countryInput.type = 'text';
+        countryInput.maxLength = 2;
+        countryInput.placeholder = 'XX';
+        countryInput.title = '2-letter ISO country code (e.g. US, GB, PH)';
+        countryInput.style.cssText = 'width:38px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.76rem;font-family:var(--font-mono,monospace);padding:3px 5px;text-align:center;text-transform:uppercase;letter-spacing:0.06em;outline:none;flex-shrink:0;';
+
+        const refreshFlag = (wallet) => {
+          const code = (playerMeta[(wallet || '').toLowerCase()]?.country || '').toUpperCase();
+          countryInput.value = code;
+          if (code.length === 2) {
+            flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
+            flagImg.style.display = '';
+          } else {
+            flagImg.style.display = 'none';
+          }
+        };
+
+        refreshFlag(seed.wallet);
+
+        countryInput.addEventListener('input', () => {
+          const code = countryInput.value.trim().toUpperCase();
+          if (code.length === 2) {
+            flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
+            flagImg.style.display = '';
+          } else {
+            flagImg.style.display = 'none';
+          }
+        });
+
+        countryInput.addEventListener('blur', () => {
+          const wallet = input.value.trim();
+          if (!wallet) return;
+          setSlotCountry(wallet, countryInput.value);
+        });
+
+        countryWrap.appendChild(flagImg);
+        countryWrap.appendChild(countryInput);
+
+        const updateNameTag = () => {
+          const w = input.value.trim();
+          if (!w) {
+            nameTag.textContent = '';
+            nameTag.style.display = 'none';
+            input.style.cssText = 'font-size:0.82rem;color:var(--text);';
+          } else {
+            const name = getDisplayName(w);
+            nameTag.textContent = name;
+            nameTag.style.display = '';
+            input.style.cssText = 'font-size:0.68rem;color:var(--text-3);font-family:var(--mono,monospace);';
+          }
+        };
+
+        updateNameTag();
+
+        input.addEventListener('input', () => {
+          const w = input.value.trim();
+          const idx = parseInt(slot.dataset.index);
+          if (w && checkDuplicate(w, idx)) {
+            slot.classList.add('duplicate-error');
+          } else {
+            slot.classList.remove('duplicate-error');
+          }
+          slot.classList.toggle('filled', !!w);
+          updateNameTag();
+          refreshFlag(w);
+          syncPoolChips();
+          debouncedSaveSeeds();
+        });
+
+        // Drag-and-drop onto slot
+        slot.addEventListener('dragover', e => {
+          e.preventDefault();
+          slot.classList.add('dragging-over');
+        });
+        slot.addEventListener('dragleave', () => slot.classList.remove('dragging-over'));
+        slot.addEventListener('drop', e => {
+          e.preventDefault();
+          slot.classList.remove('dragging-over');
+          const wallet = e.dataTransfer.getData('text/plain');
+          if (!wallet) return;
+          const idx = parseInt(slot.dataset.index);
+          if (checkDuplicate(wallet, idx)) {
+            showMsg('This player is already assigned to another seed slot.', 'error');
+            return;
+          }
+          input.value = wallet;
+          slot.classList.add('filled');
+          slot.classList.remove('duplicate-error');
+          updateNameTag();
+          refreshFlag(wallet);
+          syncPoolChips();
+          debouncedSaveSeeds();
+        });
+
+        inputWrap.appendChild(nameTag);
+        inputWrap.appendChild(input);
+        slot.appendChild(numBadge);
+        slot.appendChild(inputWrap);
+        slot.appendChild(countryWrap);
+        grid.appendChild(slot);
+      }
+      syncPoolChips();
+    }
+
+    function collectSeeds() {
+      const count = parseInt(document.querySelector('input[name=playerCount]:checked').value);
+      const slots = document.querySelectorAll('.bracket-seed-slot');
+      const seeds = [];
+      slots.forEach((slot, i) => {
+        const wallet = slot.querySelector('.bracket-seed-input').value.trim();
+        seeds.push({ seed: i + 1, wallet: wallet });
+      });
+      return { playerCount: count, seeds };
+    }
+
+    function checkGenerateBtn() {
+      const btn = document.getElementById('btn-generate');
+      const { playerCount, seeds } = collectSeeds();
+      const allFilled = seeds.every(s => s.wallet.length > 0) && seeds.length === playerCount;
+      const hasDupe = !!document.querySelector('.bracket-seed-slot.duplicate-error');
+      btn.disabled = !allFilled || hasDupe;
+    }
+
+    function debouncedSaveSeeds() {
+      checkGenerateBtn();
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(saveSeeds, 500);
+    }
+
+    async function saveSeeds() {
+      const { playerCount, seeds } = collectSeeds();
+      const res = await fetch('/api/brackets/setup', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ playerCount, seeds })
+      });
+      if (!res.ok) {
+        let d = {};
+        try { d = await res.json(); } catch { /* ignore */ }
+        throw new Error(d.error || `Setup failed (${res.status})`);
+      }
+    }
+
+    function onPlayerCountChange() {
+      updateRadioLabels();
+      const count = parseInt(document.querySelector('input[name=playerCount]:checked').value);
+      buildSeedGrid(count, []);
+      debouncedSaveSeeds();
+    }
+
+    function updateRadioLabels() {
+      document.querySelectorAll('input[name=playerCount]').forEach(r => {
+        const lbl = r.closest('.radio-label');
+        lbl.classList.toggle('selected', r.checked);
+      });
+    }
+
+    // ── Generate Bracket ─────────────────────────────────────────────────────
+
+    async function generateBracket() {
+      // Validate no duplicates before generating
+      let hasDupe = false;
+      document.querySelectorAll('.bracket-seed-slot').forEach(slot => {
+        if (slot.classList.contains('duplicate-error')) hasDupe = true;
+      });
+      if (hasDupe) return showMsg('Fix duplicate players before generating.', 'error');
+
+      try {
+        await saveSeeds();
+        const res = await fetch('/api/brackets/generate', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        let data = {};
+        try { data = await res.json(); } catch { /* non-JSON response */ }
+        if (!res.ok) return showMsg(data.error || `Server error (${res.status})`, 'error');
+        showMsg('Bracket generated!', 'success');
+        await loadBracket();
+      } catch (err) {
+        console.error('[generateBracket]', err);
+        showMsg(err.message || 'Could not reach server.', 'error');
+      }
+    }
+
+    // ── Reset Bracket ─────────────────────────────────────────────────────────
+
+    async function resetBracket() {
+      if (!confirm('Reset the entire bracket? This cannot be undone.')) return;
+      try {
+        const res = await fetch('/api/brackets', { method: 'DELETE', credentials: 'include' });
+        const data = await res.json();
+        if (!res.ok) return showMsg(data.error || 'Failed to reset', 'error');
+        showMsg('Bracket reset.', 'success');
+        await loadBracket();
+      } catch {
+        showMsg('Network error', 'error');
+      }
+    }
+
+    // ── Match Manager ─────────────────────────────────────────────────────────
+
+    function renderMatchManager() {
+      const container = document.getElementById('rounds-container');
+      container.innerHTML = '';
+      const rounds = bracketData.rounds || [];
+      rounds.forEach(round => {
+        const section = document.createElement('div');
+        section.className = 'collapsible-section';
+
+        const header = document.createElement('div');
+        header.className = 'collapsible-header open';
+        header.innerHTML = `
+          <span class="collapsible-title">${round.name} <span style="font-size:0.72rem;color:var(--text-3);font-weight:400;margin-left:6px;">BO${round.bestOf} · ${round.winsNeeded} wins</span></span>
+          <span class="collapsible-arrow">▶</span>`;
+        header.addEventListener('click', () => {
+          header.classList.toggle('open');
+          body.classList.toggle('open');
+        });
+
+        const body = document.createElement('div');
+        body.className = 'collapsible-body open';
+
+        round.matches.forEach((match, idx) => {
+          body.appendChild(renderAdminMatch(round, match, idx));
+        });
+
+        section.appendChild(header);
+        section.appendChild(body);
+        container.appendChild(section);
+      });
+    }
+
+    function renderAdminMatch(round, match, matchIndex) {
+      const wrap = document.createElement('div');
+      wrap.className = 'bracket-admin-match';
+
+      const p1Name = match.p1?.wallet ? getDisplayName(match.p1.wallet) : 'TBD';
+      const p2Name = match.p2?.wallet ? getDisplayName(match.p2.wallet) : 'TBD';
+      const p1Seed = match.p1?.seed != null ? '#' + match.p1.seed : '—';
+      const p2Seed = match.p2?.seed != null ? '#' + match.p2.seed : '—';
+      const st = match.status || 'pending';
+      const statusClass = st === 'live' ? 'live' : st === 'done' ? 'done' : st === 'upcoming' ? 'upcoming' : 'pending';
+      const score = match.score || { p1: 0, p2: 0 };
+
+      // Game dots
+      const dotHtml = (match.games || []).map(g => {
+        if (g === 'p1') return '<span class="bracket-dot p1-win" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--gold);"></span>';
+        if (g === 'p2') return '<span class="bracket-dot p2-win" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--accent);"></span>';
+        return '<span class="bracket-dot draw" style="display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--text-3);"></span>';
+      }).join('');
+
+      const p1Won = match.winner === match.p1?.wallet;
+      const p2Won = match.winner === match.p2?.wallet;
+
+      wrap.innerHTML = `
+        <div class="bracket-admin-match-header">
+          <span>Match ${matchIndex + 1}</span>
+          <span class="bracket-match-status ${statusClass}">${st.toUpperCase()}</span>
+        </div>
+        <div class="bracket-admin-match-body">
+          <div class="bracket-admin-player ${p1Won ? 'winner' : ''}">
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.68rem;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;">${p1Seed}</span>
+              <span>${p1Name}</span>
+            </span>
+            <span style="font-size:1rem;font-weight:700;color:${p1Won ? 'var(--gold)' : 'var(--text-2)'};">${score.p1}</span>
+          </div>
+          <div class="bracket-admin-player ${p2Won ? 'winner' : ''}">
+            <span style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.68rem;color:var(--text-3);background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;">${p2Seed}</span>
+              <span>${p2Name}</span>
+            </span>
+            <span style="font-size:1rem;font-weight:700;color:${p2Won ? 'var(--gold)' : 'var(--text-2)'};">${score.p2}</span>
+          </div>
+          ${match.games && match.games.length > 0 ? `
+          <div style="display:flex;gap:4px;padding:8px 0 4px;align-items:center;">
+            ${dotHtml}
+          </div>` : ''}
+          ${!match.winner && (st === 'upcoming' || st === 'live') ? `
+          <div class="bracket-admin-actions">
+            <button class="btn btn-primary btn-sm" onclick="recordGame('${round.id}', ${matchIndex}, 'p1')">P1 Wins</button>
+            <button class="btn btn-ghost btn-sm" onclick="recordGame('${round.id}', ${matchIndex}, 'draw')">Draw</button>
+            <button class="btn btn-gold btn-sm" onclick="recordGame('${round.id}', ${matchIndex}, 'p2')">P2 Wins</button>
+            ${match.games && match.games.length > 0 ? `<button class="btn btn-danger btn-sm" onclick="undoGame('${round.id}', ${matchIndex})">Undo Last</button>` : ''}
+          </div>` : ''}
+          ${match.winner ? `<div style="margin-top:10px;font-size:0.78rem;color:var(--gold);">✓ Winner: ${getDisplayName(match.winner)}</div>` : ''}
+          ${match.winner && match.games && match.games.length > 0 ? `
+          <div class="bracket-admin-actions" style="margin-top:8px">
+            <button class="btn btn-danger btn-sm" onclick="undoGame('${round.id}', ${matchIndex})">Undo Last</button>
+          </div>` : ''}
+        </div>`;
+      return wrap;
+    }
+
+    async function recordGame(roundId, matchIndex, result) {
+      try {
+        const res = await fetch('/api/brackets/game', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roundId, matchIndex, result })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg(data.error || 'Failed to record game', 'error');
+        await loadBracket();
+      } catch {
+        showMsg('Network error', 'error');
+      }
+    }
+
+    async function undoGame(roundId, matchIndex) {
+      try {
+        const res = await fetch('/api/brackets/undo', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ roundId, matchIndex })
+        });
+        const data = await res.json();
+        if (!res.ok) return showMsg(data.error || 'Failed to undo', 'error');
+        await loadBracket();
+      } catch {
+        showMsg('Network error', 'error');
+      }
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    function isEVMAddress(s) { return /^0x[0-9a-fA-F]{40}$/.test(s || ''); }
+
+    function getDisplayName(wallet) {
+      if (!wallet) return 'TBD';
+      const p = playerMap[wallet.toLowerCase()];
+      if (p && p.username && !isEVMAddress(p.username)) return p.username;
+      return shortenWallet(wallet);
+    }
+
+    function shortenWallet(w) {
+      if (!w) return '';
+      return w.slice(0, 6) + '…' + w.slice(-4);
+    }
+
+    function showMsg(text, type) {
+      const el = document.getElementById('msg-banner');
+      el.className = 'result-banner ' + (type === 'error' ? 'result-error' : 'result-success');
+      el.textContent = text;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
+    // ── Tournament Name ───────────────────────────────────────────────────────
+    let nameTimer = null;
+
+    function debouncedSaveName() {
+      clearTimeout(nameTimer);
+      nameTimer = setTimeout(saveName, 700);
+    }
+
+    async function saveName() {
+      const name = (document.getElementById('bracket-name-input')?.value || '').trim();
+      try {
+        const res = await fetch('/api/brackets/name', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name })
+        });
+        if (!res.ok) showMsg('Failed to save name', 'error');
+      } catch { showMsg('Could not save name', 'error'); }
+    }
+
+    // ── Bracket Background ────────────────────────────────────────────────────
+    async function loadBracketBgStatus() {
+      try {
+        const res = await fetch('/api/bracket-background', { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        const statusEl = document.getElementById('bracket-bg-status');
+        const removeBtn = document.getElementById('btn-remove-bracket-bg');
+        if (data.exists && data.filename) {
+          if (statusEl) statusEl.textContent = data.filename;
+          if (removeBtn) removeBtn.classList.remove('hidden');
+        } else {
+          if (statusEl) statusEl.textContent = 'No background set';
+          if (removeBtn) removeBtn.classList.add('hidden');
+        }
+      } catch {}
+    }
+
+    async function uploadBracketBg(input) {
+      const file = input?.files?.[0];
+      if (!file) return;
+      const fd = new FormData();
+      fd.append('background', file);
+      try {
+        const res = await fetch('/api/bracket-background', { method: 'POST', credentials: 'include', body: fd });
+        const data = await res.json();
+        if (!res.ok) return showMsg(data.error || 'Failed to upload', 'error');
+        document.getElementById('bracket-bg-status').textContent = data.filename;
+        document.getElementById('btn-remove-bracket-bg').classList.remove('hidden');
+        showMsg('Bracket background uploaded!', 'success');
+      } catch { showMsg('Could not upload background', 'error'); }
+      input.value = '';
+    }
+
+    async function removeBracketBg() {
+      try {
+        const res = await fetch('/api/bracket-background', { method: 'DELETE', credentials: 'include' });
+        if (!res.ok) return showMsg('Failed to remove', 'error');
+        document.getElementById('bracket-bg-status').textContent = 'No background set';
+        document.getElementById('btn-remove-bracket-bg').classList.add('hidden');
+        showMsg('Background removed', 'success');
+      } catch { showMsg('Could not remove background', 'error'); }
+    }
+
+    // ── Country helpers ───────────────────────────────────────────────────────
+
+    async function setSlotCountry(wallet, code) {
+      const normalized = code.trim().toUpperCase();
+      try {
+        await fetch(`/api/player-meta/${encodeURIComponent(wallet)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ country: normalized }),
+        });
+        playerMeta[wallet.toLowerCase()] = { ...playerMeta[wallet.toLowerCase()], country: normalized };
+      } catch { /* silent — country save is best-effort */ }
+    }
+
+    // ── Auto-refresh ──────────────────────────────────────────────────────────
+    function startRefresh() {
+      refreshTimer = setInterval(async () => {
+        await loadBracket();
+      }, 30000);
+    }
+
+    async function initFull() {
+      await Promise.all([
+        init(),
+        loadBracketBgStatus()
+      ]);
+      startRefresh();
+    }
+
+    initFull();
+  </script>
+</body>
+</html>

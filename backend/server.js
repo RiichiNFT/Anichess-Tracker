@@ -43,10 +43,25 @@ const LOGO_EXTS          = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
 const TOURNAMENT_DETAILS_FILE  = path.join(__dirname, 'tournament-details.json');
 const QUALIFIERS_FILE          = path.join(__dirname, 'qualifiers.json');
 const EXCLUDED_WALLETS_FILE    = path.join(__dirname, 'excluded-wallets.json');
+const BRACKETS_FILE            = path.join(__dirname, 'brackets.json');
+const PLAYER_META_FILE         = path.join(__dirname, 'player-meta.json');
+const MANUAL_FINALISTS_FILE    = path.join(__dirname, 'manual-finalists.json');
+const SITE_STATE_FILE          = path.join(__dirname, 'site-state.json');
+const RESULTS_STATUS_FILE      = path.join(__dirname, 'results-status.json'); // legacy migration source
+
+const VALID_STATES = ['leaderboard', 'finalizing', 'confirmed'];
 
 function findBgImage() {
   for (const ext of BG_EXTS) {
     const file = `bg-image${ext}`;
+    if (fs.existsSync(path.join(FRONTEND_DIR, file))) return file;
+  }
+  return null;
+}
+
+function findBracketBgImage() {
+  for (const ext of BG_EXTS) {
+    const file = `bracket-bg-image${ext}`;
     if (fs.existsSync(path.join(FRONTEND_DIR, file))) return file;
   }
   return null;
@@ -100,6 +115,14 @@ function loadExcludedWallets() {
 function saveExcludedWallets(list) {
   try { fs.writeFileSync(EXCLUDED_WALLETS_FILE, JSON.stringify(list, null, 2)); }
   catch (err) { console.error('[saveExcludedWallets] Write failed:', err.message); throw err; }
+}
+
+function loadBrackets() {
+  try { return JSON.parse(fs.readFileSync(BRACKETS_FILE, 'utf8')); }
+  catch { return { status: 'setup', playerCount: 8, seeds: [], rounds: [], champion: null, bracketName: '' }; }
+}
+function saveBrackets(data) {
+  fs.writeFileSync(BRACKETS_FILE, JSON.stringify(data, null, 2));
 }
 
 const badgeUpload = multer({
@@ -165,6 +188,22 @@ const bgUpload = multer({
   limits: { fileSize: 10 * 1024 * 1024 },
 });
 
+const bracketBgUpload = multer({
+  storage: multer.diskStorage({
+    destination: FRONTEND_DIR,
+    filename: (req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, `bracket-bg-image${ext}`);
+    },
+  }),
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (!BG_EXTS.includes(ext)) return cb(new Error('Only image files allowed (jpg, png, webp, gif)'));
+    cb(null, true);
+  },
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
 const pdfUpload = multer({
   storage: multer.diskStorage({
     destination: BRANDING_DIR,
@@ -205,7 +244,10 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-app.use(cors());
+app.use(cors({
+  origin: ['https://anichesstracker.com', 'https://www.anichesstracker.com', 'http://localhost:4000'],
+  credentials: true,
+}));
 app.use(express.json());
 
 // Serve uploaded logo as favicon (Content-Type derived from file extension)
@@ -218,14 +260,38 @@ app.get('/favicon.ico', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, filename));
 });
 
+// Root redirect based on site state
+app.get('/', (req, res, next) => {
+  const { state } = loadSiteState();
+  if (state === 'finalizing') return res.redirect('/preview.html');
+  if (state === 'confirmed')  return res.redirect('/results.html');
+  next();
+});
+
+// results.html: public only when state=confirmed
+app.get('/results.html', (req, res, next) => {
+  if (loadSiteState().state !== 'confirmed') return requireAdmin(req, res, next);
+  next();
+}, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'results.html'));
+});
+
 // Protect admin panel before static middleware intercepts it
 app.get('/admin.html', requireAdmin, (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'admin.html'));
 });
 
-// Protect preview page (admin-only finalized state preview)
-app.get('/preview.html', requireAdmin, (req, res) => {
+// preview.html: public only when state=finalizing
+app.get('/preview.html', (req, res, next) => {
+  if (loadSiteState().state !== 'finalizing') return requireAdmin(req, res, next);
+  next();
+}, (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'preview.html'));
+});
+
+// Protect bracket manager page (admin-only)
+app.get('/brackets.html', requireAdmin, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'brackets.html'));
 });
 
 app.use(express.static(FRONTEND_DIR));
@@ -249,6 +315,45 @@ function loadWinsStore() {
 function saveWinsStore(store) {
   try { fs.writeFileSync(WINS_FILE, JSON.stringify(store, null, 2)); }
   catch (err) { console.error('[saveWinsStore] Write failed:', err.message); throw err; }
+}
+
+function loadPlayerMeta() {
+  try { return JSON.parse(fs.readFileSync(PLAYER_META_FILE, 'utf8')); } catch { return {}; }
+}
+
+function savePlayerMeta(meta) {
+  try { fs.writeFileSync(PLAYER_META_FILE, JSON.stringify(meta, null, 2)); }
+  catch (err) { console.error('[savePlayerMeta] Write failed:', err.message); throw err; }
+}
+
+function loadManualFinalists() {
+  try { return JSON.parse(fs.readFileSync(MANUAL_FINALISTS_FILE, 'utf8')); }
+  catch { return { top8: [], wildcards: [] }; }
+}
+
+function saveManualFinalists(data) {
+  fs.writeFileSync(MANUAL_FINALISTS_FILE, JSON.stringify(data, null, 2));
+}
+
+let _siteStateCache = null;
+function loadSiteState() {
+  if (_siteStateCache !== null) return _siteStateCache;
+  try {
+    const data = JSON.parse(fs.readFileSync(SITE_STATE_FILE, 'utf8'));
+    if (VALID_STATES.includes(data.state)) { _siteStateCache = data; return _siteStateCache; }
+  } catch {}
+  // Migrate from old results-status.json
+  try {
+    const old = JSON.parse(fs.readFileSync(RESULTS_STATUS_FILE, 'utf8'));
+    if (old.published) { _siteStateCache = { state: 'confirmed' }; return _siteStateCache; }
+  } catch {}
+  _siteStateCache = { state: 'leaderboard' };
+  return _siteStateCache;
+}
+function saveSiteState(state) {
+  const data = { state };
+  fs.writeFileSync(SITE_STATE_FILE, JSON.stringify(data, null, 2));
+  _siteStateCache = data;
 }
 
 async function fetchLeaderboard() {
@@ -462,9 +567,10 @@ async function refreshPlayerData() {
 app.get('/api/players', (req, res) => {
   const wallets = loadWallets();
   const winsStore = loadWinsStore();
+  const playerMeta = loadPlayerMeta();
   const players = wallets.map(w => {
     const key = w.toLowerCase();
-    return playerCache[key] || {
+    const base = playerCache[key] || {
       wallet: w,
       username: w,
       avatar: null,
@@ -478,6 +584,7 @@ app.get('/api/players', (req, res) => {
       inTopHundred: false,
       lastUpdated: null,
     };
+    return { ...base, country: playerMeta[key]?.country || null };
   });
 
   players.sort((a, b) => {
@@ -584,12 +691,160 @@ app.delete('/api/wallets', requireAdmin, (req, res) => {
   }
 });
 
+// ── Player metadata (country flags, etc.) ────────────────────────────────────
+
+app.get('/api/player-meta', requireAdmin, (req, res) => {
+  res.json(loadPlayerMeta());
+});
+
+// Public endpoint — returns only country codes, no auth required
+app.get('/api/player-countries', (req, res) => {
+  const meta = loadPlayerMeta();
+  const result = {};
+  for (const [key, val] of Object.entries(meta)) {
+    if (val.country) result[key] = val.country;
+  }
+  res.json(result);
+});
+
+app.post('/api/player-meta/:wallet', requireAdmin, (req, res) => {
+  const raw = req.params.wallet;
+  if (!/^0x[0-9a-fA-F]{40}$/.test(raw)) {
+    return res.status(400).json({ error: 'Invalid wallet address format' });
+  }
+  const key = raw.toLowerCase();
+  const country = (req.body.country || '').trim().toUpperCase().slice(0, 2);
+  const meta = loadPlayerMeta();
+  if (country) {
+    meta[key] = { ...meta[key], country };
+  } else {
+    if (meta[key]) {
+      delete meta[key].country;
+      if (Object.keys(meta[key]).length === 0) delete meta[key];
+    }
+  }
+  try {
+    savePlayerMeta(meta);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to save player metadata' });
+  }
+});
+
 app.get('/api/refresh', refreshRateLimit, async (req, res) => {
   if (Date.now() >= CUTOFF_MS) {
     return res.json({ ok: false, cutoff: true, lastRefreshed });
   }
   await refreshPlayerData();
   res.json({ ok: true, lastRefreshed });
+});
+
+// ── Site state ───────────────────────────────────────────────────────────────
+
+app.get('/api/site-state', (req, res) => {
+  res.json(loadSiteState());
+});
+
+app.post('/api/site-state', requireAdmin, (req, res) => {
+  const { state } = req.body;
+  if (!VALID_STATES.includes(state)) return res.status(400).json({ error: 'Invalid state' });
+  saveSiteState(state);
+  res.json({ ok: true, state });
+});
+
+// Legacy alias — kept for any cached browser requests
+app.get('/api/results-status', (req, res) => {
+  const { state } = loadSiteState();
+  res.json({ state, published: state === 'confirmed' });
+});
+
+// Lightweight session check — returns { admin } without triggering a 401
+app.get('/api/session', (req, res) => {
+  const auth = req.headers['authorization'];
+  if (!auth || !auth.startsWith('Basic ')) return res.json({ admin: false });
+  const [user, pass] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
+  res.json({ admin: user === ADMIN_USER && pass === ADMIN_PASS });
+});
+
+app.get('/api/results-data', (req, res, next) => {
+  if (loadSiteState().state !== 'confirmed') return requireAdmin(req, res, next);
+}, (req, res) => {
+  const norm = w => (w || '').trim().toLowerCase();
+  const { state } = loadSiteState();
+  const quals = loadQualifiers();
+  const manual = loadManualFinalists();
+  const playerMeta = loadPlayerMeta();
+  const wallets = loadWallets();
+  const excluded = new Set(loadExcludedWallets().map(norm));
+
+  const allPlayers = wallets.map(w => {
+    const key = w.toLowerCase();
+    const base = playerCache[key] || { wallet: w, username: w, avatar: null, rank: null, rankTier: null, rating: null, matches: null };
+    return { ...base, country: playerMeta[key]?.country || null };
+  });
+
+  const lookup = w => allPlayers.find(p => norm(p.wallet) === norm(w)) || { wallet: w, username: w, rating: null, matches: null, avatar: null, country: null };
+
+  const q1 = [quals.qualifier1?.first, quals.qualifier1?.second, quals.qualifier1?.third].filter(Boolean);
+  const q2 = [quals.qualifier2?.first, quals.qualifier2?.second, quals.qualifier2?.third].filter(Boolean);
+  const qualSet = new Set([...q1, ...q2].map(norm));
+
+  const manualTop8 = (manual.top8 || []).map(norm).filter(Boolean);
+  const manualWc   = (manual.wildcards || []).map(norm).filter(Boolean);
+
+  let top8;
+  if (manualTop8.length > 0) {
+    top8 = manualTop8.map(lookup);
+  } else {
+    top8 = [...allPlayers]
+      .filter(p => !qualSet.has(norm(p.wallet)))
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+      .slice(0, 8);
+  }
+
+  const top8Set = new Set(top8.map(p => norm(p.wallet)));
+  const counted = new Set([...qualSet, ...top8Set]);
+
+  let wildcards;
+  if (manualWc.length > 0) {
+    wildcards = manualWc.map(lookup);
+  } else {
+    wildcards = [...allPlayers]
+      .filter(p => !counted.has(norm(p.wallet)) && !excluded.has(norm(p.wallet)))
+      .sort((a, b) => (b.matches || 0) - (a.matches || 0))
+      .slice(0, 2);
+  }
+
+  res.json({
+    state,
+    qualifier1: q1.map(lookup),
+    qualifier2: q2.map(lookup),
+    top8,
+    wildcards,
+  });
+});
+
+// ── Manual finalists override ────────────────────────────────────────────────
+
+app.get('/api/manual-finalists', requireAdmin, (req, res) => {
+  res.json(loadManualFinalists());
+});
+
+app.post('/api/manual-finalists', requireAdmin, (req, res) => {
+  const clean = (arr, max) =>
+    (Array.isArray(arr) ? arr : [])
+      .map(w => (typeof w === 'string' ? w.trim() : ''))
+      .filter(w => w === '' || /^0x[0-9a-fA-F]{40}$/i.test(w))
+      .slice(0, max);
+  try {
+    saveManualFinalists({
+      top8:      clean(req.body.top8,      8),
+      wildcards: clean(req.body.wildcards, 2),
+    });
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to save manual finalists' });
+  }
 });
 
 // ── Badge management (admin-only) ────────────────────────────────────────────
@@ -807,6 +1062,294 @@ app.delete('/api/branding/pdf/:filename', requireAdmin, (req, res) => {
 app.get('/api/status', (req, res) => {
   res.json({ tracked: loadWallets().length, cached: Object.keys(playerCache).length, lastRefreshed, pastCutoff: Date.now() >= CUTOFF_MS });
 });
+
+// ── Brackets ──────────────────────────────────────────────────────────────────
+
+app.get('/api/brackets', (req, res) => res.json(loadBrackets()));
+
+app.post('/api/brackets/setup', requireAdmin, (req, res) => {
+  const { playerCount, seeds } = req.body;
+  if (![8, 16].includes(playerCount)) return res.status(400).json({ error: 'playerCount must be 8 or 16' });
+  if (!Array.isArray(seeds)) return res.status(400).json({ error: 'seeds array required' });
+  const data = loadBrackets();
+  data.playerCount = playerCount;
+  data.seeds = seeds;
+  data.status = 'setup';
+  try { saveBrackets(data); res.json({ ok: true }); }
+  catch { res.status(500).json({ error: 'Failed to save bracket' }); }
+});
+
+app.post('/api/brackets/generate', requireAdmin, (req, res) => {
+  try {
+    const data = loadBrackets();
+    const pc = data.playerCount;
+    if (!Array.isArray(data.seeds) || data.seeds.length < pc) {
+      return res.status(400).json({ error: `Need ${pc} seeds, got ${(data.seeds||[]).length}. Save seeds first.` });
+    }
+    const empty = data.seeds.filter(s => !s.wallet || !s.wallet.trim());
+    if (empty.length > 0) {
+      return res.status(400).json({ error: `${empty.length} seed slot(s) are empty` });
+    }
+    data.rounds = generateBracketRounds(data.seeds, pc);
+    data.status = 'active';
+    data.champion = null;
+    saveBrackets(data);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('[/api/brackets/generate] Error:', err.message, '\n', err.stack);
+    if (!res.headersSent) res.status(500).json({ error: err.message || 'Failed to generate bracket' });
+  }
+});
+
+app.post('/api/brackets/game', requireAdmin, (req, res) => {
+  const { roundId, matchIndex, result } = req.body;
+  if (!['p1', 'p2', 'draw'].includes(result)) return res.status(400).json({ error: 'result must be p1, p2, or draw' });
+  const data = loadBrackets();
+  const round = data.rounds.find(r => r.id === roundId);
+  if (!round) return res.status(404).json({ error: 'Round not found' });
+  const match = round.matches[matchIndex];
+  if (!match) return res.status(404).json({ error: 'Match not found' });
+  if (match.winner) return res.status(400).json({ error: 'Match already decided' });
+  match.games.push(result);
+  match.status = 'live';
+  match.score = match.games.reduce((acc, g) => {
+    if (g === 'p1') acc.p1++;
+    else if (g === 'p2') acc.p2++;
+    return acc;
+  }, { p1: 0, p2: 0 });
+  if (match.score.p1 >= round.winsNeeded) {
+    match.winner = match.p1.wallet; match.loser = match.p2.wallet; match.status = 'done';
+    propagateBracketResult(data, roundId, matchIndex);
+  } else if (match.score.p2 >= round.winsNeeded) {
+    match.winner = match.p2.wallet; match.loser = match.p1.wallet; match.status = 'done';
+    propagateBracketResult(data, roundId, matchIndex);
+  }
+  try { saveBrackets(data); res.json({ ok: true, match }); }
+  catch { res.status(500).json({ error: 'Failed to save bracket' }); }
+});
+
+app.post('/api/brackets/undo', requireAdmin, (req, res) => {
+  const { roundId, matchIndex } = req.body;
+  const data = loadBrackets();
+  const round = data.rounds.find(r => r.id === roundId);
+  if (!round) return res.status(404).json({ error: 'Round not found' });
+  const match = round.matches[matchIndex];
+  if (!match || match.games.length === 0) return res.status(400).json({ error: 'No games to undo' });
+  const hadWinner = !!match.winner;
+  match.games.pop();
+  match.score = match.games.reduce((acc, g) => {
+    if (g === 'p1') acc.p1++;
+    else if (g === 'p2') acc.p2++;
+    return acc;
+  }, { p1: 0, p2: 0 });
+  match.winner = null; match.loser = null;
+  match.status = match.games.length ? 'live' : 'upcoming';
+  // If the undone game was the deciding game, clear the propagated slot in subsequent rounds
+  if (hadWinner) clearPropagated(data, roundId, matchIndex);
+  try { saveBrackets(data); res.json({ ok: true, match }); }
+  catch { res.status(500).json({ error: 'Failed to save bracket' }); }
+});
+
+app.delete('/api/brackets', requireAdmin, (req, res) => {
+  try {
+    const existing = loadBrackets();
+    saveBrackets({ status: 'setup', playerCount: 8, seeds: [], rounds: [], champion: null, bracketName: existing.bracketName || '' });
+    res.json({ ok: true });
+  } catch { res.status(500).json({ error: 'Failed to reset bracket' }); }
+});
+
+app.post('/api/brackets/name', requireAdmin, (req, res) => {
+  try {
+    const data = loadBrackets();
+    data.bracketName = (req.body.name || '').trim().slice(0, 200);
+    saveBrackets(data);
+    res.json({ ok: true });
+  } catch { res.status(500).json({ error: 'Failed to save name' }); }
+});
+
+app.get('/api/bracket-background', (req, res) => {
+  const filename = findBracketBgImage();
+  if (!filename) return res.json({ exists: false, filename: null });
+  try {
+    fs.statSync(path.join(FRONTEND_DIR, filename));
+    res.json({ exists: true, filename });
+  } catch { res.json({ exists: false, filename: null }); }
+});
+
+app.post('/api/bracket-background', requireAdmin, (req, res) => {
+  BG_EXTS.forEach(ext => {
+    const f = path.join(FRONTEND_DIR, `bracket-bg-image${ext}`);
+    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
+  });
+  bracketBgUpload.single('background')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file received' });
+    res.json({ ok: true, filename: req.file.filename });
+  });
+});
+
+app.delete('/api/bracket-background', requireAdmin, (req, res) => {
+  BG_EXTS.forEach(ext => {
+    const f = path.join(FRONTEND_DIR, `bracket-bg-image${ext}`);
+    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
+  });
+  res.json({ ok: true });
+});
+
+function generateBracketRounds(seeds, playerCount) {
+  const winsNeeded = bo => Math.ceil(bo / 2);
+  const makeMatch = id => ({ id, p1: null, p2: null, games: [], score: { p1: 0, p2: 0 }, winner: null, loser: null, status: 'pending' });
+
+  const roundDefs = playerCount === 16 ? [
+    { id: 'r16', name: 'Round of 16', bestOf: 1, matchCount: 8 },
+    { id: 'qf',  name: 'Quarterfinals', bestOf: 1, matchCount: 4 },
+    { id: 'sf',  name: 'Semifinals', bestOf: 3, matchCount: 2 },
+    { id: '3rd', name: 'Third Place', bestOf: 3, matchCount: 1, isThirdPlace: true },
+    { id: 'gf',  name: 'Grand Final', bestOf: 5, matchCount: 1 },
+  ] : [
+    { id: 'qf',  name: 'Quarterfinals', bestOf: 1, matchCount: 4 },
+    { id: 'sf',  name: 'Semifinals', bestOf: 3, matchCount: 2 },
+    { id: '3rd', name: 'Third Place', bestOf: 3, matchCount: 1, isThirdPlace: true },
+    { id: 'gf',  name: 'Grand Final', bestOf: 5, matchCount: 1 },
+  ];
+
+  const rounds = roundDefs.map(d => ({
+    ...d,
+    winsNeeded: winsNeeded(d.bestOf),
+    matches: Array.from({ length: d.matchCount }, (_, i) => makeMatch(`${d.id}-${i}`)),
+  }));
+
+  const s = seeds.map(sd => sd.wallet ? { wallet: sd.wallet, seed: sd.seed } : null);
+
+  if (playerCount === 16) {
+    const pairs = [[0,15],[7,8],[3,12],[4,11],[1,14],[6,9],[2,13],[5,10]];
+    const firstRound = rounds[0].matches;
+    pairs.forEach(([a, b], i) => {
+      firstRound[i].p1 = s[a]; firstRound[i].p2 = s[b];
+      if (firstRound[i].p1 && firstRound[i].p2) firstRound[i].status = 'upcoming';
+    });
+  } else {
+    const pairs = [[0,7],[3,4],[1,6],[2,5]];
+    const firstRound = rounds[0].matches;
+    pairs.forEach(([a, b], i) => {
+      firstRound[i].p1 = s[a]; firstRound[i].p2 = s[b];
+      if (firstRound[i].p1 && firstRound[i].p2) firstRound[i].status = 'upcoming';
+    });
+  }
+  return rounds;
+}
+
+function propagateBracketResult(data, fromRoundId, matchIndex) {
+  const rounds = data.rounds;
+  const fromRound = rounds.find(r => r.id === fromRoundId);
+  const fromMatch = fromRound.matches[matchIndex];
+  const winnerWallet = fromMatch.winner;
+  const loserWallet = fromMatch.loser;
+  const winnerInfo = winnerWallet === fromMatch.p1.wallet ? fromMatch.p1 : fromMatch.p2;
+  const loserInfo  = loserWallet  === fromMatch.p1.wallet ? fromMatch.p1 : fromMatch.p2;
+
+  if (fromRoundId === 'gf') {
+    data.champion = winnerWallet;
+    data.status = 'complete';
+    return;
+  }
+
+  if (fromRound.isThirdPlace) return; // Terminal — no further propagation
+
+  if (fromRoundId === 'sf') {
+    const gf      = rounds.find(r => r.id === 'gf');
+    const tp      = rounds.find(r => r.id === '3rd');
+    const sfRound = rounds.find(r => r.id === 'sf');
+    const sf0 = sfRound.matches[0];
+    const sf1 = sfRound.matches[1];
+    // Only populate GF and 3rd-place once BOTH semi-finals are complete
+    if (sf0.winner && sf1.winner) {
+      const pick = (m, w) => w === m.p1.wallet ? m.p1 : m.p2;
+      if (gf) {
+        gf.matches[0].p1 = pick(sf0, sf0.winner);
+        gf.matches[0].p2 = pick(sf1, sf1.winner);
+        gf.matches[0].status = 'upcoming';
+      }
+      if (tp) {
+        tp.matches[0].p1 = pick(sf0, sf0.loser);
+        tp.matches[0].p2 = pick(sf1, sf1.loser);
+        tp.matches[0].status = 'upcoming';
+      }
+    }
+    return;
+  }
+
+  // Standard: find next non-third-place round
+  const fromIdx = rounds.findIndex(r => r.id === fromRoundId);
+  let nextRound = null;
+  for (let i = fromIdx + 1; i < rounds.length; i++) {
+    if (!rounds[i].isThirdPlace) { nextRound = rounds[i]; break; }
+  }
+  if (!nextRound) return;
+
+  const nextMatchIdx = Math.floor(matchIndex / 2);
+  const nextMatch = nextRound.matches[nextMatchIdx];
+  if (!nextMatch) return;
+  if (matchIndex % 2 === 0) nextMatch.p1 = winnerInfo;
+  else nextMatch.p2 = winnerInfo;
+  if (nextMatch.p1 && nextMatch.p2) nextMatch.status = 'upcoming';
+}
+
+function clearPropagated(data, fromRoundId, matchIndex) {
+  const rounds = data.rounds;
+
+  if (fromRoundId === 'gf') {
+    data.champion = null;
+    data.status   = 'active';
+    return;
+  }
+
+  const fromRound = rounds.find(r => r.id === fromRoundId);
+  if (fromRound && fromRound.isThirdPlace) return; // Terminal — nothing to clear forward
+
+  if (fromRoundId === 'sf') {
+    const gf = rounds.find(r => r.id === 'gf');
+    const tp = rounds.find(r => r.id === '3rd');
+    // Both slots were written atomically, so clear both entirely
+    if (gf && gf.matches[0]) {
+      gf.matches[0].p1 = null; gf.matches[0].p2 = null;
+      gf.matches[0].status = 'pending';
+      gf.matches[0].winner = null; gf.matches[0].loser = null;
+      gf.matches[0].games  = [];   gf.matches[0].score = { p1: 0, p2: 0 };
+      data.champion = null;
+      if (data.status === 'complete') data.status = 'active';
+    }
+    if (tp && tp.matches[0]) {
+      tp.matches[0].p1 = null; tp.matches[0].p2 = null;
+      tp.matches[0].status = 'pending';
+      tp.matches[0].winner = null; tp.matches[0].loser = null;
+      tp.matches[0].games  = [];   tp.matches[0].score = { p1: 0, p2: 0 };
+    }
+    return;
+  }
+
+  // Standard: find the next non-third-place round and clear the slot
+  const fromIdx = rounds.findIndex(r => r.id === fromRoundId);
+  let nextRound = null;
+  for (let i = fromIdx + 1; i < rounds.length; i++) {
+    if (!rounds[i].isThirdPlace) { nextRound = rounds[i]; break; }
+  }
+  if (!nextRound) return;
+
+  const nextMatchIdx = Math.floor(matchIndex / 2);
+  const nextMatch    = nextRound.matches[nextMatchIdx];
+  if (!nextMatch) return;
+
+  if (matchIndex % 2 === 0) nextMatch.p1 = null;
+  else                      nextMatch.p2 = null;
+  nextMatch.status = 'pending';
+  // If the next match was already decided, cascade the clear upward
+  if (nextMatch.winner) {
+    nextMatch.winner = null; nextMatch.loser  = null;
+    nextMatch.games  = [];   nextMatch.score  = { p1: 0, p2: 0 };
+    clearPropagated(data, nextRound.id, nextMatchIdx);
+  }
+}
 
 cron.schedule('*/5 * * * *', () => {
   if (Date.now() >= CUTOFF_MS) {

@@ -3,19 +3,24 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Final Results — Anichess Rising Stars Tournament #1</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
+  <title>Confirmed Finalists — Anichess Tracker</title>
   <link rel="icon" id="favicon" href="/favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
-    .preview-bar {
+    .admin-bar {
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 100;
-      background: rgba(16,185,129,0.10);
-      border-bottom: 1px solid rgba(16,185,129,0.30);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -25,20 +30,146 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       text-transform: uppercase;
-      color: #10b981;
     }
-    .preview-bar a {
-      color: var(--text-2);
+    .admin-bar.preview-bar {
+      background: rgba(237,199,41,0.12);
+      border-bottom: 1px solid rgba(237,199,41,0.35);
+      color: #edc729;
+    }
+    .admin-bar.live-bar {
+      background: rgba(0,174,250,0.08);
+      border-bottom: 1px solid rgba(0,174,250,0.25);
+      color: var(--accent, #00aefa);
+    }
+    .admin-bar-btn {
+      background: var(--accent, #00aefa);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 16px;
+      font-size: 0.74rem;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .admin-bar-btn:hover { opacity: 0.85; }
+    .admin-bar-btn:disabled { opacity: 0.5; cursor: default; }
+    .admin-bar-btn.ghost {
+      background: transparent;
+      color: rgba(255,255,255,0.45);
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .admin-bar-btn.ghost:hover { color: #f87171; border-color: rgba(248,113,113,0.45); }
+    .admin-bar a {
+      color: currentColor;
       text-decoration: none;
-      border: 1px solid var(--border);
+      border: 1px solid currentColor;
+      opacity: 0.6;
       padding: 3px 12px;
       border-radius: 6px;
       font-size: 0.72rem;
-      transition: border-color 0.2s, color 0.2s;
+      transition: opacity 0.2s;
     }
-    .preview-bar a:hover { border-color: var(--accent); color: var(--accent); }
-    header { top: 37px; }
-    main   { padding-top: 42px; }
+    .admin-bar a:hover { opacity: 1; }
+    body.has-admin-bar header { top: 37px; }
+    body.has-admin-bar main  { padding-top: 42px; }
+
+    /* ── Embedded bracket ── */
+    .bracket-section {
+      background: var(--bg-card, rgba(255,255,255,0.04));
+      border: 1px solid rgba(0,174,250,0.18);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .bracket-section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 20px;
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+    }
+    .bracket-section-label {
+      font-size: 0.67rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #00aefa;
+    }
+    .bracket-section-link {
+      font-size: 0.76rem;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .bracket-section-link:hover { color: #00aefa; }
+
+    /* Scroll container — width is set by the sizer div inside */
+    .bracket-embed-outer {
+      width: 100%;
+      height: 200px;       /* minimum before JS sets exact height on iframe load */
+      overflow-x: auto;
+      overflow-y: hidden;
+      position: relative;
+      background: #090c16;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,174,250,0.3) transparent;
+    }
+    .bracket-embed-outer::-webkit-scrollbar { height: 4px; }
+    .bracket-embed-outer::-webkit-scrollbar-track { background: transparent; }
+    .bracket-embed-outer::-webkit-scrollbar-thumb { background: rgba(0,174,250,0.3); border-radius: 2px; }
+
+    /* Sizer sets the correct scroll width (native × scale) so scrollbar matches visual content */
+    .bracket-embed-sizer {
+      width: calc(2600px * 0.48);   /* 1248px — matches visual width of scaled iframe */
+      height: 1px;
+      display: block;
+    }
+    .bracket-embed-outer iframe {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 2600px;
+      height: 800px;
+      border: none;
+      transform: scale(0.48);
+      transform-origin: top left;
+      pointer-events: none;
+    }
+    .bracket-embed-loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #090c16;
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.35);
+      z-index: 3;
+    }
+    /* Fade edges to hint at scrollability */
+    .bracket-embed-outer::before,
+    .bracket-embed-outer::after {
+      content: '';
+      position: absolute;
+      top: 0; bottom: 0;
+      width: 40px;
+      pointer-events: none;
+      z-index: 2;
+    }
+    .bracket-embed-outer::before { left: 0;  background: linear-gradient(to right, #090c16, transparent); }
+    .bracket-embed-outer::after  { right: 0; background: linear-gradient(to left,  #090c16, transparent); }
+
+    @media (max-width: 700px) {
+      .bracket-embed-outer { display: none; }
+      .bracket-section-link { display: block; font-size: 0.82rem; color: #00aefa; }
+      .bracket-section-link::after { content: ' ↗'; }
+    }
   </style>
 </head>
 <body>
@@ -49,28 +180,34 @@
     </div>
   </div>
 
-  <div class="preview-bar">
-    <span>🏆 Admin Preview — Final Results</span>
-    <a href="/admin.html">← Back to Admin</a>
+  <div class="admin-bar preview-bar" id="bar-preview" style="display:none">
+    <span id="bar-preview-text">⚠ Preview — not yet published</span>
+    <button class="admin-bar-btn" id="btn-set-confirmed" onclick="setSiteState('confirmed')">Set to Confirmed →</button>
+    <a href="/admin.html">← Admin</a>
+  </div>
+
+  <div class="admin-bar live-bar" id="bar-live" style="display:none">
+    <span>✓ Site: Confirmed — live at root</span>
+    <button class="admin-bar-btn ghost" onclick="setSiteState('finalizing')">← Set to Finalizing</button>
+    <a href="/admin.html">← Admin</a>
   </div>
 
   <header>
     <div class="header-inner">
       <div class="header-left">
-        <div class="logo">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
           <span class="logo-icon" id="logo-icon">♟</span>
           <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
                onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
           <div class="logo-text-group">
             <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
-            <span class="logo-sub">Community Leaderboard</span>
           </div>
-        </div>
+        </a>
         <nav class="header-nav">
-          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
-          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
-          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
-          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="Discord Nav" data-track-category="navigation">Discord</a>
         </nav>
       </div>
       <div class="header-right">
@@ -79,9 +216,6 @@
           <span>Live</span>
         </div>
         <span id="last-updated" class="last-updated-text"></span>
-        <button id="refresh-btn" class="btn-refresh" onclick="forceRefresh()">
-          <span class="refresh-icon">↻</span><span class="refresh-text"> Refresh</span>
-        </button>
       </div>
     </div>
   </header>
@@ -91,42 +225,40 @@
       Could not reach the server — showing last cached data.
     </div>
 
-    <div id="finalized-banner" class="finalized-banner hidden">
-      <span class="finalized-icon">🏆</span>
-      <span class="finalized-text">FINAL RESULT</span>
-    </div>
-
     <div class="section-heading-wrap">
       <div class="section-heading-group">
         <h2 class="section-heading">Anichess Rising Stars Tournament #1</h2>
         <div class="prize-pool-tag">$600 USD Prize Pool</div>
         <p class="section-heading-sub">16 players qualify for the playoff finals · May 10, 2026 · 13:00 UTC · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
       </div>
-      <a class="tournament-cta-btn" href="/tournament.html">
+      <a class="tournament-cta-btn" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">
         <span>Tournament Details</span>
         <span class="tournament-cta-arrow">↗</span>
       </a>
     </div>
 
-    <div class="eligibility-banner">
-      <div class="eligibility-row">
-        <span class="eligibility-item">
-          <span class="eligibility-label">New Players Only</span>
-        </span>
-        <span class="eligibility-sep"></span>
-        <span class="eligibility-item">
-          <span class="eligibility-label">REGISTER </span>
-          <a class="eligibility-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener">HERE</a>
-        </span>
-        <span class="eligibility-sep"></span>
-        <span class="eligibility-item">
-          <span class="eligibility-label">Submission Cutoff</span>
-          <span class="eligibility-value cutoff">MAY 8TH · UTC 00:00</span>
-        </span>
+    <div id="qualified-section" class="hidden"></div>
+
+    <div class="bracket-section">
+      <div class="bracket-section-head">
+        <span class="bracket-section-label">Top 16 · Tournament Bracket</span>
+        <a class="bracket-section-link" href="/bracket-public.html" target="_blank">Open full view ↗</a>
+      </div>
+      <div class="bracket-embed-outer" id="bracket-embed-outer">
+        <div class="bracket-embed-sizer"></div>
+        <div class="bracket-embed-loading" id="bracket-embed-loading">
+          <div class="loading-ring"></div>
+          <span>Loading bracket…</span>
+        </div>
+        <iframe
+          src="/bracket-public.html?embed=1"
+          id="bracket-iframe"
+          title="Tournament Bracket"
+          scrolling="no"
+          onload="onBracketLoad()">
+        </iframe>
       </div>
     </div>
-
-    <div id="qualified-section" class="hidden"></div>
 
     <div class="table-card">
       <div class="table-card-header">
@@ -137,7 +269,7 @@
         </div>
         <div class="table-card-title-row">
           <div class="table-card-subtitle">Sorted by rating · Tracked wallets only</div>
-          <span class="qualify-badge">✦ TOP 8 QUALIFIES FOR PLAYOFF</span>
+          <span class="qualify-badge">✦ FINALIZED</span>
         </div>
       </div>
       <div class="table-wrap">
@@ -169,11 +301,78 @@
   <footer>
     <span>Anichess Ranked Tracker</span>
     <span class="sep">·</span>
-    <span>Auto-refreshes every 30 mins</span>
+    <span>Final results</span>
   </footer>
 
-  <!-- Final results state: all post-cutoff logic + merged results card -->
   <script>window.__RESULTS_FINAL__ = true;</script>
   <script src="app.js"></script>
+  <script>
+    function onBracketLoad() {
+      const loading = document.getElementById('bracket-embed-loading');
+      const outer   = document.getElementById('bracket-embed-outer');
+      const iframe  = document.getElementById('bracket-iframe');
+      const SCALE   = 0.48;
+
+      loading.style.display = 'none';
+
+      function applyHeight() {
+        try {
+          const iDoc = iframe.contentDocument;
+          if (!iDoc || !iDoc.body) return false;
+          const h = iDoc.body.scrollHeight;
+          if (h < 80) return false; // bracket not yet rendered
+          outer.style.height = Math.round(h * SCALE + 16) + 'px';
+          outer.scrollLeft = Math.max(0, (outer.scrollWidth - outer.clientWidth) / 2);
+          return true;
+        } catch { return false; }
+      }
+
+      if (!applyHeight()) {
+        const poll = setInterval(() => {
+          if (applyHeight()) clearInterval(poll);
+        }, 100);
+        setTimeout(() => clearInterval(poll), 3000);
+      }
+    }
+
+    const STATE_ORDER = ['leaderboard', 'finalizing', 'confirmed'];
+    let siteState = null;
+
+    (async function initAdminBar() {
+      try {
+        const [sessionRes, stateRes] = await Promise.all([fetch('/api/session'), fetch('/api/site-state')]);
+        if (!sessionRes.ok) return;
+        const { admin } = await sessionRes.json();
+        if (!admin) return;
+        const { state } = stateRes.ok ? await stateRes.json() : { state: 'leaderboard' };
+        siteState = state;
+        renderAdminBar();
+      } catch {}
+    })();
+
+    function renderAdminBar() {
+      document.body.classList.add('has-admin-bar');
+      const isConfirmed = siteState === 'confirmed';
+      document.getElementById('bar-live').style.display    = isConfirmed ? '' : 'none';
+      document.getElementById('bar-preview').style.display = isConfirmed ? 'none' : '';
+      const idx = STATE_ORDER.indexOf(siteState);
+      const labels = { leaderboard: 'Leaderboard', finalizing: 'Finalizing', confirmed: 'Confirmed' };
+      document.getElementById('bar-preview-text').textContent =
+        `⚠ Site: ${labels[siteState] || siteState} — results.html is preview only`;
+      document.getElementById('btn-set-confirmed').disabled = idx < 1; // need at least finalizing first
+    }
+
+    async function setSiteState(newState) {
+      const labels = { leaderboard: 'Leaderboard', finalizing: 'Finalizing', confirmed: 'Confirmed' };
+      if (!confirm(`Set site state to "${labels[newState]}"?`)) return;
+      const res = await fetch('/api/site-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ state: newState }),
+      });
+      if (res.ok) { siteState = newState; renderAdminBar(); }
+    }
+  </script>
 </body>
 </html>

@@ -359,6 +359,68 @@
       font-size: 1.4rem;
       color: var(--text-3);
     }
+
+    /* Site State stepper */
+    .state-stepper {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      gap: 0;
+    }
+    .state-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex: 1;
+      max-width: 160px;
+      opacity: 0.38;
+      transition: opacity 0.2s;
+    }
+    .state-step.done   { opacity: 0.6; }
+    .state-step.active { opacity: 1; }
+    .step-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background: var(--surface-2);
+      transition: background 0.2s, border-color 0.2s;
+      flex-shrink: 0;
+    }
+    .state-step.done   .step-dot { background: rgba(52,211,153,0.2); border-color: rgba(52,211,153,0.6); }
+    .state-step.active .step-dot { background: var(--accent); border-color: var(--accent); }
+    .step-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+    }
+    .step-desc {
+      font-size: 0.69rem;
+      color: var(--text-2);
+      text-align: center;
+      line-height: 1.35;
+    }
+    .step-connector {
+      flex: 0 0 40px;
+      height: 2px;
+      background: var(--border);
+      align-self: center;
+      margin-bottom: 28px;
+    }
+    .state-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 22px;
+      justify-content: center;
+      align-items: center;
+    }
+    .state-current-label {
+      font-size: 0.78rem;
+      color: var(--text-2);
+      font-weight: 500;
+    }
   </style>
 </head>
 <body>
@@ -367,12 +429,47 @@
       <h1>Anichess <span class="accent">Admin</span></h1>
       <div class="meta">
         <a href="/preview.html" class="nav-link" style="border-color:rgba(237,199,41,0.4);color:#edc729">🔒 Preview Finalized</a>
+        <a href="/brackets.html" class="nav-link" style="border-color:rgba(0,174,250,0.4);color:#00aefa">⚙ Bracket Manager</a>
         <a href="/" class="nav-link">← Dashboard</a>
       </div>
     </div>
   </header>
 
   <main>
+
+    <!-- Site State -->
+    <div class="panel" style="margin-bottom:28px">
+      <div class="panel-header">
+        <h2>🌐 Site State</h2>
+        <span class="state-current-label" id="site-state-label">Loading…</span>
+      </div>
+      <div class="panel-body">
+        <div class="state-stepper">
+          <div class="state-step" id="step-leaderboard">
+            <div class="step-dot"></div>
+            <div class="step-label">Leaderboard</div>
+            <div class="step-desc">index.html at root</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="state-step" id="step-finalizing">
+            <div class="step-dot"></div>
+            <div class="step-label">Finalizing</div>
+            <div class="step-desc">preview.html at root</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="state-step" id="step-confirmed">
+            <div class="step-dot"></div>
+            <div class="step-label">Confirmed</div>
+            <div class="step-desc">results.html at root</div>
+          </div>
+        </div>
+        <div class="state-actions">
+          <button class="btn btn-ghost" id="btn-state-prev" onclick="setSiteState('prev')">← Previous</button>
+          <button class="btn btn-primary" id="btn-state-next" onclick="setSiteState('next')">Next →</button>
+        </div>
+      </div>
+    </div>
+
     <div class="admin-layout">
 
       <!-- LEFT: CSV Upload -->
@@ -563,6 +660,30 @@
             <li class="empty-list">No wallets excluded.</li>
           </ul>
         </div>
+      </div>
+    </div>
+
+    <!-- Manual Finalists Override -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🎯 Manual Finalists Override</h2>
+        <button class="btn btn-danger" style="padding:5px 13px;font-size:0.78rem" onclick="clearManualFinalists()">Clear All</button>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px">
+          Override the auto-calculated finalists shown in the bracket builder. Leave a column completely empty to fall back to automatic calculation for that group.
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+          <div>
+            <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px">Top 8 · Highest Rating</div>
+            <div id="finalist-top8-slots" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+          <div>
+            <div style="font-size:0.75rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px">Wild Cards</div>
+            <div id="finalist-wc-slots" style="display:flex;flex-direction:column;gap:6px"></div>
+          </div>
+        </div>
+        <div id="finalist-result" class="result-banner hidden" style="margin-top:14px"></div>
       </div>
     </div>
 
@@ -858,7 +979,7 @@
     async function loadWalletList() {
       const res = await fetch('/api/wallets');
       const wallets = await res.json();
-      const list = document.getElementById('wallet-list');
+      const list    = document.getElementById('wallet-list');
       const countEl = document.getElementById('tracked-count');
 
       countEl.textContent = wallets.length;
@@ -872,8 +993,7 @@
         <li class="wallet-item">
           <span class="wallet-addr">${esc(w)}</span>
           <button class="wallet-remove" title="Remove" onclick="removeWallet('${esc(w)}')">✕</button>
-        </li>
-      `).join('');
+        </li>`).join('');
     }
 
     async function removeWallet(address) {
@@ -1409,6 +1529,165 @@
     }
 
     loadExcludedWallets();
+
+    // ── Manual Finalists ──────────────────────────────────────────────────────
+
+    let finalistPlayerMap = {}; // wallet.lower → display name, loaded on init
+
+    async function initFinalists() {
+      try {
+        const [playersRes, data] = await Promise.all([
+          fetch('/api/players'),
+          fetch('/api/manual-finalists').then(r => r.json()),
+        ]);
+        const players = await playersRes.json();
+        finalistPlayerMap = {};
+        players.forEach(p => {
+          if (p.wallet) {
+            const hasName = p.username && !/^0x[0-9a-fA-F]{40}$/i.test(p.username);
+            finalistPlayerMap[p.wallet.toLowerCase()] = hasName ? p.username : fmtFinalistWallet(p.wallet);
+          }
+        });
+        buildFinalistSlots('finalist-top8-slots', 8, data.top8 || []);
+        buildFinalistSlots('finalist-wc-slots',   2, data.wildcards || []);
+      } catch { /* non-critical */ }
+    }
+
+    function fmtFinalistWallet(addr) {
+      if (!addr || addr.length < 10) return addr || '';
+      return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+    }
+
+    function finalistDisplayName(wallet) {
+      if (!wallet) return '';
+      return finalistPlayerMap[wallet.toLowerCase()] || fmtFinalistWallet(wallet);
+    }
+
+    function buildFinalistSlots(containerId, count, values) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const wallet = (values[i] || '').trim();
+        const slot = document.createElement('div');
+        slot.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;';
+
+        const badge = document.createElement('div');
+        badge.textContent = '#' + (i + 1);
+        badge.style.cssText = 'font-size:0.72rem;font-weight:700;color:rgba(255,255,255,0.35);min-width:22px;text-align:center;flex-shrink:0;';
+
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;';
+
+        const nameTag = document.createElement('div');
+        nameTag.style.cssText = 'font-size:0.82rem;font-weight:600;color:var(--text);min-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+        nameTag.textContent = wallet ? finalistDisplayName(wallet) : '';
+        if (!wallet) nameTag.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Wallet address…';
+        input.value = wallet;
+        input.style.cssText = `background:none;border:none;outline:none;color:var(--text-3);font-size:${wallet ? '0.68rem' : '0.82rem'};font-family:${wallet ? 'var(--font-mono,monospace)' : 'inherit'};padding:0;width:100%;`;
+
+        const updateName = () => {
+          const w = input.value.trim();
+          if (w) {
+            nameTag.textContent = finalistDisplayName(w);
+            nameTag.style.display = '';
+            input.style.fontSize = '0.68rem';
+            input.style.fontFamily = 'var(--font-mono,monospace)';
+            input.style.color = 'var(--text-3)';
+          } else {
+            nameTag.textContent = '';
+            nameTag.style.display = 'none';
+            input.style.fontSize = '0.82rem';
+            input.style.fontFamily = 'inherit';
+            input.style.color = 'var(--text)';
+          }
+        };
+
+        input.addEventListener('input', updateName);
+        input.addEventListener('blur', saveManualFinalists);
+
+        wrap.appendChild(nameTag);
+        wrap.appendChild(input);
+        slot.appendChild(badge);
+        slot.appendChild(wrap);
+        container.appendChild(slot);
+      }
+    }
+
+    async function saveManualFinalists() {
+      const top8     = [...document.querySelectorAll('#finalist-top8-slots input')].map(i => i.value.trim());
+      const wildcards = [...document.querySelectorAll('#finalist-wc-slots input')].map(i => i.value.trim());
+      try {
+        const res = await fetch('/api/manual-finalists', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ top8, wildcards }),
+        });
+        if (!res.ok) throw new Error();
+        const resultEl = document.getElementById('finalist-result');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Finalists saved.';
+        resultEl.classList.remove('hidden');
+        setTimeout(() => resultEl.classList.add('hidden'), 2000);
+      } catch { /* silent */ }
+    }
+
+    async function clearManualFinalists() {
+      if (!confirm('Clear all manual finalist overrides? Brackets will revert to automatic calculation.')) return;
+      await fetch('/api/manual-finalists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ top8: [], wildcards: [] }),
+      });
+      buildFinalistSlots('finalist-top8-slots', 8, []);
+      buildFinalistSlots('finalist-wc-slots',   2, []);
+    }
+
+    initFinalists();
+
+    // ── Site State ────────────────────────────────────────────────────────────
+
+    const STATE_ORDER  = ['leaderboard', 'finalizing', 'confirmed'];
+    const STATE_LABELS = { leaderboard: 'Leaderboard', finalizing: 'Finalizing', confirmed: 'Confirmed' };
+    let currentSiteState = 'leaderboard';
+
+    async function initSiteState() {
+      const res = await fetch('/api/site-state');
+      if (res.ok) { const { state } = await res.json(); currentSiteState = state; }
+      renderSiteState();
+    }
+
+    function renderSiteState() {
+      const idx = STATE_ORDER.indexOf(currentSiteState);
+      STATE_ORDER.forEach((s, i) => {
+        const el = document.getElementById('step-' + s);
+        el.classList.toggle('active', i === idx);
+        el.classList.toggle('done',   i < idx);
+      });
+      document.getElementById('btn-state-prev').disabled = idx <= 0;
+      document.getElementById('btn-state-next').disabled = idx >= STATE_ORDER.length - 1;
+      document.getElementById('site-state-label').textContent =
+        'Current: ' + (STATE_LABELS[currentSiteState] || currentSiteState);
+    }
+
+    async function setSiteState(dir) {
+      const idx = STATE_ORDER.indexOf(currentSiteState);
+      const newIdx = dir === 'next' ? idx + 1 : idx - 1;
+      if (newIdx < 0 || newIdx >= STATE_ORDER.length) return;
+      const newState = STATE_ORDER[newIdx];
+      if (!confirm(`Set site state to "${STATE_LABELS[newState]}"?`)) return;
+      const res = await fetch('/api/site-state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state: newState }),
+      });
+      if (res.ok) { currentSiteState = newState; renderSiteState(); }
+    }
+
+    initSiteState();
 
     // ── Tournament Details ────────────────────────────────────────────────────
 

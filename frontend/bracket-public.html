@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tournament Bracket — Anichess</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script>if (new URLSearchParams(location.search).get('embed') === '1') document.documentElement.classList.add('embed-mode');</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Embed mode: hide topbar + footer, remove min-height, top-align + center bracket */
+    .embed-mode body { min-height: 0; }
+    .embed-mode .bp-topbar { display: none; }
+    .embed-mode .bp-footer { display: none; }
+    .embed-mode .bp-page { justify-content: flex-start; align-items: center; padding: 24px 0 32px; }
+
+    /* ── Variables ── */
+    :root {
+      --conn:         rgba(0,174,250,0.50);
+      --conn-bright:  #00aefa;
+      --card-bg:      rgba(255,255,255,0.055);
+      --card-border:  rgba(255,255,255,0.10);
+      --win-bg:       rgba(0,174,250,0.10);
+      --gold:         #fbbf24;
+      /* match card sizing — must be consistent with connector math */
+      --mh: 130px;   /* height of one match card (2 rows × 65px) */
+      --qg: 24px;    /* gap between QF match cards in a pair */
+      /* derived: pair-h = 2*130 + 24 = 284px, arm = 65+12 = 77px, spacer = 65px */
+    }
+
+    /* ── Base ── */
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #090c16;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Background layer ── */
+    .bp-bg {
+      position: fixed;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+    }
+    .bp-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to bottom,
+        rgba(6,9,20,0.88) 0%,
+        rgba(6,9,20,0.75) 40%,
+        rgba(6,9,20,0.88) 100%
+      );
+    }
+
+    /* ── Top bar ── */
+    .bp-topbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(6,9,20,0.70);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    .bp-back {
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: rgba(255,255,255,0.45);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+      transition: color 0.15s;
+    }
+    .bp-back:hover { color: #fff; }
+
+    .bp-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .bp-brand-icon {
+      height: 26px;
+      width: 26px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .bp-brand-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      color: rgba(255,255,255,0.80);
+      text-transform: uppercase;
+    }
+    .bp-brand-accent { color: var(--conn-bright); }
+
+    .bp-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .bp-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.30);
+      flex-shrink: 0;
+    }
+    .bp-dot.live {
+      background: #10b981;
+      animation: bpPulse 2s ease-in-out infinite;
+    }
+    .bp-dot.complete { background: var(--gold); }
+    @keyframes bpPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.45; transform: scale(0.82); }
+    }
+    .bp-status-text {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.40);
+    }
+    .bp-status-text.live     { color: #10b981; }
+    .bp-status-text.complete { color: var(--gold); }
+
+    /* ── Main area ── */
+    .bp-page {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 28px 44px;
+      overflow-x: auto;
+    }
+
+    /* ── Pending state ── */
+    .bp-pending {
+      text-align: center;
+      padding: 80px 40px;
+      max-width: 480px;
+    }
+    .bp-pending-icon { font-size: 3rem; margin-bottom: 20px; }
+    .bp-pending-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      white-space: pre-line;
+    }
+    .bp-pending-sub {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.38);
+      line-height: 1.55;
+    }
+
+    /* ── Stage wrapper ── */
+    .bp-stage-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      min-width: min-content;
+    }
+
+    /* ── Round label row ── */
+    .bp-label-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      margin-bottom: 18px;
+      width: 100%;
+    }
+    .bp-rl {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.30);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Bracket stage ── */
+    .bp-stage {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    /* ── QF column ── */
+    .bp-qf-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--qg);
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* ── H connectors ── */
+    .bp-h {
+      height: 1.5px;
+      background: var(--conn);
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Pair connector (2 QF → 1 SF) ──
+     * pair-h  = 2*130 + 24 = 284px
+     * spacer  = 130/2      = 65px
+     * arm     = 65 + 24/2  = 77px
+     */
+    .bp-pconn {
+      width: 22px;
+      height: 284px;
+      align-self: center;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .bp-pconn-s  { height: 65px; flex-shrink: 0; }
+    .bp-pconn-t  { height: 77px; flex-shrink: 0; border-top: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-pconn-b  { height: 77px; flex-shrink: 0; border-bottom: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    /* mirror for right side */
+    .bp-pconn.r .bp-pconn-t { border-right: none; border-left: 1.5px solid var(--conn); }
+    .bp-pconn.r .bp-pconn-b { border-right: none; border-left: 1.5px solid var(--conn); }
+
+    /* ── SF wrap ── */
+    .bp-sf { align-self: center; flex-shrink: 0; }
+
+    /* ── Center column ── */
+    .bp-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 0 20px;
+      /* GCW + 2×20px padding = total center column inline width */
+      flex-shrink: 0;
+    }
+
+    .bp-title {
+      text-align: center;
+      line-height: 1.15;
+    }
+    .bp-title-text {
+      font-size: 2.0rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: pre-line;
+    }
+
+    .bp-gf-wrap { text-align: center; }
+    .bp-gf-label {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(0,174,250,0.65);
+      margin-bottom: 10px;
+    }
+
+    /* ── Champion ── */
+    .bp-champion {
+      text-align: center;
+    }
+    .bp-champion-avatar {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-size: 2.70rem;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 22px rgba(251,191,36,0.40);
+    }
+    .bp-champion-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .bp-champion-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.80;
+      margin: 10px 0 4px;
+    }
+    .bp-champion-name {
+      font-size: 1.36rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* ── Match card ── */
+    .bp-card {
+      width: 338px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 11px;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .bp-card.gf {
+      width: 380px;
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(0,174,250,0.28);
+      box-shadow: 0 0 28px rgba(0,174,250,0.08);
+    }
+    .bp-card.done { border-color: rgba(255,255,255,0.14); }
+
+    /* ── Player rows ── */
+    .bp-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 17px;
+      height: 65px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bp-card .bp-player:first-child {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .bp-player.winner {
+      background: var(--win-bg);
+    }
+    .bp-player.winner::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--conn-bright);
+      border-radius: 0 2px 2px 0;
+    }
+    .bp-player.loser { opacity: 0.40; }
+    .bp-player.tbd   { opacity: 0.32; }
+
+    .bp-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.94rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .bp-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .bp-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .bp-flag {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #12162a;
+      pointer-events: none;
+    }
+    .bp-side-left .bp-flag {
+      right: auto;
+      left: -10px;
+    }
+    .bp-seed {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.38);
+      min-width: 31px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .bp-name {
+      flex: 1;
+      font-size: 1.14rem;
+      font-weight: 600;
+      color: #dde4f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+    }
+    .bp-name.wallet {
+      font-size: 1.0rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .bp-score {
+      font-size: 1.20rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.70);
+      min-width: 29px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .bp-score.win { color: var(--conn-bright); }
+
+    /* ── 3rd place section ── */
+    .bp-third {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .bp-third-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+    }
+
+    /* ── QF→SF connector for 16-player bracket (602px: s142+t159+b159+s142) ── */
+    .bp-qfsf-conn {
+      width: 22px;
+      height: 602px;
+      align-self: center;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .bp-qfsf-s { height: 142px; flex-shrink: 0; }
+    .bp-qfsf-t { height: 159px; flex-shrink: 0; border-top: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-qfsf-b { height: 159px; flex-shrink: 0; border-bottom: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-qfsf-conn.r .bp-qfsf-t { border-right: none; border-left: 1.5px solid var(--conn); }
+    .bp-qfsf-conn.r .bp-qfsf-b { border-right: none; border-left: 1.5px solid var(--conn); }
+
+    /* ── Bottom bar ── */
+    .bp-footer {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .bp-footer-text {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+    .bp-footer-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="bp-bg" id="bp-bg"></div>
+
+  <div class="bp-topbar">
+    <a class="bp-back" href="/" data-track="Back to Leaderboard" data-track-category="navigation">← Leaderboard</a>
+    <a class="bp-brand" href="https://www.anichesstracker.com/" rel="noopener">
+      <img class="bp-brand-icon" src="/logo-image.png" alt="" onerror="this.outerHTML='<span style=&quot;font-size:1.05rem;color:var(--conn-bright)&quot;>♟</span>'">
+      <span class="bp-brand-name">ANICHESS <span class="bp-brand-accent">TRACKER</span></span>
+    </a>
+    <div class="bp-status">
+      <div class="bp-dot" id="bp-dot"></div>
+      <span class="bp-status-text" id="bp-status-text">UPCOMING</span>
+    </div>
+  </div>
+
+  <div class="bp-page" id="bp-page">
+    <div id="state-pending" class="bp-pending" style="display:none;">
+      <div class="bp-pending-icon">🏆</div>
+      <div class="bp-pending-title" id="pending-title">Tournament Bracket</div>
+      <div class="bp-pending-sub">The bracket will appear here once seeding is complete and the bracket is generated.</div>
+    </div>
+
+    <div id="state-bracket" style="display:none;">
+      <div class="bp-stage-wrap" id="stage-wrap">
+        <div class="bp-label-row" id="label-row"></div>
+        <div class="bp-stage" id="bracket-stage"></div>
+      </div>
+      <div class="bp-third" id="third-section" style="display:none;">
+        <div class="bp-third-label">3rd Place Match</div>
+        <div id="third-card"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bp-footer">
+    <span class="bp-footer-text">Anichess Ranked Tracker</span>
+    <div class="bp-footer-dot"></div>
+    <span class="bp-footer-text">Live Bracket</span>
+    <div class="bp-footer-dot"></div>
+    <span class="bp-footer-text">Auto-refreshes every 60s</span>
+  </div>
+
+  <script>
+    // ── State ──────────────────────────────────────────────────────────────────
+    let playerMap     = {}; // wallet.toLowerCase() → displayName
+    let playerAvatar  = {}; // wallet.toLowerCase() → avatar URL
+    let playerCountry = {}; // wallet.toLowerCase() → ISO-3166-1 alpha-2 code
+    let bracketData   = null;
+
+    // Avatar colour palette (cycles by seed)
+    const AV_COLORS = [
+      '#00aefa','#6366f1','#ec4899','#f59e0b','#10b981',
+      '#ef4444','#8b5cf6','#06b6d4','#f97316','#84cc16'
+    ];
+    const avColor = seed => AV_COLORS[((parseInt(seed) || 1) - 1) % AV_COLORS.length];
+    const avInitial = name => (name || '?')[0].toUpperCase();
+
+    // ── Boot ──────────────────────────────────────────────────────────────────
+    async function init() {
+      // loadPlayers must finish before loadBracket so the name map is ready when render() fires
+      await Promise.all([loadBg(), loadPlayers()]);
+      await loadBracket();
+    }
+
+    async function loadBg() {
+      try {
+        const r = await fetch('/api/bracket-background');
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d.exists && d.filename) {
+          document.getElementById('bp-bg').style.backgroundImage = `url(/${d.filename}?t=${Date.now()})`;
+        }
+      } catch {}
+    }
+
+    async function loadPlayers() {
+      try {
+        const [playersRes, countriesRes] = await Promise.all([
+          fetch('/api/players'),
+          fetch('/api/player-countries'),
+        ]);
+        const list = await playersRes.json();
+        const countries = countriesRes.ok ? await countriesRes.json() : {};
+        playerMap = {};
+        playerAvatar = {};
+        // Seed all known countries first (covers non-tracked bracket participants)
+        Object.assign(playerCountry, countries);
+        list.forEach(p => {
+          if (!p.wallet) return;
+          const key = p.wallet.toLowerCase();
+          playerMap[key] = isEVMAddress(p.username) ? fmtWallet(p.wallet) : p.username;
+          if (p.avatar)   playerAvatar[key]  = p.avatar;
+          if (p.country)  playerCountry[key] = p.country;
+        });
+      } catch {}
+    }
+
+    async function loadBracket() {
+      try {
+        const r = await fetch('/api/brackets');
+        bracketData = await r.json();
+        render();
+      } catch {}
+    }
+
+    // ── Render ────────────────────────────────────────────────────────────────
+    function render() {
+      const d = bracketData;
+
+      // Status indicator
+      const dot = document.getElementById('bp-dot');
+      const stText = document.getElementById('bp-status-text');
+      dot.className = 'bp-dot';
+      stText.className = 'bp-status-text';
+      if (d.status === 'active') {
+        dot.classList.add('live');
+        stText.classList.add('live');
+        stText.textContent = 'LIVE';
+      } else if (d.status === 'complete') {
+        dot.classList.add('complete');
+        stText.classList.add('complete');
+        stText.textContent = 'COMPLETE';
+      } else {
+        stText.textContent = 'UPCOMING';
+      }
+
+      // Pending state
+      if (!d.rounds || d.rounds.length === 0) {
+        document.getElementById('state-pending').style.display = '';
+        document.getElementById('state-bracket').style.display = 'none';
+        const title = (d.bracketName || '').trim();
+        if (title) document.getElementById('pending-title').textContent = title;
+        return;
+      }
+
+      document.getElementById('state-pending').style.display = 'none';
+      document.getElementById('state-bracket').style.display = '';
+      renderStage(d);
+    }
+
+    function renderStage(d) {
+      const rounds = d.rounds || [];
+      const qf  = rounds.find(r => r.id === 'qf');
+      const sf  = rounds.find(r => r.id === 'sf');
+      const gf  = rounds.find(r => r.id === 'gf');
+      const r16 = rounds.find(r => r.id === 'r16');
+      const tp  = rounds.find(r => r.isThirdPlace);
+      if (!sf || !gf) return;
+
+      const stage = document.getElementById('bracket-stage');
+      const labelRow = document.getElementById('label-row');
+      stage.innerHTML = '';
+      labelRow.innerHTML = '';
+
+      const tourName = (d.bracketName || '').trim() || 'TOURNAMENT BRACKET';
+
+      if (r16 && !qf) {
+        // Rare: 16-player without a separate QF phase — fallback to linear
+        renderLinear(stage, rounds, d, tourName);
+      } else if (r16 && qf) {
+        render16(stage, labelRow, d, r16, qf, sf, gf, tourName);
+      } else if (qf) {
+        render8(stage, labelRow, d, qf, sf, gf, tourName);
+      } else {
+        renderLinear(stage, rounds, d, tourName);
+      }
+
+      // Third place
+      const tpSec = document.getElementById('third-section');
+      const tpCard = document.getElementById('third-card');
+      if (tp && tp.matches[0] && (tp.matches[0].p1 || tp.matches[0].p2 || tp.matches[0].status !== 'pending')) {
+        tpSec.style.display = '';
+        tpCard.innerHTML = '';
+        tpCard.appendChild(buildCard(tp.matches[0], false));
+      } else {
+        tpSec.style.display = 'none';
+      }
+    }
+
+    // ── 8-player mirrored bracket ─────────────────────────────────────────────
+    function render8(stage, labelRow, d, qf, sf, gf, tourName) {
+      // Card widths
+      const CW = 338, GCW = 380;
+      // Connector widths
+      const PCW = 22,  // pair connector
+            HC1 = 55,  // QF→SF horizontal
+            HC2 = 74;  // SF→GF horizontal
+
+      // Round labels (centred over each column)
+      const rlDefs = [
+        { w: CW,            label: 'QUARTERFINALS' },
+        { w: PCW + HC1,     label: ''              },
+        { w: CW,            label: 'SEMIFINALS'    },
+        { w: HC2,           label: ''              },
+        { w: GCW + 40,      label: 'FINAL'         },
+        { w: HC2,           label: ''              },
+        { w: CW,            label: 'SEMIFINALS'    },
+        { w: PCW + HC1,     label: ''              },
+        { w: CW,            label: 'QUARTERFINALS' },
+      ];
+      rlDefs.forEach(({ w, label }) => {
+        const d = el('div', 'bp-rl');
+        d.style.width = w + 'px';
+        d.textContent = label;
+        labelRow.appendChild(d);
+      });
+
+      // Left QF column
+      const lqf = el('div', 'bp-qf-col bp-side-left');
+      lqf.appendChild(buildCard(qf.matches[0], false));
+      lqf.appendChild(buildCard(qf.matches[1], false));
+
+      // Left pair connector
+      const lpconn = makePairConn(false);
+
+      // Left QF→SF
+      const lh1 = makeH(HC1);
+
+      // Left SF
+      const lsf = el('div', 'bp-sf bp-side-left');
+      lsf.appendChild(buildCard(sf.matches[0], false));
+
+      // Left SF→GF
+      const lh2 = makeH(HC2);
+
+      // Center
+      const center = el('div', 'bp-center');
+      center.style.width = (GCW + 40) + 'px';
+      const titleDiv = el('div', 'bp-title');
+      titleDiv.innerHTML = `<div class="bp-title-text">${esc(tourName)}</div>`;
+      const gfWrap = el('div', 'bp-gf-wrap');
+      const gfLbl = el('div', 'bp-gf-label');
+      gfLbl.textContent = '⬥  Grand Final  ⬥';
+      gfWrap.appendChild(gfLbl);
+      gfWrap.appendChild(buildCard(gf.matches[0], true));
+      center.appendChild(titleDiv);
+      center.appendChild(gfWrap);
+
+      if (d.champion) {
+        center.appendChild(buildChampion(d.champion));
+      }
+
+      // Right SF→GF
+      const rh2 = makeH(HC2);
+
+      // Right SF
+      const rsf = el('div', 'bp-sf');
+      rsf.appendChild(buildCard(sf.matches[1], false));
+
+      // Right SF→QF
+      const rh1 = makeH(HC1);
+
+      // Right pair connector (mirrored)
+      const rpconn = makePairConn(true);
+
+      // Right QF column
+      const rqf = el('div', 'bp-qf-col');
+      rqf.appendChild(buildCard(qf.matches[2], false));
+      rqf.appendChild(buildCard(qf.matches[3], false));
+
+      [lqf, lpconn, lh1, lsf, lh2, center, rh2, rsf, rh1, rpconn, rqf]
+        .forEach(n => stage.appendChild(n));
+    }
+
+    // ── 16-player mirrored bracket ────────────────────────────────────────────
+    // Layout (left side): R16[0-3] → pair-conns × 2 → QF[0,1] → QFSF-conn → SF[0] → H → GF
+    // Dimensions: col-h=352px, pair-h=166px, r16-inter=20px
+    //   QF spacers: 45px top/bottom, 110px mid-gap (cards at y=83, y=269)
+    //   QFSF connector: s83 + t93 + b93 + s83 = 352px, junction at y=176
+    function render16(stage, labelRow, d, r16, qf, sf, gf, tourName) {
+      const CW = 283, GCW = 380;
+      const PCW = 22, HC1 = 74, HC2 = 74;
+
+      // Round labels
+      const rlDefs = [
+        { w: CW,       label: 'ROUND OF 16'   },
+        { w: PCW,      label: ''              },
+        { w: CW,       label: 'QUARTERFINALS' },
+        { w: PCW+HC1,  label: ''              },
+        { w: CW,       label: 'SEMIFINALS'    },
+        { w: HC2,      label: ''              },
+        { w: GCW+40,   label: 'FINAL'         },
+        { w: HC2,      label: ''              },
+        { w: CW,       label: 'SEMIFINALS'    },
+        { w: PCW+HC1,  label: ''              },
+        { w: CW,       label: 'QUARTERFINALS' },
+        { w: PCW,      label: ''              },
+        { w: CW,       label: 'ROUND OF 16'   },
+      ];
+      rlDefs.forEach(({ w, label }) => {
+        const lbl = el('div', 'bp-rl');
+        lbl.style.width = w + 'px';
+        lbl.textContent = label;
+        labelRow.appendChild(lbl);
+      });
+
+      // R16 column: 76+14+76 [20px gap] 76+14+76 = 352px
+      function makeR16Col(startIdx) {
+        const col = el('div');
+        col.style.cssText = 'display:flex;flex-direction:column;align-self:center;flex-shrink:0;';
+        const addGap = h => { const g = el('div'); g.style.cssText = `height:${h}px;flex-shrink:0;`; col.appendChild(g); };
+        col.appendChild(buildCard(r16.matches[startIdx + 0], false, CW));
+        addGap(24);
+        col.appendChild(buildCard(r16.matches[startIdx + 1], false, CW));
+        addGap(34);
+        col.appendChild(buildCard(r16.matches[startIdx + 2], false, CW));
+        addGap(24);
+        col.appendChild(buildCard(r16.matches[startIdx + 3], false, CW));
+        return col;
+      }
+
+      // Two stacked bp-pconns with 34px inter-pair gap: 284+34+284 = 602px
+      function makeR16Conn(mirror) {
+        const wrap = el('div');
+        wrap.style.cssText = 'display:flex;flex-direction:column;align-self:center;flex-shrink:0;';
+        wrap.appendChild(makePairConn(mirror));
+        const inter = el('div'); inter.style.cssText = 'height:34px;flex-shrink:0;';
+        wrap.appendChild(inter);
+        wrap.appendChild(makePairConn(mirror));
+        return wrap;
+      }
+
+      // QF column: sp45 + card(76) + sp110 + card(76) + sp45 = 352px
+      // Cards at y=83 and y=269 — aligned with R16→QF connector junctions
+      function makeQFCol16(m0, m1) {
+        const col = el('div');
+        col.style.cssText = 'display:flex;flex-direction:column;align-self:center;flex-shrink:0;';
+        const addSp = h => { const s = el('div'); s.style.cssText = `height:${h}px;flex-shrink:0;`; col.appendChild(s); };
+        addSp(77);
+        col.appendChild(buildCard(m0, false, CW));
+        addSp(188);
+        col.appendChild(buildCard(m1, false, CW));
+        addSp(77);
+        return col;
+      }
+
+      // QF→SF connector (352px, junction at y=176 = SF mid)
+      function makeQFSFConn(mirror) {
+        const c = el('div', 'bp-qfsf-conn' + (mirror ? ' r' : ''));
+        c.innerHTML = `
+          <div class="bp-qfsf-s"></div>
+          <div class="bp-qfsf-t"></div>
+          <div class="bp-qfsf-b"></div>
+          <div class="bp-qfsf-s"></div>`;
+        return c;
+      }
+
+      // ── Left side ──
+      const lr16  = makeR16Col(0);   lr16.classList.add('bp-side-left');
+      const lr16c = makeR16Conn(false);
+      const lqf   = makeQFCol16(qf.matches[0], qf.matches[1]);   lqf.classList.add('bp-side-left');
+      const lqfc  = makeQFSFConn(false);
+      const lh1   = makeH(HC1);
+      const lsf   = el('div', 'bp-sf bp-side-left');
+      lsf.appendChild(buildCard(sf.matches[0], false, CW));
+      const lh2   = makeH(HC2);
+
+      // ── Center ──
+      const center   = el('div', 'bp-center');
+      center.style.width = (GCW + 40) + 'px';
+      const titleDiv = el('div', 'bp-title');
+      titleDiv.innerHTML = `<div class="bp-title-text">${esc(tourName)}</div>`;
+      const gfWrap = el('div', 'bp-gf-wrap');
+      const gfLbl  = el('div', 'bp-gf-label');
+      gfLbl.textContent = '⬥  Grand Final  ⬥';
+      gfWrap.appendChild(gfLbl);
+      gfWrap.appendChild(buildCard(gf.matches[0], true));
+      center.appendChild(titleDiv);
+      center.appendChild(gfWrap);
+      if (d.champion) {
+        center.appendChild(buildChampion(d.champion));
+      }
+
+      // ── Right side ──
+      const rh2   = makeH(HC2);
+      const rsf   = el('div', 'bp-sf');
+      rsf.appendChild(buildCard(sf.matches[1], false, CW));
+      const rh1   = makeH(HC1);
+      const rqfc  = makeQFSFConn(true);
+      const rqf   = makeQFCol16(qf.matches[2], qf.matches[3]);
+      const rr16c = makeR16Conn(true);
+      const rr16  = makeR16Col(4);
+
+      [lr16, lr16c, lqf, lqfc, lh1, lsf, lh2, center, rh2, rsf, rh1, rqfc, rqf, rr16c, rr16]
+        .forEach(n => stage.appendChild(n));
+    }
+
+    // ── Linear fallback ───────────────────────────────────────────────────────
+    function renderLinear(stage, rounds, d, tourName, cw, gcw) {
+      const mainRounds = rounds.filter(r => !r.isThirdPlace);
+      mainRounds.forEach((round, i) => {
+        if (i > 0) stage.appendChild(makeH(61));
+        const col = el('div', null);
+        col.style.cssText = 'display:flex;flex-direction:column;gap:21px;align-self:center;flex-shrink:0;';
+        const isGF = round.id === 'gf';
+        round.matches.forEach(m => col.appendChild(buildCard(m, isGF, cw)));
+        stage.appendChild(col);
+      });
+      // Champion overlay if complete
+      if (d.champion) {
+        const champEl = buildChampion(d.champion);
+        champEl.style.marginTop = '26px';
+        document.getElementById('stage-wrap').appendChild(champEl);
+      }
+    }
+
+    // ── Build match card ──────────────────────────────────────────────────────
+    function buildCard(match, isGF, overrideW) {
+      const card = el('div', 'bp-card' + (isGF ? ' gf' : '') + (match.winner ? ' done' : ''));
+      if (overrideW) card.style.width = overrideW + 'px';
+
+      // Show TBD for both slots until the match is ready to be played (pending = waiting for players)
+      const pending = !match || match.status === 'pending';
+      const p1 = pending ? null : match.p1;
+      const p2 = pending ? null : match.p2;
+      const s  = match.score || { p1: 0, p2: 0 };
+      const p1w = !pending && match.winner && p1 && match.winner === p1.wallet;
+      const p2w = !pending && match.winner && p2 && match.winner === p2.wallet;
+
+      card.appendChild(buildRow(p1, pending ? null : s.p1, p1w, !pending && match.winner && !p1w));
+      card.appendChild(buildRow(p2, pending ? null : s.p2, p2w, !pending && match.winner && !p2w));
+      return card;
+    }
+
+    function buildRow(player, score, isWinner, isLoser) {
+      const row = el('div', 'bp-player');
+
+      if (!player) {
+        row.classList.add('tbd');
+        row.innerHTML = `
+          <div class="bp-avatar" style="background:rgba(255,255,255,0.08);">?</div>
+          <span class="bp-seed">—</span>
+          <span class="bp-name" style="color:rgba(255,255,255,0.28);">TBD</span>`;
+        return row;
+      }
+
+      if (isWinner)      row.classList.add('winner');
+      else if (isLoser)  row.classList.add('loser');
+
+      const name        = getName(player.wallet);
+      const isWallet    = (name === fmtWallet(player.wallet));
+      const color       = avColor(player.seed || 1);
+      const scoreStr    = (score !== null && score !== undefined) ? String(score) : '';
+      const avatarUrl   = playerAvatar[(player.wallet || '').toLowerCase()];
+      const avatarHtml  = avatarUrl
+        ? `<img src="${esc(avatarUrl)}" alt="" onerror="this.style.display='none'">`
+        : esc(avInitial(name));
+      const avatarBg    = avatarUrl ? 'rgba(20,24,40,0.8)' : color;
+      const countryCode = playerCountry[(player.wallet || '').toLowerCase()];
+      const flagHtml    = countryCode
+        ? `<div class="bp-flag" style="background-image:url('https://flagcdn.com/80x60/${countryCode.toLowerCase()}.png');"></div>`
+        : '';
+
+      row.innerHTML = `
+        <div class="bp-avatar-wrap">
+          <div class="bp-avatar" style="background:${avatarBg};">${avatarHtml}</div>
+          ${flagHtml}
+        </div>
+        <span class="bp-seed">#${player.seed}</span>
+        <span class="bp-name${isWallet ? ' wallet' : ''}">${esc(name)}</span>
+        <span class="bp-score${isWinner ? ' win' : ''}">${esc(scoreStr)}</span>`;
+      return row;
+    }
+
+    // ── Champion block (profile picture if available, else trophy emoji) ──────
+    function buildChampion(wallet) {
+      const name = getName(wallet);
+      const avatarUrl = playerAvatar[(wallet || '').toLowerCase()];
+      const avatarContent = avatarUrl
+        ? `<img src="${esc(avatarUrl)}" alt="${esc(name)}" onerror="this.parentNode.textContent='🏆'">`
+        : '🏆';
+      const avatarBg = avatarUrl ? 'rgba(20,24,40,0.8)' : 'transparent';
+      const champ = el('div', 'bp-champion');
+      champ.innerHTML = `
+        <div class="bp-champion-avatar" style="background:${avatarBg};">${avatarContent}</div>
+        <div class="bp-champion-label">Tournament Champion</div>
+        <div class="bp-champion-name">${esc(name)}</div>`;
+      return champ;
+    }
+
+    // ── DOM helpers ───────────────────────────────────────────────────────────
+    function el(tag, className) {
+      const d = document.createElement(tag || 'div');
+      if (className) d.className = className;
+      return d;
+    }
+
+    function makePairConn(mirror) {
+      const d = el('div', 'bp-pconn' + (mirror ? ' r' : ''));
+      d.innerHTML = `
+        <div class="bp-pconn-s"></div>
+        <div class="bp-pconn-t"></div>
+        <div class="bp-pconn-b"></div>
+        <div class="bp-pconn-s"></div>`;
+      return d;
+    }
+
+    function makeH(w) {
+      const d = el('div', 'bp-h');
+      d.style.width = (w || 36) + 'px';
+      return d;
+    }
+
+    function isEVMAddress(str) {
+      return !str || /^0x[0-9a-fA-F]{40}$/i.test(str);
+    }
+
+    function fmtWallet(addr) {
+      if (!addr || addr.length < 10) return addr || '—';
+      return `${addr.slice(0, 6)}…${addr.slice(-4)}`;
+    }
+
+    function getName(wallet) {
+      if (!wallet) return 'TBD';
+      return playerMap[wallet.toLowerCase()] || fmtWallet(wallet);
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    // ── Auto-refresh ──────────────────────────────────────────────────────────
+    setInterval(async () => {
+      await loadPlayers();
+      await loadBracket();
+    }, 60000);
+
+    init();
+  </script>
+</body>
+</html>
