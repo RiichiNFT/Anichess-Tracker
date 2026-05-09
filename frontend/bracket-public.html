@@ -54,7 +54,10 @@
     /* ── Background layer ── */
     .bp-bg {
       position: fixed;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -1462,7 +1465,7 @@
       // Inject override styles that re-assert desktop values over the mobile media query
       const overrideStyle = document.createElement('style');
       overrideStyle.textContent = `
-        .bp-screenshot-mode .bp-page { padding: 36px 28px 44px !important; justify-content: center !important; }
+        .bp-screenshot-mode .bp-page { padding: 36px 28px 44px !important; justify-content: center !important; overflow: visible !important; }
         .bp-screenshot-mode .bp-title { padding: 0 !important; width: auto !important; }
         .bp-screenshot-mode .bp-title-text { font-size: 2.0rem !important; white-space: pre-line !important; word-break: normal !important; }
         .bp-screenshot-mode .bp-gf-label { display: block !important; }
