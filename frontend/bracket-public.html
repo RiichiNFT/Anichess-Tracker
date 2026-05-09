@@ -1245,8 +1245,10 @@
     }
 
     // ── Mobile round navigator ──────────────────────────────────────────────────
-    let mobileNavRounds = [];   // [{id, label, panel, dot}]
-    let mobileNavIndex  = 0;
+    let mobileNavRounds  = [];   // [{id, label, panel, dot}]
+    let mobileNavIndex   = 0;
+    let mobileTpSec      = null; // #third-section element
+    let mobileTpVisible  = false; // whether it has content to show
 
     function initMobileNav() {
       if (window.innerWidth >= 1024) return;
@@ -1372,6 +1374,11 @@
       // Hide original bracket layout — panels take over on mobile
       bracketStage.style.display = 'none';
 
+      // Track third-place section — only show it on the GF panel
+      mobileTpSec     = document.getElementById('third-section');
+      mobileTpVisible = !!(mobileTpSec && mobileTpSec.style.display !== 'none');
+      if (mobileTpVisible) mobileTpSec.style.display = 'none';
+
       navEl.style.display = 'flex';
       renderMobileNav();
     }
@@ -1389,6 +1396,11 @@
       if (labelEl) labelEl.textContent = mobileNavRounds[mobileNavIndex]?.label || '';
       if (prevBtn) prevBtn.disabled = mobileNavIndex === 0;
       if (nextBtn) nextBtn.disabled = mobileNavIndex === mobileNavRounds.length - 1;
+
+      // Show third-place section only on the GF panel
+      if (mobileTpSec && mobileTpVisible) {
+        mobileTpSec.style.display = mobileNavRounds[mobileNavIndex]?.id === 'gf' ? '' : 'none';
+      }
 
       // Scroll to top of page when switching rounds
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1603,6 +1615,9 @@
           mobileNavRounds.forEach((r, i) => {
             r.panel.classList.toggle('hidden', i !== mobileNavIndex);
           });
+          if (mobileTpSec && mobileTpVisible) {
+            mobileTpSec.style.display = mobileNavRounds[mobileNavIndex]?.id === 'gf' ? '' : 'none';
+          }
         } else {
           roundPanels.forEach(p => { p.style.display = ''; });
           if (roundNav) roundNav.style.display = '';
