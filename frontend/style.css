@@ -1261,7 +1261,7 @@ footer {
     grid-template-columns: 46px 1fr 72px 28px;
     grid-template-areas:
       "rank player rating expand"
-      "rank tier   winrate expand";
+      "rank tier   .      expand";
     align-items: center;
     column-gap: 10px;
     row-gap: 3px;
@@ -1278,10 +1278,8 @@ footer {
   .rating-cell  { grid-area: rating; text-align: right !important; }
   .matches-cell { display: none !important; }
   .wins-cell    { display: none !important; }
-  .winrate-cell { grid-area: winrate; display: block !important; text-align: right !important; }
+  .winrate-cell { display: none !important; }
   .expand-cell  { grid-area: expand; display: flex !important; align-items: center; justify-content: center; }
-  .winrate-cell .winrate-bar-track { display: none; }
-  .winrate-cell .winrate-wrap { align-items: flex-end; }
 
   .lb-table tr:has(.loading-cell) { display: block; }
   .lb-table td.loading-cell { display: flex !important; width: 100%; padding: 40px 20px !important; }
@@ -1301,7 +1299,7 @@ footer {
     display: flex;
     justify-content: flex-end;
     gap: 24px;
-    padding: 8px 52px 12px 14px;
+    padding: 8px 28px 12px 14px;
     border-top: 1px solid var(--border-light);
   }
   .detail-stat { display: flex; flex-direction: column; gap: 2px; text-align: right; }

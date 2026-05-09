@@ -560,12 +560,14 @@ document.getElementById('lb-body').addEventListener('click', function(e) {
     const fmtNum = v => (v != null && v !== '') ? Number(v).toLocaleString() : '—';
     const wins = row.dataset.wins;
     const matches = row.dataset.matches;
+    const pct = row.dataset.pct;
     const detail = document.createElement('tr');
     detail.className = 'detail-row';
     detail.innerHTML =
       `<td colspan="8" class="detail-cell"><div class="detail-inner">` +
       `<div class="detail-stat"><span class="detail-label">Wins</span><span class="detail-value">${fmtNum(wins)}</span></div>` +
       `<div class="detail-stat"><span class="detail-label">Matches</span><span class="detail-value">${fmtNum(matches)}</span></div>` +
+      `<div class="detail-stat"><span class="detail-label">Win Rate</span><span class="detail-value">${pct != null && pct !== '' ? pct + '%' : '—'}</span></div>` +
       `</div></td>`;
     row.after(detail);
     btn.classList.add('expanded');
