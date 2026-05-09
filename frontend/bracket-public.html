@@ -1452,17 +1452,33 @@
       btn.disabled = true;
       btn.textContent = 'Saving…';
 
+      // ── Overlay spinner — shown immediately so layout changes are invisible ──
+      const overlay = document.createElement('div');
+      overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(9,12,22,0.97);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+      const spinEl = document.createElement('div');
+      spinEl.style.cssText = 'width:44px;height:44px;border-radius:50%;border:3px solid rgba(0,174,250,0.18);border-top-color:#00aefa;animation:bp-spin 0.85s linear infinite;';
+      const spinLabel = document.createElement('span');
+      spinLabel.style.cssText = 'font-size:0.78rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);font-family:inherit;';
+      spinLabel.textContent = 'Saving…';
+      overlay.appendChild(spinEl);
+      overlay.appendChild(spinLabel);
+      if (!document.getElementById('bp-spin-kf')) {
+        const kf = document.createElement('style');
+        kf.id = 'bp-spin-kf';
+        kf.textContent = '@keyframes bp-spin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(kf);
+      }
+      document.body.appendChild(overlay);
+
       // ── Force desktop layout regardless of current viewport ──────────────────
       const bracketStage = document.getElementById('bracket-stage');
       const roundNav     = document.getElementById('bp-round-nav');
       const roundPanels  = Array.from(document.querySelectorAll('.bp-round-panel'));
 
-      // Show the full bracket layout and hide the mobile navigator UI
       if (bracketStage) bracketStage.style.display = '';
       roundPanels.forEach(p => { p.style.display = 'none'; });
       if (roundNav) roundNav.style.display = 'none';
 
-      // Inject override styles that re-assert desktop values over the mobile media query
       const overrideStyle = document.createElement('style');
       overrideStyle.textContent = `
         .bp-screenshot-mode .bp-page { padding: 36px 28px 44px !important; justify-content: center !important; overflow: visible !important; }
@@ -1495,7 +1511,6 @@
       document.head.appendChild(overrideStyle);
       document.documentElement.classList.add('bp-screenshot-mode');
 
-      // Remove scale transform so we capture at full native resolution
       const stageWrap      = document.getElementById('stage-wrap');
       const scaleHost      = document.getElementById('bp-scale-host');
       const savedTransform = stageWrap ? stageWrap.style.transform       : '';
@@ -1507,10 +1522,16 @@
       if (scaleHost) { scaleHost.style.width = ''; scaleHost.style.height = ''; scaleHost.style.overflow = ''; }
       void document.body.offsetWidth; // force reflow
 
-      // Capture the full .bp-page (includes top/bottom padding + all bracket content)
-      const pageEl = document.getElementById('bp-page');
+      // ── Capture dimensions from stageWrap (unaffected by page overflow) ──────
+      // pageEl.scrollWidth = viewport width on mobile (overflow:visible → scrollWidth=clientWidth)
+      // stageWrap.scrollWidth = actual rendered bracket width via min-width:min-content
+      const pageEl   = document.getElementById('bp-page');
+      const padX     = 56;  // bp-page desktop: 28px × 2
+      const padY     = 80;  // bp-page desktop: 36px top + 44px bottom
+      const captureW = stageWrap ? stageWrap.scrollWidth  + padX : pageEl.offsetWidth;
+      const captureH = stageWrap ? stageWrap.scrollHeight + padY : pageEl.scrollHeight;
 
-      // Temporarily apply the page background to bp-page so it appears in the screenshot
+      // Temporarily apply the page background so it appears in the screenshot
       const bgEl    = document.getElementById('bp-bg');
       const bgImage = bgEl ? window.getComputedStyle(bgEl).backgroundImage : 'none';
       const origBg    = pageEl.style.backgroundImage;
@@ -1547,10 +1568,10 @@
           allowTaint: false,
           scale: 2,
           logging: false,
-          width:        pageEl.scrollWidth,
-          height:       pageEl.scrollHeight,
-          windowWidth:  pageEl.scrollWidth,
-          windowHeight: pageEl.scrollHeight,
+          width:        captureW,
+          height:       captureH,
+          windowWidth:  captureW,
+          windowHeight: captureH,
           scrollX: 0,
           scrollY: 0,
         });
@@ -1571,13 +1592,10 @@
         pageEl.style.backgroundImage    = origBg;
         pageEl.style.backgroundSize     = origBgSz;
         pageEl.style.backgroundPosition = origBgPos;
-        // Restore scale transform
         if (stageWrap) { stageWrap.style.transform = savedTransform; stageWrap.style.transformOrigin = savedTfOrigin; }
         if (scaleHost) { scaleHost.style.width = savedHostW; scaleHost.style.height = savedHostH; scaleHost.style.overflow = savedHostOv; }
-        // Restore desktop layout override
         document.documentElement.classList.remove('bp-screenshot-mode');
         if (overrideStyle.parentNode) overrideStyle.parentNode.removeChild(overrideStyle);
-        // Restore mobile navigator state
         if (mobileNavRounds.length > 0) {
           if (bracketStage) bracketStage.style.display = 'none';
           roundPanels.forEach(p => { p.style.display = ''; });
@@ -1589,6 +1607,10 @@
           roundPanels.forEach(p => { p.style.display = ''; });
           if (roundNav) roundNav.style.display = '';
         }
+        // Fade out overlay after layout is restored
+        overlay.style.transition = 'opacity 0.25s ease';
+        overlay.style.opacity = '0';
+        setTimeout(() => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); }, 280);
         btn.disabled = false;
         btn.innerHTML = SCREENSHOT_SVG_ICON + ' Save as JPG';
       }
