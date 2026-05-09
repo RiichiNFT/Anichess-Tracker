@@ -1299,6 +1299,7 @@ footer {
   .detail-cell { display: block !important; padding: 0 !important; }
   .detail-inner {
     display: flex;
+    justify-content: flex-end;
     gap: 24px;
     padding: 8px 14px 12px;
     border-top: 1px solid var(--border-light);
