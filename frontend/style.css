@@ -1530,6 +1530,15 @@ footer {
   border-top: 1px solid var(--border);
 }
 
+.qualified-absence-note {
+  padding: 10px 24px 14px;
+  font-size: 0.72rem;
+  color: var(--text-3);
+  font-style: italic;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
 /* Top-8 4-column grid: label above, qualified-body below */
 .qs-subsection { border-top: 1px solid var(--border); }
 .qs-subsection-header { padding: 14px 24px 0; }

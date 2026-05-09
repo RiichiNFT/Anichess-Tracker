@@ -292,6 +292,7 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = []) {
         <div class="qualifier-event-label">Top 2 · Most Matches</div>
         ${wcRows}
       </div>` : ''}
+      <p class="qualified-absence-note">Note: In the event of an absence, the next highest rated player outside the top 8 will be selected instead.</p>
     </div></div>`;
     section.classList.remove('hidden');
     return;
@@ -308,6 +309,7 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = []) {
         <div class="qualifier-divider"></div>
         ${hasQ2 ? renderEvent(qualifiers.qualifier2, 'Top 3 · Lichess Qualifiers II') : `<div class="qualifier-event qualifier-event-half"></div>`}
       </div>
+      <p class="qualified-absence-note">Note: In the event of an absence, the next highest rated player outside the top 8 will be selected instead.</p>
     </div>` : '';
 
   const ongoingCard = hasWC ? (() => {
