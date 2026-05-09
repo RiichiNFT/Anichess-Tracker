@@ -1301,10 +1301,10 @@ footer {
     display: flex;
     justify-content: flex-end;
     gap: 24px;
-    padding: 8px 14px 12px;
+    padding: 8px 52px 12px 14px;
     border-top: 1px solid var(--border-light);
   }
-  .detail-stat { display: flex; flex-direction: column; gap: 2px; }
+  .detail-stat { display: flex; flex-direction: column; gap: 2px; text-align: right; }
   .detail-label { font-size: 0.60rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
   .detail-value { font-size: 0.80rem; color: var(--text); font-weight: 600; }
   .tier-pill      { font-size: 0.66rem; padding: 2px 6px; }
