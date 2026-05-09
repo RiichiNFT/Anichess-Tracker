@@ -158,7 +158,7 @@
       align-items: center;
       justify-content: center;
       padding: 36px 28px 44px;
-      overflow-x: auto;
+      overflow-x: hidden;
     }
 
     /* ── Pending state ── */
@@ -433,6 +433,8 @@
       overflow: hidden;
       text-overflow: ellipsis;
       min-width: 0;
+      padding-bottom: 3px;
+      line-height: 1.5;
     }
     .bp-name.wallet {
       font-size: 1.0rem;
@@ -481,6 +483,28 @@
     .bp-qfsf-conn.r .bp-qfsf-b { border-right: none; border-left: 1.5px solid var(--conn); }
 
     /* ── Bottom bar ── */
+    .bp-screenshot-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,174,250,0.12);
+      border: 1px solid rgba(0,174,250,0.30);
+      color: #00aefa;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.70rem;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .bp-screenshot-btn:hover { background: rgba(0,174,250,0.22); border-color: rgba(0,174,250,0.55); }
+    .bp-screenshot-btn:disabled { opacity: 0.45; cursor: default; }
+    .bp-screenshot-btn svg { flex-shrink: 0; }
+
     .bp-footer {
       position: relative;
       z-index: 5;
@@ -504,6 +528,172 @@
       border-radius: 50%;
       background: rgba(255,255,255,0.18);
     }
+
+    /* ── Mobile ── */
+
+    /* B-1 + B-2 + B-3 — topbar, screenshot button, back link */
+    @media (max-width: 540px) {
+      .bp-topbar { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+      .bp-brand-name { font-size: 0.68rem; }
+      .bp-screenshot-btn { padding: 10px 12px; min-height: 44px; font-size: 0.66rem; }
+      .bp-back { padding: 12px 8px 12px 0; font-size: 0.82rem; display: inline-block; }
+    }
+    @media (max-width: 380px) {
+      .bp-brand { display: none; }
+    }
+
+    /* B-5 — pending state at 480px */
+    @media (max-width: 480px) {
+      .bp-pending-title { font-size: 1.2rem; letter-spacing: 0.03em; }
+      .bp-pending-sub   { font-size: 0.80rem; }
+      .bp-pending       { padding: 48px 24px; }
+    }
+
+    /* B-6 — champion avatar at 480px */
+    @media (max-width: 480px) {
+      .bp-champion-avatar { width: 80px; height: 80px; font-size: 2rem; }
+      .bp-champion-name   { font-size: 1.1rem; }
+    }
+
+    /* B-7 — tournament title text at 480px */
+    @media (max-width: 480px) {
+      .bp-title-text { font-size: 1.4rem; word-break: break-word; white-space: normal; }
+    }
+
+    /* ── Scale host — sized by JS to match visual dimensions of scaled bracket ── */
+    .bp-scale-host { flex-shrink: 0; }
+
+    /* ── Mobile navigator component ── */
+    .bp-round-nav {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      background: rgba(6,9,20,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      height: 56px;
+      flex-shrink: 0;
+    }
+    .bp-rnav-btn {
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.55);
+      font-size: 1.6rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .bp-rnav-btn:hover { color: #fff; }
+    .bp-rnav-btn:disabled { color: rgba(255,255,255,0.18); cursor: default; }
+    .bp-rnav-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .bp-rnav-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+    }
+    .bp-rnav-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bp-rnav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      transition: background 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+    .bp-rnav-dot.active {
+      background: #00aefa;
+      transform: scale(1.35);
+    }
+
+    /* ── Mobile layout (≤1023px) ── */
+    @media (max-width: 1023px) {
+      /* Page layout */
+      .bp-page {
+        overflow-x: hidden;
+        padding: 0 0 44px;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      /* Tournament title — shown above cards */
+      .bp-title { padding: 20px 16px 8px; width: 100%; }
+      .bp-title-text { font-size: 1.30rem; white-space: normal; word-break: break-word; }
+      .bp-gf-label { display: none; }
+
+      /* Hide the stage and label row structure — we use stacked cards instead */
+      .bp-stage     { flex-direction: column; align-items: center; gap: 0; }
+      .bp-label-row { display: none; }
+
+      /* Hide all connectors */
+      .bp-pconn, .bp-qfsf-conn, .bp-h, .bp-pconn-s, .bp-pconn-t, .bp-pconn-b,
+      .bp-qfsf-s, .bp-qfsf-t, .bp-qfsf-b { display: none !important; }
+
+      /* Round panels — each round is a vertical stack */
+      .bp-round-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 16px 16px 8px;
+        gap: 12px;
+      }
+      .bp-round-panel.hidden { display: none; }
+
+      /* Cards fill viewport width */
+      .bp-card, .bp-card.gf {
+        width: min(calc(100vw - 32px), 400px);
+        border-radius: 10px;
+      }
+
+      /* Player rows */
+      .bp-player { height: 58px; padding: 0 14px; }
+
+      /* Avatar */
+      .bp-avatar { width: 40px; height: 40px; font-size: 0.86rem; }
+      .bp-flag { width: 22px; height: 22px; bottom: -8px; right: -8px; }
+
+      /* Typography */
+      .bp-name        { font-size: 0.96rem; padding-bottom: 3px; }
+      .bp-name.wallet { font-size: 0.84rem; }
+      .bp-score       { font-size: 1.05rem; }
+      .bp-seed        { font-size: 0.76rem; min-width: 28px; }
+
+      /* QF columns — remove flex-direction (they become vertical stacks via round panels) */
+      .bp-qf-col { flex-direction: column; gap: 12px; align-self: auto; }
+
+      /* SF wrap — stacks naturally */
+      .bp-sf { align-self: auto; }
+
+      /* 3rd place section */
+      .bp-third { padding: 16px 16px 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+      .bp-third-label { margin: 8px 0 4px; }
+
+      /* Champion block */
+      .bp-champion { margin-top: 24px; }
+      .bp-champion-avatar { width: 80px; height: 80px; font-size: 2rem; }
+      .bp-champion-name   { font-size: 1.10rem; }
+    }
   </style>
 </head>
 <body>
@@ -515,10 +705,27 @@
       <img class="bp-brand-icon" src="/logo-image.png" alt="" onerror="this.outerHTML='<span style=&quot;font-size:1.05rem;color:var(--conn-bright)&quot;>♟</span>'">
       <span class="bp-brand-name">ANICHESS <span class="bp-brand-accent">TRACKER</span></span>
     </a>
-    <div class="bp-status">
-      <div class="bp-dot" id="bp-dot"></div>
-      <span class="bp-status-text" id="bp-status-text">UPCOMING</span>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="bp-screenshot-btn" id="screenshot-btn" onclick="downloadBracketJpg()">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 1H3a2 2 0 0 0-2 2v3M10 1h3a2 2 0 0 1 2 2v3M6 15H3a2 2 0 0 1-2-2v-3M10 15h3a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+        </svg>
+        Save as JPG
+      </button>
+      <div class="bp-status">
+        <div class="bp-dot" id="bp-dot"></div>
+        <span class="bp-status-text" id="bp-status-text">UPCOMING</span>
+      </div>
     </div>
+  </div>
+  <div class="bp-round-nav" id="bp-round-nav" style="display:none">
+    <button class="bp-rnav-btn" id="bp-rnav-prev" aria-label="Previous round">&#8249;</button>
+    <div class="bp-rnav-center">
+      <span class="bp-rnav-label" id="bp-rnav-label">Quarterfinals</span>
+      <div class="bp-rnav-dots" id="bp-rnav-dots"></div>
+    </div>
+    <button class="bp-rnav-btn" id="bp-rnav-next" aria-label="Next round">&#8250;</button>
   </div>
 
   <div class="bp-page" id="bp-page">
@@ -529,9 +736,11 @@
     </div>
 
     <div id="state-bracket" style="display:none;">
-      <div class="bp-stage-wrap" id="stage-wrap">
-        <div class="bp-label-row" id="label-row"></div>
-        <div class="bp-stage" id="bracket-stage"></div>
+      <div class="bp-scale-host" id="bp-scale-host">
+        <div class="bp-stage-wrap" id="stage-wrap">
+          <div class="bp-label-row" id="label-row"></div>
+          <div class="bp-stage" id="bracket-stage"></div>
+        </div>
       </div>
       <div class="bp-third" id="third-section" style="display:none;">
         <div class="bp-third-label">3rd Place Match</div>
@@ -541,10 +750,6 @@
   </div>
 
   <div class="bp-footer">
-    <span class="bp-footer-text">Anichess Ranked Tracker</span>
-    <div class="bp-footer-dot"></div>
-    <span class="bp-footer-text">Live Bracket</span>
-    <div class="bp-footer-dot"></div>
     <span class="bp-footer-text">Auto-refreshes every 60s</span>
   </div>
 
@@ -662,6 +867,9 @@
 
       const tourName = (d.bracketName || '').trim() || 'TOURNAMENT BRACKET';
 
+      // Store bracket data for mobile navigator
+      window.__bracketData = d;
+
       if (r16 && !qf) {
         // Rare: 16-player without a separate QF phase — fallback to linear
         renderLinear(stage, rounds, d, tourName);
@@ -683,6 +891,12 @@
       } else {
         tpSec.style.display = 'none';
       }
+
+      // Initialise mobile round navigator (no-op on desktop/tablet)
+      initMobileNav();
+
+      // Scale bracket to fit viewport on tablet/desktop (no-op on mobile)
+      applyBracketScale();
     }
 
     // ── 8-player mirrored bracket ─────────────────────────────────────────────
@@ -1027,6 +1241,190 @@
       return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // ── Mobile round navigator ──────────────────────────────────────────────────
+    let mobileNavRounds = [];   // [{id, label, panel, dot}]
+    let mobileNavIndex  = 0;
+
+    function initMobileNav() {
+      if (window.innerWidth >= 1024) return;
+
+      const bracketStage = document.getElementById('bracket-stage'); // original layout
+      const stageWrap    = document.getElementById('stage-wrap');    // parent — panels go here
+      const navEl   = document.getElementById('bp-round-nav');
+      const prevBtn = document.getElementById('bp-rnav-prev');
+      const nextBtn = document.getElementById('bp-rnav-next');
+      const labelEl = document.getElementById('bp-rnav-label');
+      const dotsEl  = document.getElementById('bp-rnav-dots');
+      if (!bracketStage || !stageWrap || !navEl) return;
+
+      // Reset state from any previous render
+      mobileNavRounds = [];
+      dotsEl.innerHTML = '';
+      // Remove any existing round panels from a prior call (they live in stageWrap)
+      stageWrap.querySelectorAll('.bp-round-panel').forEach(p => p.remove());
+
+      const d = window.__bracketData;
+      if (!d) return;
+
+      const ROUND_LABELS = {
+        r16: 'Round of 16',
+        qf:  'Quarterfinals',
+        sf:  'Semifinals',
+        gf:  'Grand Final',
+      };
+
+      // Determine which round ids are present
+      const orderedRoundIds = ['r16', 'qf', 'sf', 'gf'];
+      const existingRoundIds = d.rounds ? d.rounds.map(r => r.id) : [];
+      const roundIds = orderedRoundIds.filter(id =>
+        id === 'gf' || existingRoundIds.includes(id)
+      );
+
+      // Collect all match cards from the original bracket layout
+      const allCards = Array.from(bracketStage.querySelectorAll('.bp-card'));
+      const gfCard   = bracketStage.querySelector('.bp-card.gf');
+
+      // Group cards by round based on known layout order
+      let cardGroups = {};
+
+      if (existingRoundIds.includes('r16') && existingRoundIds.includes('qf')) {
+        // 16-player: L-R16(4), L-QF(2), L-SF(1), GF(1 .gf), R-SF(1), R-QF(2), R-R16(4)
+        // allCards includes all .bp-card elements; .bp-card.gf is included in that list
+        // We need non-GF cards in order; GF card is the .gf one
+        const nonGfCards = allCards.filter(c => !c.classList.contains('gf'));
+        // nonGfCards order: L-R16[0..3], L-QF[0..1], L-SF[0], R-SF[0], R-QF[0..1], R-R16[0..3]
+        // That's 4+2+1 = 7 left, 1+2+4 = 7 right → 14 total (if all present)
+        const n = nonGfCards.length;
+        if (n >= 14) {
+          cardGroups['r16'] = [
+            nonGfCards[0], nonGfCards[1], nonGfCards[2], nonGfCards[3],
+            nonGfCards[n-4], nonGfCards[n-3], nonGfCards[n-2], nonGfCards[n-1]
+          ];
+          cardGroups['qf'] = [
+            nonGfCards[4], nonGfCards[5],
+            nonGfCards[n-6], nonGfCards[n-5]
+          ];
+          cardGroups['sf'] = [nonGfCards[6], nonGfCards[n-7]];
+        } else {
+          // Partial data — best effort
+          cardGroups['r16'] = nonGfCards.slice(0, Math.min(4, n));
+          cardGroups['qf']  = nonGfCards.slice(4, Math.min(6, n));
+          cardGroups['sf']  = nonGfCards.slice(6, Math.min(7, n));
+        }
+        cardGroups['gf'] = gfCard ? [gfCard] : [];
+      } else if (existingRoundIds.includes('qf')) {
+        // 8-player: L-QF(2), L-SF(1), GF(1 .gf), R-SF(1), R-QF(2)
+        const nonGfCards = allCards.filter(c => !c.classList.contains('gf'));
+        const n = nonGfCards.length;
+        if (n >= 6) {
+          cardGroups['qf'] = [
+            nonGfCards[0], nonGfCards[1],
+            nonGfCards[n-2], nonGfCards[n-1]
+          ];
+          cardGroups['sf'] = [nonGfCards[2], nonGfCards[n-3]];
+        } else {
+          cardGroups['qf'] = nonGfCards.slice(0, Math.min(4, n));
+          cardGroups['sf'] = nonGfCards.slice(4, Math.min(6, n));
+        }
+        cardGroups['gf'] = gfCard ? [gfCard] : [];
+      }
+
+      // Build panels — clone cards into round panel divs appended to stage
+      roundIds.forEach((roundId, i) => {
+        const panel = document.createElement('div');
+        panel.className = 'bp-round-panel hidden';
+        panel.dataset.round = roundId;
+
+        const cards = cardGroups[roundId] || [];
+        cards.forEach(card => {
+          if (card) panel.appendChild(card.cloneNode(true));
+        });
+
+        stageWrap.appendChild(panel);
+
+        // Dot indicator
+        const dot = document.createElement('div');
+        dot.className = 'bp-rnav-dot';
+        dot.dataset.index = i;
+        dotsEl.appendChild(dot);
+
+        mobileNavRounds.push({ id: roundId, label: ROUND_LABELS[roundId] || roundId, panel, dot });
+      });
+
+      mobileNavIndex = 0;
+
+      // Remove old listeners by replacing buttons (cloneNode trick)
+      const newPrev = prevBtn.cloneNode(true);
+      const newNext = nextBtn.cloneNode(true);
+      prevBtn.parentNode.replaceChild(newPrev, prevBtn);
+      nextBtn.parentNode.replaceChild(newNext, nextBtn);
+
+      newPrev.addEventListener('click', () => {
+        if (mobileNavIndex > 0) { mobileNavIndex--; renderMobileNav(); }
+      });
+      newNext.addEventListener('click', () => {
+        if (mobileNavIndex < mobileNavRounds.length - 1) { mobileNavIndex++; renderMobileNav(); }
+      });
+
+      // Hide original bracket layout — panels take over on mobile
+      bracketStage.style.display = 'none';
+
+      navEl.style.display = 'flex';
+      renderMobileNav();
+    }
+
+    function renderMobileNav() {
+      const labelEl = document.getElementById('bp-rnav-label');
+      const prevBtn = document.getElementById('bp-rnav-prev');
+      const nextBtn = document.getElementById('bp-rnav-next');
+
+      mobileNavRounds.forEach((r, i) => {
+        r.panel.classList.toggle('hidden', i !== mobileNavIndex);
+        r.dot.classList.toggle('active', i === mobileNavIndex);
+      });
+
+      if (labelEl) labelEl.textContent = mobileNavRounds[mobileNavIndex]?.label || '';
+      if (prevBtn) prevBtn.disabled = mobileNavIndex === 0;
+      if (nextBtn) nextBtn.disabled = mobileNavIndex === mobileNavRounds.length - 1;
+
+      // Scroll to top of page when switching rounds
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Scale-to-fit (tablet + desktop only) ─────────────────────────────────
+    function applyBracketScale() {
+      if (window.innerWidth < 1024) return;
+      const stageWrap = document.getElementById('stage-wrap');
+      const host      = document.getElementById('bp-scale-host');
+      if (!stageWrap || !host) return;
+
+      // Reset any previous scale so we measure native dimensions
+      stageWrap.style.transform       = '';
+      stageWrap.style.transformOrigin = '';
+      host.style.width    = '';
+      host.style.height   = '';
+      host.style.overflow = '';
+      void stageWrap.offsetWidth; // force reflow
+
+      const nativeW  = stageWrap.scrollWidth;
+      const nativeH  = stageWrap.scrollHeight;
+      const isEmbed  = document.documentElement.classList.contains('embed-mode');
+      const pagePad  = isEmbed ? 0 : 56; // embed: no padding; normal: 28px × 2
+      const available = window.innerWidth - pagePad;
+      const scale    = Math.min(1.0, available / nativeW);
+      if (scale >= 1.0) return; // bracket fits natively — no transform needed
+
+      stageWrap.style.transformOrigin = 'top left';
+      stageWrap.style.transform       = `scale(${scale})`;
+      host.style.width    = Math.ceil(nativeW * scale) + 'px';
+      host.style.height   = Math.ceil(nativeH * scale) + 'px';
+      host.style.overflow = 'hidden';
+    }
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1024) applyBracketScale();
+    });
+
     // ── Auto-refresh ──────────────────────────────────────────────────────────
     setInterval(async () => {
       await loadPlayers();
@@ -1034,6 +1432,164 @@
     }, 60000);
 
     init();
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script>
+    const SCREENSHOT_SVG_ICON = `
+      <svg width="13" height="13" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M6 1H3a2 2 0 0 0-2 2v3M10 1h3a2 2 0 0 1 2 2v3M6 15H3a2 2 0 0 1-2-2v-3M10 15h3a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="8" cy="8" r="2.5" stroke="currentColor" stroke-width="1.5"/>
+      </svg>`;
+
+    async function downloadBracketJpg() {
+      const bracketEl = document.getElementById('state-bracket');
+      const btn       = document.getElementById('screenshot-btn');
+      if (!bracketEl || bracketEl.style.display === 'none') return;
+
+      btn.disabled = true;
+      btn.textContent = 'Saving…';
+
+      // ── Force desktop layout regardless of current viewport ──────────────────
+      const bracketStage = document.getElementById('bracket-stage');
+      const roundNav     = document.getElementById('bp-round-nav');
+      const roundPanels  = Array.from(document.querySelectorAll('.bp-round-panel'));
+
+      // Show the full bracket layout and hide the mobile navigator UI
+      if (bracketStage) bracketStage.style.display = '';
+      roundPanels.forEach(p => { p.style.display = 'none'; });
+      if (roundNav) roundNav.style.display = 'none';
+
+      // Inject override styles that re-assert desktop values over the mobile media query
+      const overrideStyle = document.createElement('style');
+      overrideStyle.textContent = `
+        .bp-screenshot-mode .bp-page { padding: 36px 28px 44px !important; justify-content: center !important; }
+        .bp-screenshot-mode .bp-title { padding: 0 !important; width: auto !important; }
+        .bp-screenshot-mode .bp-title-text { font-size: 2.0rem !important; white-space: pre-line !important; word-break: normal !important; }
+        .bp-screenshot-mode .bp-gf-label { display: block !important; }
+        .bp-screenshot-mode .bp-stage { flex-direction: row !important; }
+        .bp-screenshot-mode .bp-label-row { display: flex !important; }
+        .bp-screenshot-mode .bp-pconn, .bp-screenshot-mode .bp-qfsf-conn { display: flex !important; }
+        .bp-screenshot-mode .bp-h, .bp-screenshot-mode .bp-pconn-s, .bp-screenshot-mode .bp-pconn-t,
+        .bp-screenshot-mode .bp-pconn-b, .bp-screenshot-mode .bp-qfsf-s, .bp-screenshot-mode .bp-qfsf-t,
+        .bp-screenshot-mode .bp-qfsf-b { display: block !important; }
+        .bp-screenshot-mode .bp-card { width: 338px !important; border-radius: 11px !important; }
+        .bp-screenshot-mode .bp-card.gf { width: 380px !important; }
+        .bp-screenshot-mode .bp-player { height: 65px !important; padding: 0 17px !important; }
+        .bp-screenshot-mode .bp-avatar { width: 44px !important; height: 44px !important; font-size: 0.94rem !important; }
+        .bp-screenshot-mode .bp-flag { width: 26px !important; height: 26px !important; bottom: -10px !important; right: -10px !important; }
+        .bp-screenshot-mode .bp-name { font-size: 1.14rem !important; padding-bottom: 3px !important; }
+        .bp-screenshot-mode .bp-name.wallet { font-size: 1.0rem !important; }
+        .bp-screenshot-mode .bp-score { font-size: 1.20rem !important; }
+        .bp-screenshot-mode .bp-seed { font-size: 0.83rem !important; min-width: 31px !important; }
+        .bp-screenshot-mode .bp-qf-col { gap: var(--qg) !important; align-self: center !important; }
+        .bp-screenshot-mode .bp-sf { align-self: center !important; }
+        .bp-screenshot-mode .bp-third { margin-top: 32px !important; padding: 0 !important; width: auto !important; flex-direction: column !important; align-items: center !important; gap: 8px !important; }
+        .bp-screenshot-mode .bp-third-label { margin: 0 !important; }
+        .bp-screenshot-mode .bp-champion { margin-top: 32px !important; }
+        .bp-screenshot-mode .bp-champion-avatar { width: 108px !important; height: 108px !important; font-size: 2.70rem !important; }
+        .bp-screenshot-mode .bp-champion-name { font-size: 1.36rem !important; }
+      `;
+      document.head.appendChild(overrideStyle);
+      document.documentElement.classList.add('bp-screenshot-mode');
+
+      // Remove scale transform so we capture at full native resolution
+      const stageWrap      = document.getElementById('stage-wrap');
+      const scaleHost      = document.getElementById('bp-scale-host');
+      const savedTransform = stageWrap ? stageWrap.style.transform       : '';
+      const savedTfOrigin  = stageWrap ? stageWrap.style.transformOrigin : '';
+      const savedHostW     = scaleHost ? scaleHost.style.width    : '';
+      const savedHostH     = scaleHost ? scaleHost.style.height   : '';
+      const savedHostOv    = scaleHost ? scaleHost.style.overflow : '';
+      if (stageWrap) { stageWrap.style.transform = ''; stageWrap.style.transformOrigin = ''; }
+      if (scaleHost) { scaleHost.style.width = ''; scaleHost.style.height = ''; scaleHost.style.overflow = ''; }
+      void document.body.offsetWidth; // force reflow
+
+      // Capture the full .bp-page (includes top/bottom padding + all bracket content)
+      const pageEl = document.getElementById('bp-page');
+
+      // Temporarily apply the page background to bp-page so it appears in the screenshot
+      const bgEl    = document.getElementById('bp-bg');
+      const bgImage = bgEl ? window.getComputedStyle(bgEl).backgroundImage : 'none';
+      const origBg    = pageEl.style.backgroundImage;
+      const origBgSz  = pageEl.style.backgroundSize;
+      const origBgPos = pageEl.style.backgroundPosition;
+      if (bgImage && bgImage !== 'none') {
+        pageEl.style.backgroundImage    =
+          `linear-gradient(to bottom,rgba(6,9,20,0.88) 0%,rgba(6,9,20,0.75) 40%,rgba(6,9,20,0.88) 100%),${bgImage}`;
+        pageEl.style.backgroundSize     = 'cover';
+        pageEl.style.backgroundPosition = 'center';
+      }
+
+      // Rewrite avatar src to same-origin proxy so html2canvas can render them
+      const avatarImgs = [];
+      const loadPromises = [];
+      pageEl.querySelectorAll('img').forEach(img => {
+        if (img.src && img.src.includes('avatar.anichess.com')) {
+          const orig = img.src;
+          avatarImgs.push({ img, orig });
+          loadPromises.push(new Promise(resolve => {
+            const done = () => { img.onload = null; img.onerror = null; resolve(); };
+            img.onload  = done;
+            img.onerror = done;
+            img.src = `/api/proxy-image?url=${encodeURIComponent(orig)}`;
+          }));
+        }
+      });
+      await Promise.all(loadPromises);
+
+      try {
+        const canvas = await html2canvas(pageEl, {
+          backgroundColor: '#090c16',
+          useCORS: true,
+          allowTaint: false,
+          scale: 2,
+          logging: false,
+          width:        pageEl.scrollWidth,
+          height:       pageEl.scrollHeight,
+          windowWidth:  pageEl.scrollWidth,
+          windowHeight: pageEl.scrollHeight,
+          scrollX: 0,
+          scrollY: 0,
+        });
+
+        canvas.toBlob(blob => {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'anichess-bracket.jpg';
+          a.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }, 'image/jpeg', 0.95);
+      } catch (err) {
+        console.error('Screenshot failed:', err);
+        alert('Screenshot failed: ' + (err && err.message ? err.message : 'unknown error'));
+      } finally {
+        avatarImgs.forEach(({ img, orig }) => { img.src = orig; });
+        pageEl.style.backgroundImage    = origBg;
+        pageEl.style.backgroundSize     = origBgSz;
+        pageEl.style.backgroundPosition = origBgPos;
+        // Restore scale transform
+        if (stageWrap) { stageWrap.style.transform = savedTransform; stageWrap.style.transformOrigin = savedTfOrigin; }
+        if (scaleHost) { scaleHost.style.width = savedHostW; scaleHost.style.height = savedHostH; scaleHost.style.overflow = savedHostOv; }
+        // Restore desktop layout override
+        document.documentElement.classList.remove('bp-screenshot-mode');
+        if (overrideStyle.parentNode) overrideStyle.parentNode.removeChild(overrideStyle);
+        // Restore mobile navigator state
+        if (mobileNavRounds.length > 0) {
+          if (bracketStage) bracketStage.style.display = 'none';
+          roundPanels.forEach(p => { p.style.display = ''; });
+          if (roundNav) roundNav.style.display = 'flex';
+          mobileNavRounds.forEach((r, i) => {
+            r.panel.classList.toggle('hidden', i !== mobileNavIndex);
+          });
+        } else {
+          roundPanels.forEach(p => { p.style.display = ''; });
+          if (roundNav) roundNav.style.display = '';
+        }
+        btn.disabled = false;
+        btn.innerHTML = SCREENSHOT_SVG_ICON + ' Save as JPG';
+      }
+    }
   </script>
 </body>
 </html>
