@@ -823,6 +823,8 @@ tr:hover .rank-badge.qualified { background: rgba(0,174,250,0.14); }
 }
 .player-link:hover { color: var(--text); opacity: 0.75; }
 
+.player-mobile-stat { display: none; }
+
 /* ── Tier cell ─────────────────────────────────────────── */
 .tier-cell-wrap {
   display: flex;
@@ -1148,16 +1150,16 @@ footer {
   main { padding: 16px; }
   header { padding-left: 16px; padding-right: 16px; }
   .logo-sub { display: none; }
-  .table-card-title { font-size: 3.5rem; }
-  .section-heading { font-size: 2.2rem; }
+  .table-card-title { font-size: 2.4rem; }
+  .section-heading { font-size: 1.6rem; }
 }
 
 /* 768px — hide matches column (Z Fold 5 main screen) */
 @media (max-width: 768px) {
   .col-matches { display: none; }
   .matches-cell { display: none; }
-  .table-card-title { font-size: 2.9rem; }
-  .section-heading { font-size: 1.9rem; }
+  .table-card-title { font-size: 2rem; }
+  .section-heading { font-size: 1.4rem; }
   /* Qualifier columns stack vertically */
   .qualified-body { flex-direction: column; }
   .qualifier-divider { width: 100%; height: 1px; align-self: auto; flex-shrink: 0; }
@@ -1171,16 +1173,21 @@ footer {
 /* 640px — compact header */
 @media (max-width: 640px) {
   .live-badge span:last-child { display: none; }
-  .last-updated-text { display: none; }
-  .section-heading { font-size: 1.6rem; }
+  .section-heading { font-size: 1.25rem; }
   .section-heading-wrap { flex-wrap: wrap; }
   .section-heading-wrap .tournament-cta-btn { margin-left: 0; }
+
+  /* B — show last-updated as a small sub-row below live badge + refresh */
+  .header-right { flex-wrap: wrap; justify-content: flex-end; gap: 6px 10px; }
+  .live-badge   { order: 1; }
+  .btn-refresh  { order: 2; }
+  .last-updated-text { order: 3; width: 100%; text-align: right; font-size: 0.60rem; opacity: 0.55; padding-bottom: 2px; }
 }
 
 /* ── Mobile card layout ≤ 540px (Z Fold 5 cover screen ~301px CSS) ── */
 @media (max-width: 540px) {
   header { padding: 0 12px; height: auto; }
-  main   { padding: 10px; }
+  main   { padding: 12px 12px 20px; }
 
   .refresh-text  { display: none; }
   .logo-name     { font-size: 0.88rem; }
@@ -1199,6 +1206,9 @@ footer {
     gap: 4px;
     flex-wrap: nowrap;
     padding: 8px 0 4px;
+    /* A — right-edge fade hints that more links are scrollable */
+    -webkit-mask-image: linear-gradient(to right, black 78%, transparent 100%);
+    mask-image: linear-gradient(to right, black 78%, transparent 100%);
   }
   .header-nav::-webkit-scrollbar { display: none; }
   .header-nav-link { font-size: 0.78rem; white-space: nowrap; padding: 4px 8px; max-width: none; flex-shrink: 0; }
@@ -1209,7 +1219,7 @@ footer {
   .eligibility-row    { flex-direction: column; align-items: flex-start; gap: 4px; }
 
   .table-card-header { padding: 14px 14px 12px; }
-  .table-card-title  { font-size: 2.4rem; letter-spacing: -0.01em; }
+  .table-card-title  { font-size: 1.6rem; letter-spacing: -0.01em; }
   .table-card-subtitle { display: none; }
   .table-header-top   { flex-direction: column; gap: 8px; }
   .tournament-cta-btn { align-self: flex-start; font-size: 0.74rem; padding: 7px 12px; }
@@ -1249,6 +1259,8 @@ footer {
   .lb-table td.loading-cell { display: flex !important; width: 100%; padding: 40px 20px !important; }
 
   .player-name    { font-size: 0.95rem; }
+  /* C — wins sub-line inside player cell */
+  .player-mobile-stat { display: block; font-size: 0.70rem; color: var(--text-3); font-weight: 400; margin-top: 1px; }
   .tier-badge-img { width: 28px; height: 28px; }
   .tier-pill      { font-size: 0.66rem; padding: 2px 6px; }
   .rating-val     { font-size: 0.88rem; }
@@ -1257,7 +1269,7 @@ footer {
   .rank-badge     { width: 30px; height: 30px; font-size: 0.74rem; }
 
   /* Section heading area */
-  .section-heading      { font-size: 1.4rem; }
+  .section-heading      { font-size: 1.1rem; }
   .section-heading-sub  { font-size: 0.74rem; }
   .section-heading-wrap { flex-direction: column; align-items: flex-start; gap: 10px; }
   .section-heading-wrap .tournament-cta-btn { margin-left: 0; }
@@ -1820,12 +1832,12 @@ footer {
 
 /* S-2 — table card title at 390px */
 @media (max-width: 390px) {
-  .table-card-title { font-size: 1.9rem; }
+  .table-card-title { font-size: 1.4rem; }
 }
 
 /* S-3 — section heading at 480px */
 @media (max-width: 480px) {
-  .section-heading { font-size: 1.2rem; line-height: 1.25; }
+  .section-heading { font-size: 1.05rem; line-height: 1.25; }
 }
 
 /* S-4 + S-5 + I-1 + I-3 — 540px additions */
@@ -1842,8 +1854,13 @@ footer {
   header { height: auto; padding: 0 16px; }
   .header-inner { align-items: flex-start; padding: 8px 0; flex-wrap: wrap; }
   .header-left { flex-wrap: wrap; width: 100%; }
-  .header-nav { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px; }
+  .header-nav { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px;
+    -webkit-mask-image: linear-gradient(to right, black 78%, transparent 100%);
+    mask-image: linear-gradient(to right, black 78%, transparent 100%); }
   .header-nav::-webkit-scrollbar { display: none; }
+  /* Tap targets for 541–639px range */
+  .header-nav-link { min-height: 44px; padding: 10px 8px; line-height: 1; }
+  .btn-refresh { min-height: 44px; }
 }
 
 /* S-7 — tournament layout padding */
@@ -1856,7 +1873,7 @@ footer {
 
 /* S-8 — eligibility note at 480px */
 @media (max-width: 480px) {
-  .eligibility-note { font-size: 0.68rem; letter-spacing: 0; }
+  .eligibility-note { font-size: 0.75rem; }
 }
 
 /* S-10 — footer wrap at 400px */

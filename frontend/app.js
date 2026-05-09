@@ -82,11 +82,15 @@ function isEVMAddress(str) {
 function playerCell(p) {
   const hasName = !isEVMAddress(p.username);
   const displayName = hasName ? p.username : fmtWallet(p.wallet);
-  // wallet is always validated as 0x+40hex by the server; esc() guards against any edge case
   const profileUrl = `https://anichess.com/profile/${esc(p.wallet)}/`;
+  const wins = p.rankedWins ?? null;
+  const mobileStat = wins != null
+    ? `<span class="player-mobile-stat">${wins.toLocaleString()}W</span>`
+    : '';
 
   return `<td class="player-cell">
     <a class="player-name player-link" href="${profileUrl}" target="_blank" rel="noopener" title="${esc(p.wallet)}">${esc(displayName)}</a>
+    ${mobileStat}
   </td>`;
 }
 
