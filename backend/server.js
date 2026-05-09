@@ -564,6 +564,26 @@ async function refreshPlayerData() {
 
 // ── Routes ──────────────────────────────────────────────────────────────────
 
+// Proxy avatar images to same-origin so browser screenshot tools can render them
+app.get('/api/proxy-image', async (req, res) => {
+  const { url } = req.query;
+  if (!url) return res.status(400).end();
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== 'avatar.anichess.com') return res.status(403).end();
+    const response = await axios.get(url, {
+      responseType: 'arraybuffer',
+      timeout: 5000,
+      headers: { 'User-Agent': 'AnichessTracker/1.0' },
+    });
+    res.set('Content-Type', response.headers['content-type'] || 'image/jpeg');
+    res.set('Cache-Control', 'public, max-age=3600');
+    res.send(Buffer.from(response.data));
+  } catch {
+    res.status(502).end();
+  }
+});
+
 app.get('/api/players', (req, res) => {
   const wallets = loadWallets();
   const winsStore = loadWinsStore();

@@ -64,6 +64,21 @@
     .admin-bar a:hover { opacity: 1; }
     body.has-admin-bar header { top: 37px; }
     body.has-admin-bar main   { padding-top: 42px; }
+
+    /* ── Mobile ── */
+
+    /* P-1 — admin bar wraps + header offset */
+    @media (max-width: 540px) {
+      .admin-bar { flex-wrap: wrap; padding: 8px 12px; gap: 6px; }
+      .admin-bar > span { width: 100%; }
+      body.has-admin-bar header { top: 74px; }
+      body.has-admin-bar main   { padding-top: 74px; }
+    }
+
+    /* P-2 — admin bar buttons tap target */
+    @media (max-width: 540px) {
+      .admin-bar-btn { padding: 10px 13px; min-height: 44px; }
+    }
   </style>
 </head>
 <body>

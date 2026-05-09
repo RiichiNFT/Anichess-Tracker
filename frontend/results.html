@@ -170,6 +170,30 @@
       .bracket-section-link { display: block; font-size: 0.82rem; color: #00aefa; }
       .bracket-section-link::after { content: ' ↗'; }
     }
+
+    /* ── Mobile ── */
+
+    /* R-1a — remove duplicate arrow on mobile bracket link */
+    @media (max-width: 700px) {
+      .bracket-section-link::after { content: ''; }
+    }
+
+    /* R-1b — tap target for promoted bracket link */
+    @media (max-width: 700px) {
+      .bracket-section-link { padding: 10px 0; display: inline-block; min-height: 44px; line-height: 24px; }
+    }
+
+    /* R-2 — admin bar wraps at 540px */
+    @media (max-width: 540px) {
+      .admin-bar { flex-wrap: wrap; padding: 8px 12px; gap: 6px; justify-content: flex-start; }
+      .admin-bar > span:first-child { width: 100%; }
+    }
+
+    /* R-3 — header offset when admin bar wraps to 2 rows */
+    @media (max-width: 540px) {
+      body.has-admin-bar header { top: 74px; }
+      body.has-admin-bar main   { padding-top: 74px; }
+    }
   </style>
 </head>
 <body>

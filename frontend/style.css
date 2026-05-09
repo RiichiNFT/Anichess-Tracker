@@ -1811,6 +1811,64 @@ footer {
   .winrate-cell .winrate-wrap { flex-direction: row; align-items: center; justify-content: flex-end; }
 }
 
+/* ── Mobile ── */
+
+/* S-1 — nav link font size at 480px */
+@media (max-width: 480px) {
+  .header-nav-link { font-size: 0.92rem; }
+}
+
+/* S-2 — table card title at 390px */
+@media (max-width: 390px) {
+  .table-card-title { font-size: 1.9rem; }
+}
+
+/* S-3 — section heading at 480px */
+@media (max-width: 480px) {
+  .section-heading { font-size: 1.2rem; line-height: 1.25; }
+}
+
+/* S-4 + S-5 + I-1 + I-3 — 540px additions */
+@media (max-width: 540px) {
+  .btn-refresh,
+  .btn-admin { padding: 10px 14px; min-height: 44px; }
+  .header-nav-link { padding: 10px 8px; min-height: 44px; line-height: 1; }
+  .section-heading-wrap .tournament-cta-btn { align-self: flex-start; width: auto; }
+  .table-card-title-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+}
+
+/* S-6 — header collapses to two rows at 640px */
+@media (max-width: 640px) {
+  header { height: auto; padding: 0 16px; }
+  .header-inner { align-items: flex-start; padding: 8px 0; flex-wrap: wrap; }
+  .header-left { flex-wrap: wrap; width: 100%; }
+  .header-nav { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px; }
+  .header-nav::-webkit-scrollbar { display: none; }
+}
+
+/* S-7 — tournament layout padding */
+@media (max-width: 640px) {
+  .tournament-layout { padding: 0 16px 32px; }
+}
+@media (max-width: 480px) {
+  .tournament-layout { padding: 0 10px 24px; }
+}
+
+/* S-8 — eligibility note at 480px */
+@media (max-width: 480px) {
+  .eligibility-note { font-size: 0.68rem; letter-spacing: 0; }
+}
+
+/* S-10 — footer wrap at 400px */
+@media (max-width: 400px) {
+  footer { flex-wrap: wrap; gap: 4px 8px; font-size: 0.68rem; }
+}
+
+/* I-2 — prize pool tag at 480px */
+@media (max-width: 480px) {
+  .prize-pool-tag { max-width: 100%; white-space: normal; font-size: 0.68rem; }
+}
+
 /* ── Bracket ──────────────────────────────────────────────────────────────── */
 
 .bracket-page-title {
