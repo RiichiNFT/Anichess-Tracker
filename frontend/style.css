@@ -1296,7 +1296,7 @@ footer {
     display: flex;
     justify-content: flex-end;
     gap: 24px;
-    padding: 8px 28px 12px 14px;
+    padding: 8px 48px 12px 14px;
     border-top: 1px solid var(--border-light);
   }
   .detail-stat { display: flex; flex-direction: column; gap: 2px; text-align: right; }
