@@ -83,14 +83,8 @@ function playerCell(p) {
   const hasName = !isEVMAddress(p.username);
   const displayName = hasName ? p.username : fmtWallet(p.wallet);
   const profileUrl = `https://anichess.com/profile/${esc(p.wallet)}/`;
-  const wins = p.rankedWins ?? null;
-  const mobileStat = wins != null
-    ? `<span class="player-mobile-stat">${wins.toLocaleString()}W</span>`
-    : '';
-
   return `<td class="player-cell">
     <a class="player-name player-link" href="${profileUrl}" target="_blank" rel="noopener" title="${esc(p.wallet)}">${esc(displayName)}</a>
-    ${mobileStat}
   </td>`;
 }
 
@@ -145,15 +139,25 @@ function winRateCell(wins, matches) {
 function renderRow(p) {
   const rank = p.localRank;
   const podiumCls = rank && rank <= 3 ? ` rank-${rank}` : '';
-  const rowCls = rank && rank <= 8 ? `class="qualified-row${podiumCls}"` : (podiumCls ? `class="${podiumCls.trim()}"` : '');
-  return `<tr ${rowCls}>
+  const rowCls = rank && rank <= 8 ? `qualified-row${podiumCls}` : podiumCls.trim();
+  const clsAttr = rowCls ? `class="${rowCls}"` : '';
+  const wins = p.rankedWins ?? null;
+  const total = p.matches?.RANK ?? null;
+  const pct = wins != null && total != null && total > 0 ? Math.round((wins / total) * 100) : null;
+  const dataAttrs = [
+    wins != null ? `data-wins="${wins}"` : '',
+    total != null ? `data-matches="${total}"` : '',
+    pct != null ? `data-pct="${pct}"` : '',
+  ].filter(Boolean).join(' ');
+  return `<tr ${clsAttr} ${dataAttrs}>
     ${rankCell(p.localRank)}
     ${playerCell(p)}
     ${tierCell(p.rating)}
     ${ratingCell(p.rating)}
     ${matchesCell(p.matches)}
-    ${winsCell(p.rankedWins ?? null)}
-    ${winRateCell(p.rankedWins ?? null, p.matches)}
+    ${winsCell(wins)}
+    ${winRateCell(wins, p.matches)}
+    <td class="expand-cell"><button class="expand-btn" aria-label="More info" aria-expanded="false">▾</button></td>
   </tr>`;
 }
 
@@ -418,7 +422,7 @@ async function fetchPlayers() {
     if (!renderedQualified) renderQualifiedSection(qualifiers, playerMap, wildcards, byRating.slice(0, 8));
 
     if (active.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="loading-cell"><span>No players with matches yet.</span></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="8" class="loading-cell"><span>No players with matches yet.</span></td></tr>`;
       if (countEl) countEl.textContent = '0';
     } else {
       tbody.innerHTML = active.map(renderRow).join('');
@@ -528,6 +532,36 @@ async function applyBackground() {
     }
   } catch {}
 }
+
+// Expand/collapse per-player detail row (mobile only)
+document.getElementById('lb-body').addEventListener('click', function(e) {
+  const btn = e.target.closest('.expand-btn');
+  if (!btn) return;
+  const row = btn.closest('tr');
+  const next = row.nextElementSibling;
+  const isExpanded = btn.classList.contains('expanded');
+  if (isExpanded) {
+    if (next && next.classList.contains('detail-row')) next.remove();
+    btn.classList.remove('expanded');
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    const fmtNum = v => (v != null && v !== '') ? Number(v).toLocaleString() : '—';
+    const wins = row.dataset.wins;
+    const matches = row.dataset.matches;
+    const pct = row.dataset.pct;
+    const detail = document.createElement('tr');
+    detail.className = 'detail-row';
+    detail.innerHTML =
+      `<td colspan="8" class="detail-cell"><div class="detail-inner">` +
+      `<div class="detail-stat"><span class="detail-label">Wins</span><span class="detail-value">${fmtNum(wins)}</span></div>` +
+      `<div class="detail-stat"><span class="detail-label">Matches</span><span class="detail-value">${fmtNum(matches)}</span></div>` +
+      `<div class="detail-stat"><span class="detail-label">Win Rate</span><span class="detail-value">${pct != null && pct !== '' ? pct + '%' : '—'}</span></div>` +
+      `</div></td>`;
+    row.after(detail);
+    btn.classList.add('expanded');
+    btn.setAttribute('aria-expanded', 'true');
+  }
+});
 
 applyLogo();
 applyBackground();

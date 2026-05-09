@@ -823,7 +823,23 @@ tr:hover .rank-badge.qualified { background: rgba(0,174,250,0.14); }
 }
 .player-link:hover { color: var(--text); opacity: 0.75; }
 
-.player-mobile-stat { display: none; }
+.expand-cell { display: none; }
+.col-expand  { display: none; }
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 6px 4px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.expand-btn.expanded { transform: rotate(180deg); }
 
 /* ── Tier cell ─────────────────────────────────────────── */
 .tier-cell-wrap {
@@ -1207,8 +1223,8 @@ footer {
     flex-wrap: nowrap;
     padding: 8px 0 4px;
     /* A — right-edge fade hints that more links are scrollable */
-    -webkit-mask-image: linear-gradient(to right, black 78%, transparent 100%);
-    mask-image: linear-gradient(to right, black 78%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, black 90%, transparent 100%);
   }
   .header-nav::-webkit-scrollbar { display: none; }
   .header-nav-link { font-size: 0.78rem; white-space: nowrap; padding: 4px 8px; max-width: none; flex-shrink: 0; }
@@ -1231,10 +1247,10 @@ footer {
 
   .lb-table tbody tr {
     display: grid;
-    grid-template-columns: 46px 1fr 72px;
+    grid-template-columns: 46px 1fr 72px 28px;
     grid-template-areas:
-      "rank player rating"
-      "rank tier   winrate";
+      "rank player rating expand"
+      "rank tier   winrate expand";
     align-items: center;
     column-gap: 10px;
     row-gap: 3px;
@@ -1252,6 +1268,7 @@ footer {
   .matches-cell { display: none !important; }
   .wins-cell    { display: none !important; }
   .winrate-cell { grid-area: winrate; display: block !important; text-align: right !important; }
+  .expand-cell  { grid-area: expand; display: flex !important; align-items: center; justify-content: center; }
   .winrate-cell .winrate-bar-track { display: none; }
   .winrate-cell .winrate-wrap { align-items: flex-end; }
 
@@ -1259,9 +1276,22 @@ footer {
   .lb-table td.loading-cell { display: flex !important; width: 100%; padding: 40px 20px !important; }
 
   .player-name    { font-size: 0.95rem; }
-  /* C — wins sub-line inside player cell */
-  .player-mobile-stat { display: block; font-size: 0.70rem; color: var(--text-3); font-weight: 400; margin-top: 1px; }
   .tier-badge-img { width: 28px; height: 28px; }
+
+  /* Detail row — expands below player row on tap */
+  .lb-table tbody tr.detail-row { display: block !important; padding: 0; border-bottom: none; }
+  .detail-cell { display: block !important; padding: 0 12px 10px !important; }
+  .detail-inner {
+    display: flex;
+    gap: 20px;
+    padding: 8px 12px;
+    background: var(--surface-2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .detail-stat { display: flex; flex-direction: column; gap: 2px; }
+  .detail-label { font-size: 0.60rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
+  .detail-value { font-size: 0.80rem; color: var(--text); font-weight: 600; }
   .tier-pill      { font-size: 0.66rem; padding: 2px 6px; }
   .rating-val     { font-size: 0.88rem; }
   .stat-val       { font-size: 0.82rem; }
@@ -1855,11 +1885,11 @@ footer {
   .header-inner { align-items: flex-start; padding: 8px 0; flex-wrap: wrap; }
   .header-left { flex-wrap: wrap; width: 100%; }
   .header-nav { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px;
-    -webkit-mask-image: linear-gradient(to right, black 78%, transparent 100%);
-    mask-image: linear-gradient(to right, black 78%, transparent 100%); }
+    -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+    mask-image: linear-gradient(to right, black 90%, transparent 100%); }
   .header-nav::-webkit-scrollbar { display: none; }
-  /* Tap targets for 541–639px range */
-  .header-nav-link { min-height: 44px; padding: 10px 8px; line-height: 1; }
+  /* Tap targets + smaller font for 541–639px range */
+  .header-nav-link { min-height: 44px; padding: 10px 8px; line-height: 1; font-size: 0.88rem; white-space: nowrap; flex-shrink: 0; }
   .btn-refresh { min-height: 44px; }
 }
 
