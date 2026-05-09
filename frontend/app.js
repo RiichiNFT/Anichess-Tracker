@@ -560,14 +560,12 @@ document.getElementById('lb-body').addEventListener('click', function(e) {
     const fmtNum = v => (v != null && v !== '') ? Number(v).toLocaleString() : '—';
     const wins = row.dataset.wins;
     const matches = row.dataset.matches;
-    const pct = row.dataset.pct;
     const detail = document.createElement('tr');
     detail.className = 'detail-row';
     detail.innerHTML =
       `<td colspan="8" class="detail-cell"><div class="detail-inner">` +
       `<div class="detail-stat"><span class="detail-label">Wins</span><span class="detail-value">${fmtNum(wins)}</span></div>` +
       `<div class="detail-stat"><span class="detail-label">Matches</span><span class="detail-value">${fmtNum(matches)}</span></div>` +
-      `<div class="detail-stat"><span class="detail-label">Win Rate</span><span class="detail-value">${pct != null && pct !== '' ? pct + '%' : '—'}</span></div>` +
       `</div></td>`;
     row.after(detail);
     btn.classList.add('expanded');
@@ -575,6 +573,17 @@ document.getElementById('lb-body').addEventListener('click', function(e) {
     btn.setAttribute('aria-expanded', 'true');
   }
 });
+
+// Remove nav gradient when scrolled to the rightmost end
+const headerNav = document.querySelector('.header-nav');
+if (headerNav) {
+  const syncNavMask = () => {
+    const atEnd = headerNav.scrollLeft + headerNav.clientWidth >= headerNav.scrollWidth - 1;
+    headerNav.classList.toggle('nav-end', atEnd);
+  };
+  headerNav.addEventListener('scroll', syncNavMask, { passive: true });
+  syncNavMask();
+}
 
 applyLogo();
 applyBackground();

@@ -826,6 +826,12 @@ tr:hover .rank-badge.qualified { background: rgba(0,174,250,0.14); }
 .expand-cell { display: none; }
 .col-expand  { display: none; }
 
+/* Hide nav gradient when scrolled to the rightmost end */
+.header-nav.nav-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
 .expand-btn {
   background: none;
   border: none;
