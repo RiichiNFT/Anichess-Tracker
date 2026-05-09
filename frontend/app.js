@@ -1,4 +1,5 @@
 const REFRESH_INTERVAL = 30 * 60 * 1000; // 30 minutes
+let absentSet = new Set();
 const CUTOFF_MS = 1778284800 * 1000;    // May 8 2026 00:00:00 UTC
 
 // HTML-escape helper — prevents XSS when inserting user-supplied strings into innerHTML
@@ -83,8 +84,10 @@ function playerCell(p) {
   const hasName = !isEVMAddress(p.username);
   const displayName = hasName ? p.username : fmtWallet(p.wallet);
   const profileUrl = `https://anichess.com/profile/${esc(p.wallet)}/`;
+  const absent = absentSet.has((p.wallet || '').toLowerCase())
+    ? `<span class="absent-tag">Absent</span>` : '';
   return `<td class="player-cell">
-    <a class="player-name player-link" href="${profileUrl}" target="_blank" rel="noopener" title="${esc(p.wallet)}">${esc(displayName)}</a>
+    <a class="player-name player-link" href="${profileUrl}" target="_blank" rel="noopener" title="${esc(p.wallet)}">${esc(displayName)}</a>${absent}
   </td>`;
 }
 
@@ -223,8 +226,10 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = []) {
     const rows = PLACES.map(({ key, cls, label: pos }) => {
       const wallet = q?.[key] || '';
       const name   = wallet ? resolveDisplayName(wallet, playerMap) : '—';
+      const absent = wallet && absentSet.has(wallet.toLowerCase())
+        ? `<span class="absent-tag">Absent</span>` : '';
       const inner  = wallet
-        ? `<a class="qs-name player-link" href="${profileUrl(wallet)}" target="_blank" rel="noopener" title="${esc(wallet)}">${esc(name)}</a>`
+        ? `<a class="qs-name player-link" href="${profileUrl(wallet)}" target="_blank" rel="noopener" title="${esc(wallet)}">${esc(name)}</a>${absent}`
         : `<span class="qs-name qs-empty">${esc(name)}</span>`;
       return `<div class="qs-row${wallet ? '' : ' qs-empty'}">
         <div class="qs-place ${cls}">${pos}</div>
@@ -360,19 +365,22 @@ async function fetchPlayers() {
   const updatedEl = document.getElementById('last-updated');
 
   try {
-    const [playersRes, qualifiersRes, excludedRes] = await Promise.all([
+    const [playersRes, qualifiersRes, excludedRes, absentRes] = await Promise.all([
       fetch('/api/players'),
       fetch('/api/qualifiers'),
       fetch('/api/excluded-wallets'),
+      fetch('/api/absent'),
     ]);
     if (!playersRes.ok) throw new Error(`HTTP ${playersRes.status}`);
-    const [players, qualifiers, excludedRaw] = await Promise.all([
+    const [players, qualifiers, excludedRaw, absentRaw] = await Promise.all([
       playersRes.json(),
       qualifiersRes.ok ? qualifiersRes.json().catch(() => ({})) : Promise.resolve({}),
       excludedRes.ok  ? excludedRes.json().catch(() => [])      : Promise.resolve([]),
+      absentRes.ok    ? absentRes.json().catch(() => [])        : Promise.resolve([]),
     ]);
     // Guard: server could return a non-array on error
     const excludedWallets = Array.isArray(excludedRaw) ? excludedRaw : [];
+    absentSet = new Set(Array.isArray(absentRaw) ? absentRaw.map(w => w.toLowerCase()) : []);
 
     errBanner.classList.add('hidden');
 

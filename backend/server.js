@@ -42,6 +42,7 @@ const BG_EXTS            = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
 const LOGO_EXTS          = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
 const TOURNAMENT_DETAILS_FILE  = path.join(__dirname, 'tournament-details.json');
 const QUALIFIERS_FILE          = path.join(__dirname, 'qualifiers.json');
+const ABSENT_FILE              = path.join(__dirname, 'absent.json');
 const EXCLUDED_WALLETS_FILE    = path.join(__dirname, 'excluded-wallets.json');
 const BRACKETS_FILE            = path.join(__dirname, 'brackets.json');
 const PLAYER_META_FILE         = path.join(__dirname, 'player-meta.json');
@@ -105,6 +106,15 @@ function loadQualifiers() {
 function saveQualifiers(data) {
   try { fs.writeFileSync(QUALIFIERS_FILE, JSON.stringify(data, null, 2)); }
   catch (err) { console.error('[saveQualifiers] Write failed:', err.message); throw err; }
+}
+
+function loadAbsent() {
+  try { return JSON.parse(fs.readFileSync(ABSENT_FILE, 'utf8')); } catch { return []; }
+}
+
+function saveAbsent(wallets) {
+  try { fs.writeFileSync(ABSENT_FILE, JSON.stringify(wallets, null, 2)); }
+  catch (err) { console.error('[saveAbsent] Write failed:', err.message); throw err; }
 }
 
 function loadExcludedWallets() {
@@ -841,6 +851,7 @@ app.get('/api/results-data', (req, res, next) => {
     qualifier2: q2.map(lookup),
     top8,
     wildcards,
+    absent: loadAbsent(),
   });
 });
 
@@ -1012,6 +1023,22 @@ app.post('/api/qualifiers', requireAdmin, (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to save qualifiers (disk error)' });
+  }
+});
+
+app.get('/api/absent', (req, res) => {
+  res.json(loadAbsent());
+});
+
+app.post('/api/absent', requireAdmin, (req, res) => {
+  const { wallets } = req.body;
+  if (!Array.isArray(wallets)) return res.status(400).json({ error: 'wallets array required' });
+  const valid = wallets.filter(w => typeof w === 'string' && w.trim()).map(w => w.trim().toLowerCase());
+  try {
+    saveAbsent(valid);
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ error: 'Failed to save absent list' });
   }
 });
 

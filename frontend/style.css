@@ -823,6 +823,23 @@ tr:hover .rank-badge.qualified { background: rgba(0,174,250,0.14); }
 }
 .player-link:hover { color: var(--text); opacity: 0.75; }
 
+.absent-tag {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.30);
+  color: #ef4444;
+  font-size: 0.60rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 .expand-cell { display: none; }
 .col-expand  { display: none; }
 
