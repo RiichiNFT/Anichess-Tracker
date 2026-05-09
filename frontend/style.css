@@ -1258,13 +1258,10 @@ footer {
 
   .lb-table tbody tr {
     display: grid;
-    grid-template-columns: 46px 1fr 72px 28px;
-    grid-template-areas:
-      "rank player rating expand"
-      "rank tier   .      expand";
+    grid-template-columns: 46px 1fr 26px 52px 28px;
+    grid-template-areas: "rank player tier rating expand";
     align-items: center;
-    column-gap: 10px;
-    row-gap: 3px;
+    column-gap: 8px;
     padding: 10px 12px;
     border-bottom: 1px solid var(--border);
   }
@@ -1274,7 +1271,7 @@ footer {
 
   .rank-cell    { grid-area: rank;   display: flex !important; align-items: center; justify-content: center; }
   .player-cell  { grid-area: player; overflow: hidden; }
-  .tier-cell    { grid-area: tier; }
+  .tier-cell    { grid-area: tier;   display: flex !important; align-items: center; justify-content: center; }
   .rating-cell  { grid-area: rating; text-align: right !important; }
   .matches-cell { display: none !important; }
   .wins-cell    { display: none !important; }
@@ -1285,7 +1282,7 @@ footer {
   .lb-table td.loading-cell { display: flex !important; width: 100%; padding: 40px 20px !important; }
 
   .player-name    { font-size: 0.95rem; }
-  .tier-badge-img { width: 28px; height: 28px; }
+  .tier-badge-img { width: 24px; height: 24px; }
 
   /* Detail row — expands below player row on tap */
   .lb-table tbody tr.detail-row { display: block !important; padding: 0; border-bottom: 1px solid var(--border); }
@@ -1305,8 +1302,8 @@ footer {
   .detail-stat { display: flex; flex-direction: column; gap: 2px; text-align: right; }
   .detail-label { font-size: 0.60rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
   .detail-value { font-size: 0.80rem; color: var(--text); font-weight: 600; }
-  .tier-pill      { font-size: 0.66rem; padding: 2px 6px; }
-  .rating-val     { font-size: 0.88rem; }
+  .tier-pill      { font-size: 0.60rem; padding: 1px 4px; }
+  .rating-val     { font-size: 0.88rem; font-weight: 700; }
   .stat-val       { font-size: 0.82rem; }
   .wins-val       { font-size: 0.82rem; }
   .rank-badge     { width: 30px; height: 30px; font-size: 0.74rem; }
