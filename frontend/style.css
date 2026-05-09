@@ -1208,14 +1208,19 @@ footer {
   .refresh-text  { display: none; }
   .logo-name     { font-size: 0.88rem; }
 
-  /* Two-row header: [logo · live · refresh] on row 1, scrollable nav on row 2 */
-  .header-inner { align-items: flex-start; padding: 8px 0; }
-  .header-left  { flex: 1; min-width: 0; flex-wrap: wrap; gap: 0; }
+  /* Two-row header: [logo · live · refresh] on row 1, scrollable nav on full-width row 2 */
+  /* Dissolve header-left so logo, header-right, and nav all become direct flex children    */
+  /* of header-inner — this lets nav claim 100% width regardless of header-right size.      */
+  .header-inner { flex-wrap: wrap; align-items: center; padding: 8px 0; }
+  .header-left  { display: contents; }
+  .logo         { order: 1; flex: 1; min-width: 0; }
+  .header-right { order: 2; }
 
   .header-nav {
+    order: 3;
+    flex: 0 0 100%;
     display: flex !important;
     width: 100%;
-    max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
