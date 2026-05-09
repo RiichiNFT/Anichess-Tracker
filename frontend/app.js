@@ -603,7 +603,7 @@ if (isPastCutoff()) {
   const qualifyBadge = document.querySelector('.qualify-badge');
   if (qualifyBadge) {
     qualifyBadge.className = 'qs-cutoff-badge qs-cutoff-ended';
-    qualifyBadge.innerHTML = '<span class="qs-cutoff-icon">✓</span><span><strong>ENDED</strong></span>';
+    qualifyBadge.innerHTML = '<span><strong>ENDED</strong></span>';
   }
 } else {
   setInterval(fetchPlayers, REFRESH_INTERVAL);
