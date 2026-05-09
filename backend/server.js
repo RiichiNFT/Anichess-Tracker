@@ -769,6 +769,16 @@ app.get('/api/refresh', refreshRateLimit, async (req, res) => {
   res.json({ ok: true, lastRefreshed });
 });
 
+// Admin-only force refresh — bypasses cutoff gate, for updating names/avatars post-tournament
+app.post('/api/admin/force-refresh', requireAdmin, async (req, res) => {
+  try {
+    await refreshPlayerData();
+    res.json({ ok: true, lastRefreshed });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Site state ───────────────────────────────────────────────────────────────
 
 app.get('/api/site-state', (req, res) => {
