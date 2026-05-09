@@ -538,11 +538,23 @@ document.getElementById('lb-body').addEventListener('click', function(e) {
   const btn = e.target.closest('.expand-btn');
   if (!btn) return;
   const row = btn.closest('tr');
-  const next = row.nextElementSibling;
   const isExpanded = btn.classList.contains('expanded');
+
+  // Close any other open detail rows first
+  this.querySelectorAll('.expand-btn.expanded').forEach(otherBtn => {
+    if (otherBtn === btn) return;
+    const otherNext = otherBtn.closest('tr').nextElementSibling;
+    if (otherNext && otherNext.classList.contains('detail-row')) otherNext.remove();
+    otherBtn.classList.remove('expanded');
+    otherBtn.textContent = '▾';
+    otherBtn.setAttribute('aria-expanded', 'false');
+  });
+
+  const next = row.nextElementSibling;
   if (isExpanded) {
     if (next && next.classList.contains('detail-row')) next.remove();
     btn.classList.remove('expanded');
+    btn.textContent = '▾';
     btn.setAttribute('aria-expanded', 'false');
   } else {
     const fmtNum = v => (v != null && v !== '') ? Number(v).toLocaleString() : '—';
@@ -559,6 +571,7 @@ document.getElementById('lb-body').addEventListener('click', function(e) {
       `</div></td>`;
     row.after(detail);
     btn.classList.add('expanded');
+    btn.textContent = '▴';
     btn.setAttribute('aria-expanded', 'true');
   }
 });

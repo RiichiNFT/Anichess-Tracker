@@ -829,17 +829,17 @@ tr:hover .rank-badge.qualified { background: rgba(0,174,250,0.14); }
 .expand-btn {
   background: none;
   border: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
   color: var(--accent);
   font-size: 1rem;
   cursor: pointer;
   padding: 6px 4px;
   line-height: 1;
-  transition: transform 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.expand-btn.expanded { transform: rotate(180deg); }
 
 /* ── Tier cell ─────────────────────────────────────────── */
 .tier-cell-wrap {
@@ -1284,15 +1284,13 @@ footer {
   .tier-badge-img { width: 28px; height: 28px; }
 
   /* Detail row — expands below player row on tap */
-  .lb-table tbody tr.detail-row { display: block !important; padding: 0; border-bottom: none; }
-  .detail-cell { display: block !important; padding: 0 12px 10px !important; }
+  .lb-table tbody tr.detail-row { display: block !important; padding: 0; border-bottom: 1px solid var(--border); }
+  .detail-cell { display: block !important; padding: 0 !important; }
   .detail-inner {
     display: flex;
-    gap: 20px;
-    padding: 8px 12px;
-    background: var(--surface-2);
-    border-radius: 8px;
-    border: 1px solid var(--border);
+    gap: 24px;
+    padding: 8px 14px 12px;
+    border-top: 1px solid var(--border-light);
   }
   .detail-stat { display: flex; flex-direction: column; gap: 2px; }
   .detail-label { font-size: 0.60rem; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.05em; }
