@@ -1,12 +1,16 @@
 {
   "qualifier1": {
-    "first": "0x28b20075fa2c4ad42ae249c750b470babde917ba",
-    "second": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
-    "third": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44"
+    "label": "Top 3 · LICHESS QUALIFIERS III",
+    "confirmed": true,
+    "first": "0x3d0cc8a30b4089a105eafa10f2e135f7f7d8fe7d",
+    "second": "0x4e82a2b817ddfb36d51eb0a656efaaea9c31b869",
+    "third": "0x814ba0de90545210d27efab7dfa9d90be6de67cb"
   },
   "qualifier2": {
-    "first": "0x96fa3775a0dc418c3a556c251b303e4843618722",
-    "second": "0x816a34f3735fa50121aa46038fc5033984c06371",
-    "third": "0xf19e10f45fd8af97fb732f9c42302e857297ac0a"
+    "label": "Top 3 · Lichess Team Battle",
+    "confirmed": true,
+    "first": "0x4f6fb706bd31c12523f8a4aacd46d834a5641cde",
+    "second": "0x966d2e6d0252c0bfdf85760b3e55057229049a7a",
+    "third": "0x6d12304569474f2b36ff0ad353912a16cb2e2849"
   }
 }

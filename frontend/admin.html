@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin — Anichess Tracker</title>
   <link rel="icon" id="favicon" href="/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
     /* Admin-specific styles */
@@ -421,9 +418,55 @@
       color: var(--text-2);
       font-weight: 500;
     }
+    .admin-auth-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg, #0f0f13);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .admin-auth-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 36px;
+      width: 100%;
+      max-width: 380px;
+      text-align: center;
+    }
+    .admin-auth-card h2 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+    .admin-auth-card p  { font-size: 0.85rem; color: var(--text-2); margin-bottom: 24px; }
+    .admin-auth-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface-2);
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    .admin-auth-input:focus { outline: none; border-color: var(--accent); }
+    .admin-auth-error { font-size: 0.82rem; color: #f87171; min-height: 20px; margin-top: 8px; }
   </style>
 </head>
 <body>
+  <div id="admin-auth-overlay" class="admin-auth-overlay">
+    <div class="admin-auth-card">
+      <div style="font-size:2rem;margin-bottom:12px">🔐</div>
+      <h2>Admin Login</h2>
+      <p>Enter your admin credentials to continue.</p>
+      <input class="admin-auth-input" type="text" id="admin-user-input"
+             placeholder="Username" autocomplete="username" value="admin">
+      <input class="admin-auth-input" type="password" id="admin-pass-input"
+             placeholder="Password" autocomplete="current-password">
+      <button class="btn btn-primary" id="admin-login-btn" style="width:100%">Log In</button>
+      <div id="admin-auth-error" class="admin-auth-error"></div>
+    </div>
+  </div>
   <header>
     <div class="header-inner">
       <h1>Anichess <span class="accent">Admin</span></h1>
@@ -577,33 +620,43 @@
       </div>
       <div class="panel-body">
         <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px">
-          Enter wallet addresses for players who automatically qualify for the playoffs via qualifier events.
-          Leave blank if a spot has not been filled yet.
+          Set the label, display state, and top-3 wallet addresses for each qualifier event.
         </p>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+        <div style="display:flex;flex-direction:column;gap:20px">
+
           <!-- Qualifier 1 -->
-          <div>
-            <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Qualifier 1</div>
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+              <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent)">Qualifier 1</div>
+              <div style="display:flex;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                <button id="q1-toggle-upcoming"   onclick="setQToggle(1,'upcoming')"   style="padding:6px 14px;font-size:0.72rem;font-weight:700;letter-spacing:0.07em;border:none;cursor:pointer;transition:background 0.15s,color 0.15s">Upcoming</button>
+                <button id="q1-toggle-confirmed"  onclick="setQToggle(1,'confirmed')"  style="padding:6px 14px;font-size:0.72rem;font-weight:700;letter-spacing:0.07em;border:none;cursor:pointer;transition:background 0.15s,color 0.15s">Confirmed Finalists</button>
+              </div>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Section Label</label>
+              <input id="q1-label" type="text" placeholder="Top 3 · LICHESS QUALIFIERS III" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">1st Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q1-first" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q1-first" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q1-first-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">2nd Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q1-second" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q1-second" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q1-second-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">3rd Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q1-third" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q1-third" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q1-third-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
@@ -611,32 +664,43 @@
           </div>
 
           <!-- Qualifier 2 -->
-          <div>
-            <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent);margin-bottom:12px">Qualifier 2</div>
+          <div style="background:var(--surface-2);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+              <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--accent)">Qualifier 2</div>
+              <div style="display:flex;background:rgba(0,0,0,0.3);border:1px solid var(--border);border-radius:8px;overflow:hidden">
+                <button id="q2-toggle-upcoming"   onclick="setQToggle(2,'upcoming')"   style="padding:6px 14px;font-size:0.72rem;font-weight:700;letter-spacing:0.07em;border:none;cursor:pointer;transition:background 0.15s,color 0.15s">Upcoming</button>
+                <button id="q2-toggle-confirmed"  onclick="setQToggle(2,'confirmed')"  style="padding:6px 14px;font-size:0.72rem;font-weight:700;letter-spacing:0.07em;border:none;cursor:pointer;transition:background 0.15s,color 0.15s">Confirmed Finalists</button>
+              </div>
+            </div>
+            <div style="margin-bottom:14px">
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Section Label</label>
+              <input id="q2-label" type="text" placeholder="Top 3 · Lichess Team Battle" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">1st Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q2-first" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q2-first" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q2-first-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">2nd Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q2-second" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q2-second" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q2-second-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
               <div>
                 <label style="font-size:0.76rem;color:var(--text-2);display:block;margin-bottom:4px">3rd Place</label>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <input id="q2-third" type="text" placeholder="0x…" style="flex:1;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                  <input id="q2-third" type="text" placeholder="0x…" style="flex:1;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
                   <label style="display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap;font-size:0.75rem;color:var(--text-2)"><input type="checkbox" id="q2-third-absent" style="accent-color:#ef4444;width:14px;height:14px"> Absent</label>
                 </div>
               </div>
             </div>
           </div>
+
         </div>
 
         <div class="action-row">
@@ -678,6 +742,32 @@
             <li class="empty-list">No wallets excluded.</li>
           </ul>
         </div>
+      </div>
+    </div>
+
+    <!-- Match Baseline -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>📅 Match Baseline</h2>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">
+          Snapshot current match counts as the baseline for the Wild Card "Most Matches" qualifier. Only matches played <strong>after</strong> the recorded start time will count toward qualification.
+        </p>
+        <div id="baseline-info" style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">Loading…</div>
+        <div style="margin-bottom:16px">
+          <label style="display:block;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:6px">Qualifying Period Start (UTC)</label>
+          <input type="datetime-local" id="baseline-timestamp"
+            style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;
+                   color:var(--text);font-size:0.82rem;outline:none;transition:border-color 0.2s;width:240px"
+            onfocus="this.style.borderColor='var(--accent)'"
+            onblur="this.style.borderColor='var(--border)'">
+          <span style="font-size:0.72rem;color:var(--text-2);margin-left:8px">Displayed as "since [date]" on the leaderboard</span>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="setMatchBaseline()">Set Baseline</button>
+        </div>
+        <div id="baseline-result" class="result-banner hidden" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -737,12 +827,33 @@
       </div>
       <div class="panel-body">
         <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
-          Write the tournament description shown on the Tournament Details page. Plain text — line breaks are preserved.
+          Plain text shown on the Tournament Details page. Each tab has its own text box. Line breaks and <code>Key: Value</code> formatting are preserved.
         </p>
 
-        <textarea id="tournament-details-input"
-          placeholder="Enter tournament details here…&#10;&#10;e.g. Format, prize pool, schedule, rules…"
-          style="width:100%;min-height:220px;background:var(--surface-2);border:1px solid var(--border);
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Day 1 — Qualifying Arena</div>
+        <textarea id="tournament-day1-input"
+          placeholder="Enter Day 1 qualifier details…&#10;&#10;e.g. Date, format, prize pool, rules…"
+          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
+                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
+                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
+                 transition:border-color 0.2s;margin-bottom:20px"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Day 2 — Knockout Bracket</div>
+        <textarea id="tournament-day2-input"
+          placeholder="Enter Day 2 knockout bracket details…&#10;&#10;e.g. Match format, participants, rules…"
+          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
+                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
+                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
+                 transition:border-color 0.2s;margin-bottom:20px"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Finals</div>
+        <textarea id="tournament-finals-input"
+          placeholder="Enter finals details…&#10;&#10;e.g. Date, format, prize pool, rules…"
+          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
                  border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
                  font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
                  transition:border-color 0.2s"
@@ -751,7 +862,7 @@
 
         <div class="action-row">
           <button class="btn btn-primary" onclick="saveTournamentDetails()">Save Details</button>
-          <button class="btn btn-ghost" onclick="clearTournamentDetails()">Clear</button>
+          <button class="btn btn-ghost" onclick="clearTournamentDetails()">Clear All</button>
         </div>
 
         <div id="tournament-details-result" class="result-banner hidden" style="margin-top:12px"></div>
@@ -851,6 +962,211 @@
       </div>
     </div>
 
+    <!-- Game Updates -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🎮 Game Updates</h2>
+        <span class="wallet-count-tag" id="game-updates-count-tag">0 entries</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
+          Post patch notes and release updates shown on the <a href="/updates.html" target="_blank" style="color:var(--accent)">Game Updates</a> page. Newest entry appears first.
+          <a href="/updates-admin.html" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-left:10px;color:var(--accent);font-weight:700;font-size:0.8rem;text-decoration:none;border:1px solid rgba(0,174,250,0.3);border-radius:6px;padding:3px 10px;vertical-align:middle">
+            <svg width="11" height="11" viewBox="0 0 13 13" fill="none"><path d="M6.5 1H12v5.5M12 1L5 8M3 2H1.5A.5.5 0 001 2.5v9a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Open Editor
+          </a>
+        </p>
+
+        <div style="display:grid;grid-template-columns:1fr 160px;gap:12px;margin-bottom:12px">
+          <div>
+            <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Title / Version</div>
+            <input id="gu-title-input" type="text" placeholder="e.g. Season 8 Patch 1.3"
+              style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s;box-sizing:border-box"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Date</div>
+            <input id="gu-date-input" type="date"
+              style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s;box-sizing:border-box;color-scheme:dark"
+              onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+        </div>
+
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:6px">Release Notes</div>
+        <textarea id="gu-content-input"
+          placeholder="Paste release notes here…&#10;&#10;You can use plain text. Line breaks are preserved."
+          style="width:100%;min-height:180px;background:var(--surface-2);border:1px solid var(--border);
+                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
+                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
+                 transition:border-color 0.2s;margin-bottom:14px;box-sizing:border-box"
+          onfocus="this.style.borderColor='var(--accent)'"
+          onblur="this.style.borderColor='var(--border)'"></textarea>
+
+        <div class="action-row" style="margin-bottom:20px">
+          <button class="btn btn-primary" onclick="addGameUpdate()">Add Update</button>
+        </div>
+        <div id="gu-add-result" class="result-banner hidden" style="margin-bottom:16px"></div>
+
+        <!-- Existing entries -->
+        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:10px">Saved Entries</div>
+        <div id="gu-entries-list">
+          <div style="font-size:0.82rem;color:var(--text-3);padding:10px 0">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Tournament Config (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>⚙️ Active Tournament Config</h2>
+        <span class="wallet-count-tag" id="tc-status-tag">Loading…</span>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:20px">
+          Controls the tournament info shown on the front page (tournament number, date, prize pool, cutoff, registration link, Lichess URL).
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Tournament Number</label>
+            <input id="tc-num" type="number" min="1" placeholder="2" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Prize Pool</label>
+            <input id="tc-prize" type="text" placeholder="$600 USD" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Final Date</label>
+            <input id="tc-date" type="text" placeholder="May 23, 2026" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Final Time</label>
+            <input id="tc-time" type="text" placeholder="13:00 UTC" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Cutoff Unix Timestamp (seconds)</label>
+            <input id="tc-cutoff-ts" type="number" placeholder="1779408000" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Cutoff Display Label</label>
+            <input id="tc-cutoff-disp" type="text" placeholder="MAY 21ST · UTC 00:00" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Registration URL</label>
+            <input id="tc-reg-url" type="url" placeholder="https://forms.gle/…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+          <div>
+            <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Lichess Qualifier URL</label>
+            <input id="tc-lichess-url" type="url" placeholder="https://lichess.org/tournament/…" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+          </div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="saveTournamentConfig()">Save Config</button>
+          <button class="btn btn-ghost" onclick="loadTournamentConfig()">Reset</button>
+        </div>
+        <div id="tc-result" class="result-banner hidden" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- Site Cache (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>🗑️ Site Cache</h2>
+      </div>
+      <div class="panel-body">
+        <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:16px">
+          Clears branding assets (logo, background) cached in visitors' browsers. Use this after uploading a new logo or background so visitors see the updated assets immediately on their next page load.
+        </p>
+        <button class="btn btn-ghost" onclick="clearSiteCache()">Clear Site Cache</button>
+      </div>
+    </div>
+
+    <!-- Past Events Manager (full width) -->
+    <div class="panel" style="margin-top:28px">
+      <div class="panel-header">
+        <h2>📅 Past Events Manager</h2>
+        <button class="btn btn-primary" style="padding:6px 14px;font-size:0.78rem" onclick="startNewEvent()">+ New Event</button>
+      </div>
+      <div class="panel-body">
+
+        <!-- Events list -->
+        <div id="pe-list" style="margin-bottom:24px"></div>
+
+        <!-- Add / Edit form -->
+        <div id="pe-form-wrap" style="border-top:1px solid var(--border);padding-top:20px;display:none">
+          <div style="font-size:0.78rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--accent);margin-bottom:16px" id="pe-form-title">Add New Event</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Event ID <span style="font-weight:400;text-transform:none;color:var(--text-3)">(url slug, e.g. rs2)</span></label>
+              <input id="pe-id" type="text" placeholder="rs2" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.82rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Title</label>
+              <input id="pe-title" type="text" placeholder="Anichess Rising Stars Tournament #2" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Date</label>
+              <input id="pe-date" type="text" placeholder="May 23, 2026" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Time</label>
+              <input id="pe-time" type="text" placeholder="13:00 UTC" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Prize Pool</label>
+              <input id="pe-prize" type="text" placeholder="$600 USD" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Format</label>
+              <input id="pe-format" type="text" placeholder="16-player Playoff Bracket" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Eligibility</label>
+              <input id="pe-eligibility" type="text" placeholder="New Players Only" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <!-- spacer -->
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Replay URL</label>
+              <input id="pe-replay-url" type="text" placeholder="/replay.html?event=rs2" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+            <div>
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Bracket URL</label>
+              <input id="pe-bracket-url" type="text" placeholder="/bracket-public.html?event=rs2" style="width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.8rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+            </div>
+          </div>
+
+          <!-- Podium -->
+          <div style="margin-top:18px">
+            <div style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);margin-bottom:12px">Podium</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;align-items:center">
+                <span style="font-size:0.78rem;font-weight:700;color:var(--gold);text-align:center">1st Place</span>
+                <input id="pe-p1-name" type="text" placeholder="Username" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.82rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+                <input id="pe-p1-wallet" type="text" placeholder="0x… wallet" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.78rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;align-items:center">
+                <span style="font-size:0.78rem;font-weight:700;color:#dce4f0;text-align:center">2nd Place</span>
+                <input id="pe-p2-name" type="text" placeholder="Username" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.82rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+                <input id="pe-p2-wallet" type="text" placeholder="0x… wallet" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.78rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+              <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:10px;align-items:center">
+                <span style="font-size:0.78rem;font-weight:700;color:#d4895a;text-align:center">3rd Place</span>
+                <input id="pe-p3-name" type="text" placeholder="Username" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:0.82rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+                <input id="pe-p3-wallet" type="text" placeholder="0x… wallet" style="background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:var(--font-mono,monospace);font-size:0.78rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+              </div>
+            </div>
+          </div>
+
+          <div class="action-row">
+            <button class="btn btn-primary" onclick="saveEventForm()">Save Event</button>
+            <button class="btn btn-ghost" onclick="cancelEventForm()">Cancel</button>
+          </div>
+          <div id="pe-result" class="result-banner hidden" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+
   </main>
 
   <footer>
@@ -861,6 +1177,92 @@
 
   <script>
     let parsedRows = [];
+
+    // ── Admin Auth ────────────────────────────────────────────────────────────
+    let _adminCreds = null;
+
+    // Intercept fetch to inject Authorization header for /api/ calls
+    try {
+      const _origFetch = window.fetch.bind(window);
+      window.fetch = function (url, opts) {
+        opts = opts ? Object.assign({}, opts) : {};
+        if (_adminCreds && typeof url === 'string' && url.startsWith('/api/')) {
+          opts.headers = Object.assign({ 'Authorization': 'Basic ' + _adminCreds }, opts.headers || {});
+        }
+        return _origFetch(url, opts);
+      };
+    } catch (err) {
+      console.warn('fetch override skipped:', err);
+    }
+
+    function checkCreds(creds) {
+      return new Promise(resolve => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/session', true);
+        xhr.setRequestHeader('Authorization', 'Basic ' + creds);
+        xhr.onload = () => {
+          try { resolve(JSON.parse(xhr.responseText).admin === true); }
+          catch { resolve(false); }
+        };
+        xhr.onerror = xhr.ontimeout = () => resolve(false);
+        xhr.timeout = 8000;
+        xhr.send();
+      });
+    }
+
+    async function doAdminLogin() {
+      const user  = (document.getElementById('admin-user-input').value || '').trim();
+      const pass  = document.getElementById('admin-pass-input').value;
+      const errEl = document.getElementById('admin-auth-error');
+      const btnEl = document.getElementById('admin-login-btn');
+      if (!user || !pass) { errEl.textContent = 'Username and password required.'; return; }
+      errEl.textContent = 'Checking…';
+      if (btnEl) btnEl.disabled = true;
+      const creds = btoa(user + ':' + pass);
+      const ok = await checkCreds(creds);
+      if (btnEl) btnEl.disabled = false;
+      if (ok) {
+        _adminCreds = creds;
+        sessionStorage.setItem('admin-creds', creds);
+        document.getElementById('admin-auth-overlay').style.display = 'none';
+      } else {
+        errEl.textContent = 'Login failed — check credentials and try again.';
+        document.getElementById('admin-pass-input').select();
+      }
+    }
+
+    async function initAdminAuth() {
+      const stored = sessionStorage.getItem('admin-creds');
+      if (stored) {
+        const ok = await checkCreds(stored);
+        if (ok) {
+          _adminCreds = stored;
+          document.getElementById('admin-auth-overlay').style.display = 'none';
+          return;
+        }
+      }
+      sessionStorage.removeItem('admin-creds');
+      document.getElementById('admin-auth-overlay').style.display = 'flex';
+      setTimeout(() => { const p = document.getElementById('admin-pass-input'); if (p) p.focus(); }, 80);
+    }
+
+    initAdminAuth();
+
+    document.getElementById('admin-login-btn').addEventListener('click', doAdminLogin);
+    document.getElementById('admin-pass-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') doAdminLogin();
+    });
+
+    // ── Site Cache ────────────────────────────────────────────────────────────
+    function clearSiteCache() {
+      // Remove known branding cache keys
+      const keys = ['anichess-logo', 'anichess-bg-url'];
+      keys.forEach(k => { localStorage.removeItem(k); sessionStorage.removeItem(k); });
+      // Also sweep any other anichess-* keys that may have been added over time
+      [...Object.keys(localStorage)].filter(k => k.startsWith('anichess')).forEach(k => localStorage.removeItem(k));
+      [...Object.keys(sessionStorage)].filter(k => k.startsWith('anichess')).forEach(k => sessionStorage.removeItem(k));
+      alert('Site cache cleared. Visitors will fetch fresh assets on their next page load.');
+    }
 
     // HTML-escape helper — prevents XSS when inserting server-sourced strings into innerHTML
     function esc(str) {
@@ -959,7 +1361,7 @@
       try {
         const res = await fetch('/api/wallets/bulk', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ addresses: valid, replace }),
         });
         const data = await res.json();
@@ -1015,7 +1417,7 @@
     }
 
     async function removeWallet(address) {
-      await fetch(`/api/wallets/${encodeURIComponent(address)}`, { method: 'DELETE' });
+      await fetch(`/api/wallets/${encodeURIComponent(address)}`, { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       loadWalletList();
     }
 
@@ -1023,7 +1425,7 @@
       if (!confirm('Remove all tracked wallets? This cannot be undone.')) return;
       const btn = document.getElementById('clear-all-btn');
       btn.disabled = true;
-      await fetch('/api/wallets', { method: 'DELETE' });
+      await fetch('/api/wallets', { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       btn.disabled = false;
       loadWalletList();
     }
@@ -1061,14 +1463,14 @@
     async function uploadBadge(file) {
       const formData = new FormData();
       formData.append('badge', file);
-      const res = await fetch('/api/badges', { method: 'POST', body: formData });
+      const res = await fetch('/api/badges', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed');
       return data.filename;
     }
 
     async function deleteBadge(filename) {
-      await fetch(`/api/badges/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      await fetch(`/api/badges/${encodeURIComponent(filename)}`, { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       loadBadgeGrid();
     }
 
@@ -1155,7 +1557,7 @@
       const formData = new FormData();
       formData.append('pdf', file);
       try {
-        const res = await fetch('/api/branding/pdf', { method: 'POST', body: formData });
+        const res = await fetch('/api/branding/pdf', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Upload failed');
         resultEl.className = 'result-banner result-success';
@@ -1170,7 +1572,7 @@
     }
 
     async function deleteBrandingPdf(filename) {
-      await fetch(`/api/branding/pdf/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      await fetch(`/api/branding/pdf/${encodeURIComponent(filename)}`, { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       loadBrandingList();
     }
 
@@ -1224,7 +1626,7 @@
       const formData = new FormData();
       formData.append('background', file);
       try {
-        const res = await fetch('/api/background', { method: 'POST', body: formData });
+        const res = await fetch('/api/background', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Upload failed');
         resultEl.className = 'result-banner result-success';
@@ -1239,7 +1641,7 @@
     }
 
     async function deleteBgImage() {
-      await fetch('/api/background', { method: 'DELETE' });
+      await fetch('/api/background', { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       document.getElementById('bg-result').classList.add('hidden');
       loadBgStatus();
     }
@@ -1295,7 +1697,7 @@
       const formData = new FormData();
       formData.append('logo', file);
       try {
-        const res = await fetch('/api/logo', { method: 'POST', body: formData });
+        const res = await fetch('/api/logo', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Upload failed');
         resultEl.className = 'result-banner result-success';
@@ -1310,7 +1712,7 @@
     }
 
     async function deleteLogoImage() {
-      await fetch('/api/logo', { method: 'DELETE' });
+      await fetch('/api/logo', { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       document.getElementById('logo-result').classList.add('hidden');
       loadLogoStatus();
     }
@@ -1334,6 +1736,18 @@
 
     const ABSENT_IDS = ['q1-first','q1-second','q1-third','q2-first','q2-second','q2-third'];
 
+    const qConfirmed = { 1: false, 2: false };
+
+    function setQToggle(n, state) {
+      qConfirmed[n] = (state === 'confirmed');
+      const upBtn = document.getElementById('q' + n + '-toggle-upcoming');
+      const cfBtn = document.getElementById('q' + n + '-toggle-confirmed');
+      upBtn.style.background = state === 'upcoming'  ? 'var(--accent)' : 'transparent';
+      upBtn.style.color      = state === 'upcoming'  ? '#04091a'        : 'var(--text-2)';
+      cfBtn.style.background = state === 'confirmed' ? 'var(--accent)' : 'transparent';
+      cfBtn.style.color      = state === 'confirmed' ? '#04091a'        : 'var(--text-2)';
+    }
+
     async function loadQualifiers() {
       const [qRes, aRes] = await Promise.all([fetch('/api/qualifiers'), fetch('/api/absent')]);
       if (!qRes.ok) return;
@@ -1341,12 +1755,17 @@
       const absent = aRes.ok ? await aRes.json() : [];
       const absentSet = new Set(absent.map(w => w.toLowerCase()));
 
+      document.getElementById('q1-label').value  = data.qualifier1?.label  || '';
       document.getElementById('q1-first').value  = data.qualifier1?.first  || '';
       document.getElementById('q1-second').value = data.qualifier1?.second || '';
       document.getElementById('q1-third').value  = data.qualifier1?.third  || '';
+      setQToggle(1, data.qualifier1?.confirmed ? 'confirmed' : 'upcoming');
+
+      document.getElementById('q2-label').value  = data.qualifier2?.label  || '';
       document.getElementById('q2-first').value  = data.qualifier2?.first  || '';
       document.getElementById('q2-second').value = data.qualifier2?.second || '';
       document.getElementById('q2-third').value  = data.qualifier2?.third  || '';
+      setQToggle(2, data.qualifier2?.confirmed ? 'confirmed' : 'upcoming');
 
       ABSENT_IDS.forEach(id => {
         const wallet = document.getElementById(id).value.trim().toLowerCase();
@@ -1359,25 +1778,28 @@
       resultEl.classList.add('hidden');
       const body = {
         qualifier1: {
-          first:  document.getElementById('q1-first').value.trim(),
-          second: document.getElementById('q1-second').value.trim(),
-          third:  document.getElementById('q1-third').value.trim(),
+          label:     document.getElementById('q1-label').value.trim(),
+          confirmed: qConfirmed[1],
+          first:     document.getElementById('q1-first').value.trim(),
+          second:    document.getElementById('q1-second').value.trim(),
+          third:     document.getElementById('q1-third').value.trim(),
         },
         qualifier2: {
-          first:  document.getElementById('q2-first').value.trim(),
-          second: document.getElementById('q2-second').value.trim(),
-          third:  document.getElementById('q2-third').value.trim(),
+          label:     document.getElementById('q2-label').value.trim(),
+          confirmed: qConfirmed[2],
+          first:     document.getElementById('q2-first').value.trim(),
+          second:    document.getElementById('q2-second').value.trim(),
+          third:     document.getElementById('q2-third').value.trim(),
         },
       };
-      // Collect absent wallets from checked boxes
       const absentWallets = ABSENT_IDS
         .filter(id => document.getElementById(id + '-absent').checked)
         .map(id => document.getElementById(id).value.trim())
         .filter(Boolean);
       try {
         const [qRes, aRes] = await Promise.all([
-          fetch('/api/qualifiers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
-          fetch('/api/absent',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallets: absentWallets }) }),
+          fetch('/api/qualifiers', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(body) }),
+          fetch('/api/absent',     { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ wallets: absentWallets }) }),
         ]);
         const qData = await qRes.json();
         if (!qRes.ok) throw new Error(qData.error || 'Save failed');
@@ -1393,15 +1815,18 @@
     }
 
     async function clearQualifiers() {
+      ['q1-label','q2-label'].forEach(id => { document.getElementById(id).value = ''; });
       ABSENT_IDS.forEach(id => {
         document.getElementById(id).value = '';
         document.getElementById(id + '-absent').checked = false;
       });
+      setQToggle(1, 'upcoming');
+      setQToggle(2, 'upcoming');
       const resultEl = document.getElementById('qualifiers-result');
       resultEl.classList.add('hidden');
       await Promise.all([
-        fetch('/api/qualifiers', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ qualifier1: { first: '', second: '', third: '' }, qualifier2: { first: '', second: '', third: '' } }) }),
-        fetch('/api/absent',     { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ wallets: [] }) }),
+        fetch('/api/qualifiers', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ qualifier1: { label: '', confirmed: false, first: '', second: '', third: '' }, qualifier2: { label: '', confirmed: false, first: '', second: '', third: '' } }) }),
+        fetch('/api/absent',     { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify({ wallets: [] }) }),
       ]);
       resultEl.className = 'result-banner result-success';
       resultEl.textContent = '✓ Qualifiers and absent list cleared.';
@@ -1439,13 +1864,18 @@
         current.innerHTML = '';
       }
 
-      // Also populate details textarea
-      if (data.details !== undefined) {
-        const textarea = document.getElementById('tournament-details-input');
-        if (textarea && !textarea._loaded) {
-          textarea.value = data.details;
-          textarea._loaded = true;
-        }
+      // Also populate details textareas
+      if (data.day1 !== undefined) {
+        const ta = document.getElementById('tournament-day1-input');
+        if (ta && !ta._loaded) { ta.value = data.day1; ta._loaded = true; }
+      }
+      if (data.day2 !== undefined) {
+        const ta = document.getElementById('tournament-day2-input');
+        if (ta && !ta._loaded) { ta.value = data.day2; ta._loaded = true; }
+      }
+      if (data.finals !== undefined) {
+        const ta = document.getElementById('tournament-finals-input');
+        if (ta && !ta._loaded) { ta.value = data.finals; ta._loaded = true; }
       }
     }
 
@@ -1455,7 +1885,7 @@
       const formData = new FormData();
       formData.append('logo', file);
       try {
-        const res = await fetch('/api/tournament/logo', { method: 'POST', body: formData });
+        const res = await fetch('/api/tournament/logo', { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: formData });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Upload failed');
         resultEl.className = 'result-banner result-success';
@@ -1470,7 +1900,7 @@
     }
 
     async function deleteTournamentLogo() {
-      await fetch('/api/tournament/logo', { method: 'DELETE' });
+      await fetch('/api/tournament/logo', { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       document.getElementById('tournament-logo-result').classList.add('hidden');
       const tag = document.getElementById('tournament-logo-status-tag');
       tag.textContent = 'No logo';
@@ -1525,7 +1955,7 @@
       try {
         const res = await fetch('/api/excluded-wallets', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ addresses }),
         });
         const data = await res.json();
@@ -1543,7 +1973,7 @@
 
     async function clearExcludedWallets() {
       if (!confirm('Remove all excluded wallets?')) return;
-      await fetch('/api/excluded-wallets', { method: 'DELETE' });
+      await fetch('/api/excluded-wallets', { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
       loadExcludedWallets();
     }
 
@@ -1553,13 +1983,67 @@
       const updated = list.filter(w => w.toLowerCase() !== wallet.toLowerCase());
       await fetch('/api/excluded-wallets', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ addresses: updated }),
       });
       loadExcludedWallets();
     }
 
     loadExcludedWallets();
+
+    // ── Match Baseline ────────────────────────────────────────────────────────
+
+    async function loadBaselineInfo() {
+      const el = document.getElementById('baseline-info');
+      try {
+        const res = await fetch('/api/match-baseline');
+        if (!res.ok) { el.textContent = 'No baseline set.'; return; }
+        const data = await res.json();
+        const baselines = (data && data.baselines) || {};
+        const keys = Object.keys(baselines);
+        if (keys.length === 0) {
+          el.textContent = 'No baseline set yet. Matches are counted from the beginning.';
+        } else {
+          const ts = data.timestamp ? ` (set ${new Date(data.timestamp).toUTCString()})` : '';
+          el.innerHTML = `Baseline covers <strong>${keys.length}</strong> wallet${keys.length !== 1 ? 's' : ''}${ts}. Wild Card counts matches played after this snapshot.`;
+        }
+      } catch { el.textContent = 'Could not load baseline info.'; }
+    }
+
+    async function setMatchBaseline() {
+      const resultEl = document.getElementById('baseline-result');
+      const tsInput  = document.getElementById('baseline-timestamp');
+      resultEl.className = 'result-banner hidden';
+      const tsValue = tsInput && tsInput.value ? new Date(tsInput.value + 'Z').toISOString() : null;
+      if (!confirm('Snapshot current match counts as the new baseline? This will reset the "since" counter for all players.')) return;
+      try {
+        const body = tsValue ? JSON.stringify({ timestamp: tsValue }) : '{}';
+        const res = await fetch('/api/match-baseline/snapshot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body,
+        });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        resultEl.className = 'result-banner success';
+        resultEl.textContent = `✓ Baseline set for ${data.count} wallet${data.count !== 1 ? 's' : ''}.`;
+        loadBaselineInfo();
+      } catch (e) {
+        resultEl.className = 'result-banner error';
+        resultEl.textContent = `Error: ${e.message}`;
+      }
+      resultEl.classList.remove('hidden');
+    }
+
+    loadBaselineInfo();
+    // Pre-fill datetime input with May 11 00:00 UTC (converted to local for the input)
+    (function() {
+      const el = document.getElementById('baseline-timestamp');
+      if (!el) return;
+      const d = new Date('2026-05-11T00:00:00Z');
+      const pad = n => String(n).padStart(2, '0');
+      el.value = `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())}T${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+    })();
 
     // ── Manual Finalists ──────────────────────────────────────────────────────
 
@@ -1654,7 +2138,7 @@
       try {
         const res = await fetch('/api/manual-finalists', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ top8, wildcards }),
         });
         if (!res.ok) throw new Error();
@@ -1670,7 +2154,7 @@
       if (!confirm('Clear all manual finalist overrides? Brackets will revert to automatic calculation.')) return;
       await fetch('/api/manual-finalists', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ top8: [], wildcards: [] }),
       });
       buildFinalistSlots('finalist-top8-slots', 8, []);
@@ -1712,7 +2196,7 @@
       if (!confirm(`Set site state to "${STATE_LABELS[newState]}"?`)) return;
       const res = await fetch('/api/site-state', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         body: JSON.stringify({ state: newState }),
       });
       if (res.ok) { currentSiteState = newState; renderSiteState(); }
@@ -1724,13 +2208,15 @@
 
     async function saveTournamentDetails() {
       const resultEl = document.getElementById('tournament-details-result');
-      const details  = document.getElementById('tournament-details-input').value;
+      const day1     = document.getElementById('tournament-day1-input').value;
+      const day2     = document.getElementById('tournament-day2-input').value;
+      const finals   = document.getElementById('tournament-finals-input').value;
       resultEl.classList.add('hidden');
       try {
         const res = await fetch('/api/tournament/details', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ details }),
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ day1, day2, finals }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Save failed');
@@ -1750,11 +2236,13 @@
       try {
         const res = await fetch('/api/tournament/details', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ details: '' }),
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ day1: '', day2: '', finals: '' }),
         });
         if (!res.ok) throw new Error('Clear failed');
-        document.getElementById('tournament-details-input').value = '';
+        document.getElementById('tournament-day1-input').value = '';
+        document.getElementById('tournament-day2-input').value = '';
+        document.getElementById('tournament-finals-input').value = '';
         resultEl.className = 'result-banner result-success';
         resultEl.textContent = '✓ Tournament details cleared.';
         resultEl.classList.remove('hidden');
@@ -1764,6 +2252,326 @@
         resultEl.classList.remove('hidden');
       }
     }
+
+    // ── Game Updates ──────────────────────────────────────────────────────────
+
+    function formatGuDate(str) {
+      if (!str) return '';
+      try {
+        const d = new Date(str + (str.length === 10 ? 'T00:00:00' : ''));
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+      } catch { return str; }
+    }
+
+    function renderGuEntries(entries) {
+      const list = document.getElementById('gu-entries-list');
+      const tag  = document.getElementById('game-updates-count-tag');
+      if (tag) tag.textContent = `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}`;
+      if (!entries.length) {
+        list.innerHTML = `<div style="font-size:0.82rem;color:var(--text-3);padding:10px 0">No updates yet.</div>`;
+        return;
+      }
+      list.innerHTML = entries.map(e => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;
+                    padding:10px 14px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+                    border-radius:8px;margin-bottom:8px">
+          <div style="min-width:0">
+            <div style="font-size:0.85rem;font-weight:700;color:var(--text);margin-bottom:2px;
+                        white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.title.replace(/</g,'&lt;')}</div>
+            <div style="font-size:0.72rem;color:var(--text-3)">${formatGuDate(e.date)}</div>
+          </div>
+          <button onclick="deleteGameUpdate('${e.id}')"
+            style="flex-shrink:0;background:rgba(220,50,50,0.1);border:1px solid rgba(220,50,50,0.2);
+                   color:#f87171;border-radius:6px;padding:5px 12px;font-size:0.72rem;font-weight:700;
+                   cursor:pointer;transition:background 0.15s"
+            onmouseover="this.style.background='rgba(220,50,50,0.22)'"
+            onmouseout="this.style.background='rgba(220,50,50,0.1)'">Delete</button>
+        </div>
+      `).join('');
+    }
+
+    async function loadGuEntries() {
+      try {
+        const res = await fetch('/api/game-updates');
+        if (!res.ok) throw new Error();
+        renderGuEntries(await res.json());
+      } catch {
+        document.getElementById('gu-entries-list').innerHTML =
+          `<div style="font-size:0.82rem;color:var(--text-3)">Failed to load entries.</div>`;
+      }
+    }
+
+    async function addGameUpdate() {
+      const resultEl = document.getElementById('gu-add-result');
+      const title   = document.getElementById('gu-title-input').value.trim();
+      const date    = document.getElementById('gu-date-input').value;
+      const content = document.getElementById('gu-content-input').value.trim();
+      resultEl.classList.add('hidden');
+      if (!title) { resultEl.className='result-banner result-error'; resultEl.textContent='Title is required.'; resultEl.classList.remove('hidden'); return; }
+      if (!content) { resultEl.className='result-banner result-error'; resultEl.textContent='Release notes content is required.'; resultEl.classList.remove('hidden'); return; }
+      try {
+        const res = await fetch('/api/game-updates', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ title, date, content }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Update posted.';
+        resultEl.classList.remove('hidden');
+        document.getElementById('gu-title-input').value = '';
+        document.getElementById('gu-date-input').value = '';
+        document.getElementById('gu-content-input').value = '';
+        loadGuEntries();
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Error: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function deleteGameUpdate(id) {
+      if (!confirm('Delete this update?')) return;
+      try {
+        const res = await fetch(`/api/game-updates/${id}`, {
+          method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        loadGuEntries();
+      } catch (err) { alert(`Error: ${err.message}`); }
+    }
+
+    // Set today's date as default for the date picker
+    document.getElementById('gu-date-input').value = new Date().toISOString().slice(0, 10);
+    loadGuEntries();
+
+    // ── Tournament Config ─────────────────────────────────────────────────────
+
+    async function loadTournamentConfig() {
+      const statusTag = document.getElementById('tc-status-tag');
+      const resultEl  = document.getElementById('tc-result');
+      resultEl.classList.add('hidden');
+      try {
+        const res = await fetch('/api/tournament-config');
+        if (!res.ok) throw new Error('Failed to load');
+        const cfg = await res.json();
+        document.getElementById('tc-num').value         = cfg.tournamentNumber || '';
+        document.getElementById('tc-prize').value       = cfg.prizePool        || '';
+        document.getElementById('tc-date').value        = cfg.finalDate        || '';
+        document.getElementById('tc-time').value        = cfg.finalTime        || '';
+        document.getElementById('tc-cutoff-ts').value   = cfg.cutoffTimestamp  || '';
+        document.getElementById('tc-cutoff-disp').value = cfg.cutoffDisplay    || '';
+        document.getElementById('tc-reg-url').value     = cfg.registrationUrl  || '';
+        document.getElementById('tc-lichess-url').value = cfg.lichessQualifierUrl || '';
+        if (statusTag) statusTag.textContent = `Tournament #${cfg.tournamentNumber}`;
+      } catch (err) {
+        if (statusTag) statusTag.textContent = 'Error';
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Load failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    async function saveTournamentConfig() {
+      const resultEl = document.getElementById('tc-result');
+      resultEl.classList.add('hidden');
+      const cfg = {
+        tournamentNumber:   parseInt(document.getElementById('tc-num').value, 10) || 1,
+        prizePool:          document.getElementById('tc-prize').value.trim(),
+        finalDate:          document.getElementById('tc-date').value.trim(),
+        finalTime:          document.getElementById('tc-time').value.trim(),
+        cutoffTimestamp:    parseInt(document.getElementById('tc-cutoff-ts').value, 10) || 0,
+        cutoffDisplay:      document.getElementById('tc-cutoff-disp').value.trim(),
+        registrationUrl:    document.getElementById('tc-reg-url').value.trim(),
+        lichessQualifierUrl: document.getElementById('tc-lichess-url').value.trim(),
+      };
+      try {
+        const res = await fetch('/api/tournament-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(cfg),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        const statusTag = document.getElementById('tc-status-tag');
+        if (statusTag) statusTag.textContent = `Tournament #${cfg.tournamentNumber}`;
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = '✓ Tournament config saved.';
+        resultEl.classList.remove('hidden');
+      } catch (err) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Save failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    // ── Past Events Manager ───────────────────────────────────────────────────
+
+    let pastEventsData = [];
+    let peEditIndex = -1;
+
+    async function initPastEvents() {
+      try {
+        const res = await fetch('/api/past-events');
+        if (!res.ok) throw new Error('Failed to load');
+        pastEventsData = await res.json();
+        renderPastEventsList();
+      } catch {
+        document.getElementById('pe-list').innerHTML =
+          '<div style="color:var(--text-muted);font-size:0.82rem">Failed to load events.</div>';
+      }
+    }
+
+    function renderPastEventsList() {
+      const el = document.getElementById('pe-list');
+      if (!pastEventsData.length) {
+        el.innerHTML = '<div style="color:var(--text-muted);font-size:0.82rem">No past events yet.</div>';
+        return;
+      }
+      el.innerHTML = pastEventsData.map((ev, idx) => `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;margin-bottom:8px">
+          <div>
+            <div style="font-weight:600;font-size:0.88rem;color:var(--text)">${esc(ev.title || ev.id)}</div>
+            <div style="font-size:0.78rem;color:var(--text-muted);margin-top:2px">${esc(ev.date || '')} · id: ${esc(ev.id)}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-shrink:0">
+            <button class="btn btn-ghost" style="padding:4px 12px;font-size:0.78rem" onclick="editEvent(${idx})">Edit</button>
+            <button class="btn btn-ghost" style="padding:4px 12px;font-size:0.78rem;color:#f56565" onclick="deleteEvent(${idx})">Delete</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function startNewEvent() {
+      peEditIndex = -1;
+      document.getElementById('pe-form-title').textContent = 'Add New Event';
+      ['pe-id','pe-title','pe-date','pe-time','pe-prize','pe-format','pe-eligibility',
+       'pe-replay-url','pe-bracket-url','pe-p1-name','pe-p1-wallet','pe-p2-name',
+       'pe-p2-wallet','pe-p3-name','pe-p3-wallet'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('pe-id').readOnly = false;
+      document.getElementById('pe-result').classList.add('hidden');
+      document.getElementById('pe-form-wrap').style.display = 'block';
+      document.getElementById('pe-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function editEvent(idx) {
+      const ev = pastEventsData[idx];
+      if (!ev) return;
+      peEditIndex = idx;
+      document.getElementById('pe-form-title').textContent = 'Edit Event';
+      document.getElementById('pe-id').value           = ev.id          || '';
+      document.getElementById('pe-id').readOnly        = true;
+      document.getElementById('pe-title').value        = ev.title       || '';
+      document.getElementById('pe-date').value         = ev.date        || '';
+      document.getElementById('pe-time').value         = ev.time        || '';
+      document.getElementById('pe-prize').value        = ev.prizePool   || '';
+      document.getElementById('pe-format').value       = ev.format      || '';
+      document.getElementById('pe-eligibility').value  = ev.eligibility || '';
+      document.getElementById('pe-replay-url').value   = ev.replayUrl   || '';
+      document.getElementById('pe-bracket-url').value  = ev.bracketUrl  || '';
+      const pAt = place => (ev.podium || []).find(x => x.place === place) || {};
+      document.getElementById('pe-p1-name').value   = pAt(1).username || '';
+      document.getElementById('pe-p1-wallet').value = pAt(1).wallet   || '';
+      document.getElementById('pe-p2-name').value   = pAt(2).username || '';
+      document.getElementById('pe-p2-wallet').value = pAt(2).wallet   || '';
+      document.getElementById('pe-p3-name').value   = pAt(3).username || '';
+      document.getElementById('pe-p3-wallet').value = pAt(3).wallet   || '';
+      document.getElementById('pe-result').classList.add('hidden');
+      document.getElementById('pe-form-wrap').style.display = 'block';
+      document.getElementById('pe-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    async function deleteEvent(idx) {
+      const ev = pastEventsData[idx];
+      if (!ev || !confirm(`Delete event "${ev.title || ev.id}"?`)) return;
+      pastEventsData.splice(idx, 1);
+      try {
+        const res = await fetch('/api/past-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(pastEventsData),
+        });
+        if (!res.ok) throw new Error('Save failed');
+        renderPastEventsList();
+      } catch (err) {
+        pastEventsData.splice(idx, 0, ev);
+        alert(`Delete failed: ${err.message}`);
+      }
+    }
+
+    async function saveEventForm() {
+      const resultEl = document.getElementById('pe-result');
+      resultEl.classList.add('hidden');
+      const id = document.getElementById('pe-id').value.trim();
+      if (!id) {
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = 'Event ID is required.';
+        resultEl.classList.remove('hidden');
+        return;
+      }
+      const podiumEntry = (place, nameId, walletId) => {
+        const username = document.getElementById(nameId).value.trim();
+        const wallet   = document.getElementById(walletId).value.trim();
+        return (username || wallet) ? { place, username, wallet } : null;
+      };
+      const ev = {
+        id,
+        title:       document.getElementById('pe-title').value.trim(),
+        date:        document.getElementById('pe-date').value.trim(),
+        time:        document.getElementById('pe-time').value.trim(),
+        prizePool:   document.getElementById('pe-prize').value.trim(),
+        format:      document.getElementById('pe-format').value.trim(),
+        eligibility: document.getElementById('pe-eligibility').value.trim(),
+        replayUrl:   document.getElementById('pe-replay-url').value.trim(),
+        bracketUrl:  document.getElementById('pe-bracket-url').value.trim(),
+        podium: [
+          podiumEntry(1, 'pe-p1-name', 'pe-p1-wallet'),
+          podiumEntry(2, 'pe-p2-name', 'pe-p2-wallet'),
+          podiumEntry(3, 'pe-p3-name', 'pe-p3-wallet'),
+        ].filter(Boolean),
+      };
+      const original = peEditIndex >= 0 ? pastEventsData[peEditIndex] : null;
+      if (peEditIndex >= 0) {
+        pastEventsData[peEditIndex] = ev;
+      } else {
+        pastEventsData.unshift(ev);
+      }
+      const wasNew = peEditIndex < 0;
+      try {
+        const res = await fetch('/api/past-events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify(pastEventsData),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        renderPastEventsList();
+        document.getElementById('pe-form-wrap').style.display = 'none';
+        resultEl.className = 'result-banner result-success';
+        resultEl.textContent = wasNew ? '✓ Event added.' : '✓ Event updated.';
+        resultEl.classList.remove('hidden');
+      } catch (err) {
+        if (wasNew) {
+          pastEventsData.shift();
+        } else {
+          pastEventsData[peEditIndex] = original;
+        }
+        resultEl.className = 'result-banner result-error';
+        resultEl.textContent = `Save failed: ${err.message}`;
+        resultEl.classList.remove('hidden');
+      }
+    }
+
+    function cancelEventForm() {
+      document.getElementById('pe-form-wrap').style.display = 'none';
+      document.getElementById('pe-result').classList.add('hidden');
+    }
+
+    loadTournamentConfig();
+    initPastEvents();
   </script>
 </body>
 </html>

@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Guides Admin — Anichess Tracker</title>
+  <link rel="icon" href="/favicon.ico">
+  <script>(function(){var d=document.documentElement;function setVh(){d.style.setProperty('--vh',window.innerHeight+'px');}setVh();window.addEventListener('orientationchange',function(){setTimeout(setVh,200);});})();</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --grad-start: #00aefa;
+      --grad-end:   #00fffb;
+      --grad:       linear-gradient(90deg, #00aefa, #00fffb);
+      --dark:       #101932;
+      --surface:    rgba(16,25,50,0.82);
+      --surface-2:  rgba(16,25,50,0.95);
+      --border:     rgba(0,174,250,0.14);
+      --border-dim: rgba(255,255,255,0.07);
+      --text:       #e8f0fe;
+      --text-2:     #7a9abf;
+      --text-3:     #3a5070;
+    }
+
+    html { scrollbar-gutter: stable; }
+    html, body {
+      min-height: 100%;
+      background: #090c16;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overscroll-behavior: none;
+    }
+
+    /* ── Background ── */
+    .ga-bg {
+      position: fixed;
+      top: -100px; left: -100px;
+      width: calc(100vw + 200px);
+      height: calc(var(--vh, 100vh) + 200px);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+    }
+    .ga-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(6,9,20,0.96) 0%, rgba(6,9,20,0.90) 100%);
+    }
+
+    /* ── Header ── */
+    header {
+      background: rgba(6,9,20,0.80);
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .header-inner { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .header-left  { display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+    .logo-icon  { font-size: 1.8rem; color: #00aefa; line-height: 1; filter: drop-shadow(0 0 10px rgba(0,174,250,0.35)); flex-shrink: 0; }
+    .logo-img   { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+    .logo-text-group { display: flex; flex-direction: column; gap: 2px; }
+    .logo-name  { font-size: 1rem; font-weight: 800; letter-spacing: 0.14em; color: var(--text); line-height: 1; white-space: nowrap; text-transform: uppercase; }
+    .logo-accent { font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .admin-badge {
+      font-size: 0.56rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      color: #00aefa; border: 1px solid rgba(0,174,250,0.35); border-radius: 4px; padding: 3px 8px;
+      background: rgba(0,174,250,0.08); flex-shrink: 0;
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .ga-view-btn {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      color: var(--text-2); background: none; border: 1px solid var(--border-dim); border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; text-decoration: none; transition: color 0.2s, border-color 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ga-view-btn:hover { color: var(--text); border-color: rgba(0,174,250,0.3); }
+    @media (max-width: 600px) { header { padding: 0 14px; } .ga-view-btn .ga-view-label { display: none; } }
+
+    /* ── Page wrapper ── */
+    .ga-page { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 28px 24px 80px; }
+
+    /* ── Admin header bar ── */
+    .ga-topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .ga-topbar-title {
+      font-size: 1.1rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text);
+    }
+    .ga-topbar-title span { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .ga-new-btn {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em;
+      background: var(--grad); color: #04091a; border: none; border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .ga-new-btn:hover { opacity: 0.88; }
+
+    /* ── Guide list table ── */
+    .ga-list-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .ga-list-card-header {
+      padding: 14px 22px 12px;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ga-list-card-title {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .ga-count {
+      font-size: 0.62rem; font-weight: 700; color: var(--text-3);
+      background: rgba(255,255,255,0.06); border-radius: 20px; padding: 2px 8px;
+    }
+    .ga-table-wrap { overflow-x: auto; }
+    table.ga-table { width: 100%; border-collapse: collapse; }
+    .ga-table th {
+      padding: 9px 18px; text-align: left;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-3); background: rgba(0,0,0,0.18); border-bottom: 1px solid var(--border-dim);
+      white-space: nowrap;
+    }
+    .ga-table td { padding: 11px 18px; border-bottom: 1px solid var(--border-dim); vertical-align: middle; }
+    .ga-table tr:last-child td { border-bottom: none; }
+    .ga-table tr:hover td { background: rgba(255,255,255,0.025); }
+    .ga-table .ga-col-title { font-size: 0.84rem; font-weight: 600; color: var(--text); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ga-table .ga-col-cat   { font-size: 0.72rem; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+    .ga-table .ga-col-date  { font-size: 0.70rem; color: var(--text-3); white-space: nowrap; }
+    .ga-table .ga-col-act   { white-space: nowrap; }
+    .ga-pill {
+      display: inline-block; font-size: 0.56rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      border-radius: 20px; padding: 3px 9px;
+    }
+    .ga-pill.published { background: rgba(0,255,100,0.12); color: #00e676; border: 1px solid rgba(0,255,100,0.20); }
+    .ga-pill.draft     { background: rgba(255,255,255,0.07); color: var(--text-3); border: 1px solid rgba(255,255,255,0.10); }
+    .ga-edit-btn {
+      font-size: 0.70rem; font-weight: 700; background: rgba(0,174,250,0.12); color: #00aefa;
+      border: 1px solid rgba(0,174,250,0.25); border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s; margin-right: 6px;
+    }
+    .ga-edit-btn:hover { background: rgba(0,174,250,0.22); }
+    .ga-del-btn-sm {
+      font-size: 0.70rem; font-weight: 700; background: rgba(255,60,60,0.10); color: #ff6b6b;
+      border: 1px solid rgba(255,60,60,0.20); border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ga-del-btn-sm:hover { background: rgba(255,60,60,0.20); }
+    .ga-empty-row td { text-align: center; padding: 36px; font-size: 0.84rem; color: var(--text-3); }
+
+    /* ── Editor section ── */
+    .ga-editor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .ga-editor-card.hidden { display: none; }
+
+    .ga-editor-top {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .ga-editor-heading {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      flex-shrink: 0;
+    }
+    .ga-editing-label {
+      font-size: 0.68rem; font-weight: 600; color: var(--text-3); flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ga-save-status {
+      font-size: 0.64rem; font-weight: 600; color: var(--text-3); flex-shrink: 0;
+      transition: color 0.3s;
+    }
+    .ga-save-status.ok  { color: #00e676; }
+    .ga-save-status.err { color: #ff6b6b; }
+
+    .ga-fields {
+      padding: 16px 22px 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .ga-field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ga-title-input {
+      flex: 1; min-width: 220px;
+      background: rgba(6,9,20,0.70); border: 1px solid var(--border-dim); border-radius: 9px;
+      color: var(--text); font-family: inherit; font-size: 1rem; font-weight: 700;
+      padding: 11px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .ga-title-input::placeholder { color: var(--text-3); font-weight: 400; }
+    .ga-title-input:focus { border-color: rgba(0,174,250,0.45); }
+    .ga-cat-select {
+      background: rgba(6,9,20,0.70); border: 1px solid var(--border-dim); border-radius: 9px;
+      color: var(--text); font-family: inherit; font-size: 0.82rem; font-weight: 600;
+      padding: 11px 14px; outline: none; cursor: pointer; transition: border-color 0.2s;
+      appearance: none; -webkit-appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a9abf' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center;
+      padding-right: 34px;
+    }
+    .ga-cat-select:focus { border-color: rgba(0,174,250,0.45); }
+    .ga-cat-select option { background: #101932; color: var(--text); }
+    .ga-excerpt-input {
+      width: 100%;
+      background: rgba(6,9,20,0.70); border: 1px solid var(--border-dim); border-radius: 9px;
+      color: var(--text); font-family: inherit; font-size: 0.82rem;
+      padding: 10px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .ga-excerpt-input::placeholder { color: var(--text-3); }
+    .ga-excerpt-input:focus { border-color: rgba(0,174,250,0.45); }
+
+    /* ── Toolbar ── */
+    .ga-toolbar {
+      display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
+      padding: 8px 22px;
+      border-bottom: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.15);
+    }
+    .ga-tb-btn {
+      font-size: 0.72rem; font-weight: 700; font-family: inherit;
+      background: none; border: 1px solid transparent; border-radius: 6px;
+      color: var(--text-2); padding: 5px 9px; cursor: pointer;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      white-space: nowrap; line-height: 1;
+    }
+    .ga-tb-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); border-color: var(--border-dim); }
+    .ga-tb-sep { width: 1px; height: 18px; background: var(--border-dim); margin: 0 4px; flex-shrink: 0; align-self: center; }
+
+    /* ── Split pane ── */
+    .ga-split {
+      display: flex;
+      min-height: 420px;
+    }
+    .ga-md-pane, .ga-preview-pane {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+    }
+    .ga-md-pane { border-right: 1px solid var(--border-dim); }
+    .ga-pane-label {
+      font-size: 0.55rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-3); padding: 7px 16px; border-bottom: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.12);
+    }
+    .ga-md {
+      flex: 1;
+      width: 100%;
+      background: rgba(4,7,18,0.80);
+      border: none; outline: none; resize: none;
+      color: var(--text); font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem; line-height: 1.7;
+      padding: 18px 20px;
+      min-height: 380px;
+    }
+    .ga-md::placeholder { color: var(--text-3); }
+    .ga-preview-pane { overflow-y: auto; }
+    .ga-preview-scroll { padding: 18px 24px; }
+
+    /* ── Prose (reuse from guides.html) ── */
+    .gd-prose { line-height: 1.72; color: var(--text); font-size: 0.92rem; }
+    .gd-prose h1 { font-size: 1.6rem; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 16px; line-height: 1.15; }
+    .gd-prose h2 { font-size: 1.2rem; font-weight: 700; color: var(--text); margin: 28px 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--border-dim); }
+    .gd-prose h3 { font-size: 1rem; font-weight: 700; color: var(--text-2); margin: 20px 0 7px; }
+    .gd-prose h4 { font-size: 0.88rem; font-weight: 700; color: var(--text-3); margin: 16px 0 5px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .gd-prose p  { margin: 0 0 12px; }
+    .gd-prose ul, .gd-prose ol { margin: 0 0 12px; padding-left: 22px; }
+    .gd-prose li { margin-bottom: 4px; }
+    .gd-prose li > ul, .gd-prose li > ol { margin-bottom: 0; margin-top: 3px; }
+    .gd-prose strong { font-weight: 700; color: #fff; }
+    .gd-prose em { color: var(--text-2); }
+    .gd-prose a { color: var(--grad-start); text-decoration: none; }
+    .gd-prose a:hover { text-decoration: underline; }
+    .gd-prose code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84em; background: rgba(0,174,250,0.10); color: #00fffb; border-radius: 4px; padding: 2px 6px;
+    }
+    .gd-prose pre {
+      background: rgba(6,9,20,0.80); border: 1px solid var(--border-dim); border-left: 3px solid var(--grad-start);
+      border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 0 0 16px;
+    }
+    .gd-prose pre code { background: none; padding: 0; color: #e8f0fe; font-size: 0.84rem; }
+    .gd-prose blockquote {
+      border-left: 3px solid; border-image: linear-gradient(to bottom, #00aefa, #00fffb) 1;
+      margin: 0 0 16px; padding: 9px 16px; background: rgba(0,174,250,0.05); border-radius: 0 6px 6px 0;
+      color: var(--text-2); font-style: italic;
+    }
+    .gd-prose hr { border: none; height: 1px; background: linear-gradient(90deg, rgba(0,174,250,0.4), transparent); margin: 24px 0; }
+    .gd-prose table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 0 0 16px; }
+    .gd-prose th { background: rgba(0,174,250,0.10); color: var(--grad-start); font-weight: 700; text-align: left; padding: 8px 12px; font-size: 0.70rem; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .gd-prose td { padding: 8px 12px; border-bottom: 1px solid var(--border-dim); color: var(--text); }
+    .gd-prose tr:last-child td { border-bottom: none; }
+    .gd-prose tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .gd-prose img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+    .gd-prose .yt-embed { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; margin: 14px 0; background: #000; }
+    .gd-prose .yt-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 10px; }
+
+    /* ── Footer bar ── */
+    .ga-footer-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.20);
+      flex-wrap: wrap;
+    }
+    .ga-btn-draft {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: none; color: var(--text-2); border: 1px solid var(--border-dim); border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    }
+    .ga-btn-draft:hover { color: var(--text); border-color: rgba(0,174,250,0.3); }
+    .ga-btn-publish {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: var(--grad); color: #04091a; border: none; border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: opacity 0.2s;
+    }
+    .ga-btn-publish:hover { opacity: 0.88; }
+    .ga-footer-spacer { flex: 1; }
+    .ga-btn-delete {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: rgba(255,60,60,0.10); color: #ff6b6b; border: 1px solid rgba(255,60,60,0.22); border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: background 0.2s;
+    }
+    .ga-btn-delete:hover { background: rgba(255,60,60,0.22); }
+    .ga-btn-delete.hidden { display: none; }
+
+    /* ── Toast ── */
+    .ga-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(16,25,50,0.96); border: 1px solid var(--border); border-radius: 10px;
+      padding: 11px 22px; font-size: 0.78rem; font-weight: 600; color: var(--text);
+      backdrop-filter: blur(12px); z-index: 99; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
+    }
+    .ga-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .ga-toast.success { border-color: rgba(0,230,118,0.35); color: #00e676; }
+    .ga-toast.error   { border-color: rgba(255,107,107,0.35); color: #ff6b6b; }
+
+    /* ── Responsive ── */
+    @media (max-width: 760px) {
+      .ga-page { padding: 18px 14px 60px; }
+      .ga-split { flex-direction: column; min-height: auto; }
+      .ga-md-pane { border-right: none; border-bottom: 1px solid var(--border-dim); }
+      .ga-md { min-height: 260px; }
+      .ga-preview-scroll { padding: 14px 16px; }
+      .ga-fields { padding: 12px 14px 0; }
+      .ga-toolbar { padding: 8px 14px; }
+      .ga-footer-bar { padding: 12px 14px; }
+      .ga-editor-top { padding: 14px 14px 10px; }
+      .ga-list-card-header { padding: 12px 14px 10px; }
+      .ga-table th, .ga-table td { padding: 9px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ga-bg" id="ga-bg"></div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+          </div>
+        </a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="header-right">
+        <a class="ga-view-btn" href="/guides.html" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1H12v5.5M12 1L5 8M3 2H1.5A.5.5 0 001 2.5v9a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="ga-view-label">View Guides</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="ga-page">
+    <div class="ga-topbar">
+      <div class="ga-topbar-title">Strategy Guides <span>Admin</span></div>
+      <button class="ga-new-btn" onclick="newGuide()">+ New Guide</button>
+    </div>
+
+    <!-- Guide list -->
+    <div class="ga-list-card">
+      <div class="ga-list-card-header">
+        <span class="ga-list-card-title">All Guides</span>
+        <span class="ga-count" id="ga-count">0</span>
+      </div>
+      <div class="ga-table-wrap">
+        <table class="ga-table" id="ga-table">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ga-tbody">
+            <tr class="ga-empty-row"><td colspan="5">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="ga-editor-card hidden" id="ga-editor-card">
+      <div class="ga-editor-top">
+        <span class="ga-editor-heading">Editor</span>
+        <span class="ga-editing-label" id="ga-editing-label">New Guide</span>
+        <span class="ga-save-status" id="ga-save-status"></span>
+      </div>
+      <div class="ga-fields">
+        <div class="ga-field-row">
+          <input class="ga-title-input" id="ga-title" type="text" placeholder="Guide title…" autocomplete="off" />
+          <select class="ga-cat-select" id="ga-cat">
+            <option value="General">General</option>
+            <option value="Opening">Opening</option>
+            <option value="Mid-game">Mid-game</option>
+            <option value="Endgame">Endgame</option>
+            <option value="Tactics">Tactics</option>
+          </select>
+        </div>
+        <div class="ga-field-row">
+          <input class="ga-excerpt-input" id="ga-excerpt" type="text" placeholder="Short excerpt shown in listings…" autocomplete="off" />
+        </div>
+      </div>
+      <div class="ga-toolbar">
+        <button class="ga-tb-btn" onclick="ins('**','**','bold text')" title="Bold">B</button>
+        <button class="ga-tb-btn" style="font-style:italic" onclick="ins('*','*','italic text')" title="Italic">I</button>
+        <button class="ga-tb-btn" onclick="ins('\n~~','~~\n','strikethrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insLine('# ')" title="Heading 1">H1</button>
+        <button class="ga-tb-btn" onclick="insLine('## ')" title="Heading 2">H2</button>
+        <button class="ga-tb-btn" onclick="insLine('### ')" title="Heading 3">H3</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="ins('\`','\`','code')" title="Inline code">&#96;c&#96;</button>
+        <button class="ga-tb-btn" onclick="ins('\n\`\`\`\n','\n\`\`\`\n','code block')" title="Code block">{ }</button>
+        <button class="ga-tb-btn" onclick="insLine('> ')" title="Blockquote">❝</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insLine('- ')" title="Bullet list">• List</button>
+        <button class="ga-tb-btn" onclick="insLine('1. ')" title="Numbered list">1. List</button>
+        <button class="ga-tb-btn" onclick="insLine('---')" title="Horizontal rule">—</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insTable()" title="Insert table">⊞ Table</button>
+        <button class="ga-tb-btn" onclick="insLink()" title="Link">🔗</button>
+        <button class="ga-tb-btn" onclick="insImg()" title="Image">🖼</button>
+        <button class="ga-tb-btn" onclick="insYoutube()" title="Embed YouTube video">▶ YouTube</button>
+      </div>
+      <div class="ga-split">
+        <div class="ga-md-pane">
+          <div class="ga-pane-label">Markdown</div>
+          <textarea class="ga-md" id="ga-md" placeholder="Write your guide in Markdown…" spellcheck="true"></textarea>
+        </div>
+        <div class="ga-preview-pane">
+          <div class="ga-pane-label">Preview</div>
+          <div class="ga-preview-scroll">
+            <div class="gd-prose" id="ga-preview"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ga-footer-bar">
+        <button class="ga-btn-draft" onclick="saveGuide(false)">Save Draft</button>
+        <button class="ga-btn-publish" onclick="saveGuide(true)">Publish &amp; Save</button>
+        <div class="ga-footer-spacer"></div>
+        <button class="ga-btn-delete hidden" id="ga-delete-btn" onclick="deleteGuide()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ga-toast" id="ga-toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.use({
+      breaks: true,
+      gfm: true,
+      renderer: {
+        image(hrefOrToken, title, text) {
+          var href, alt;
+          if (hrefOrToken && typeof hrefOrToken === 'object') {
+            href = hrefOrToken.href || '';
+            alt  = hrefOrToken.text || '';
+          } else {
+            href = hrefOrToken || '';
+            alt  = text || '';
+          }
+          var width = null, height = null;
+          var pipe = alt.lastIndexOf('|');
+          if (pipe !== -1) {
+            var sizeStr = alt.slice(pipe + 1).trim();
+            var parts = sizeStr.split('x');
+            if (/^\d+$/.test(parts[0])) {
+              alt = alt.slice(0, pipe).trim();
+              width = parts[0];
+              if (parts[1] && /^\d+$/.test(parts[1].trim())) height = parts[1].trim();
+            }
+          }
+          var attrs = 'src="' + href + '" alt="' + alt + '"';
+          if (width)  attrs += ' width="' + width + '"';
+          if (height) attrs += ' height="' + height + '"';
+          return '<img ' + attrs + ' style="max-width:100%;height:auto;border-radius:8px;margin:6px 0">';
+        }
+      }
+    });
+
+    let guides = [];
+    let editingId = null;
+    let previewTimer = null;
+
+    async function loadBg() {
+      try {
+        const r = await fetch('/api/bracket-background');
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.exists || !d.filename) return;
+        document.getElementById('ga-bg').style.backgroundImage = 'url(/' + d.filename + ')';
+      } catch {}
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function fmtDate(ts) {
+      if (!ts) return '—';
+      return new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('ga-toast');
+      t.textContent = msg;
+      t.className = 'ga-toast ' + (type || '');
+      void t.offsetWidth;
+      t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 2800);
+    }
+
+    function setSaveStatus(msg, cls) {
+      const el = document.getElementById('ga-save-status');
+      el.textContent = msg;
+      el.className = 'ga-save-status' + (cls ? ' ' + cls : '');
+    }
+
+    function renderList() {
+      document.getElementById('ga-count').textContent = guides.length;
+      const tbody = document.getElementById('ga-tbody');
+      if (!guides.length) {
+        tbody.innerHTML = '<tr class="ga-empty-row"><td colspan="5">No guides yet. Click "+ New Guide" to create one.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = guides.map(function(g) {
+        var pill = g.published
+          ? '<span class="ga-pill published">Published</span>'
+          : '<span class="ga-pill draft">Draft</span>';
+        return '<tr>' +
+          '<td class="ga-col-title">' + esc(g.title || '(untitled)') + '</td>' +
+          '<td class="ga-col-cat">' + esc(g.category) + '</td>' +
+          '<td>' + pill + '</td>' +
+          '<td class="ga-col-date">' + fmtDate(g.updatedAt) + '</td>' +
+          '<td class="ga-col-act">' +
+            '<button class="ga-edit-btn" data-id="' + esc(g.id) + '">Edit</button>' +
+            '<button class="ga-del-btn-sm" data-id="' + esc(g.id) + '">Delete</button>' +
+          '</td>' +
+        '</tr>';
+      }).join('');
+      tbody.querySelectorAll('.ga-edit-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { selectGuide(btn.dataset.id); });
+      });
+      tbody.querySelectorAll('.ga-del-btn-sm').forEach(function(btn) {
+        btn.addEventListener('click', function() { confirmDelete(btn.dataset.id); });
+      });
+    }
+
+    function selectGuide(id) {
+      var g = guides.find(function(x) { return x.id === id; });
+      if (!g) return;
+      editingId = id;
+      document.getElementById('ga-title').value = g.title || '';
+      document.getElementById('ga-cat').value = g.category || 'General';
+      document.getElementById('ga-excerpt').value = g.excerpt || '';
+      document.getElementById('ga-md').value = g.content || '';
+      document.getElementById('ga-editing-label').textContent = g.title || '(untitled)';
+      document.getElementById('ga-delete-btn').classList.remove('hidden');
+      setSaveStatus('');
+      updatePreview();
+      showEditor();
+      window.scrollTo({ top: document.getElementById('ga-editor-card').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function newGuide() {
+      editingId = null;
+      document.getElementById('ga-title').value = '';
+      document.getElementById('ga-cat').value = 'General';
+      document.getElementById('ga-excerpt').value = '';
+      document.getElementById('ga-md').value = '';
+      document.getElementById('ga-editing-label').textContent = 'New Guide';
+      document.getElementById('ga-delete-btn').classList.add('hidden');
+      setSaveStatus('');
+      updatePreview();
+      showEditor();
+      document.getElementById('ga-title').focus();
+      window.scrollTo({ top: document.getElementById('ga-editor-card').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function showEditor() {
+      document.getElementById('ga-editor-card').classList.remove('hidden');
+    }
+
+    function updatePreview() {
+      var md = document.getElementById('ga-md').value;
+      document.getElementById('ga-preview').innerHTML = md ? marked.parse(md) : '<span style="color:var(--text-3);font-size:0.82rem">Preview will appear here…</span>';
+    }
+
+    async function saveGuide(publish) {
+      var title   = document.getElementById('ga-title').value.trim();
+      var cat     = document.getElementById('ga-cat').value;
+      var excerpt = document.getElementById('ga-excerpt').value.trim();
+      var content = document.getElementById('ga-md').value;
+      if (!title) { showToast('Please enter a title.', 'error'); document.getElementById('ga-title').focus(); return; }
+      var body = { title: title, category: cat, excerpt: excerpt, content: content, published: publish };
+      setSaveStatus('Saving…');
+      try {
+        var url    = editingId ? '/api/guides/' + encodeURIComponent(editingId) : '/api/guides';
+        var method = editingId ? 'PUT' : 'POST';
+        var r = await fetch(url, { method: method, headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }, body: JSON.stringify(body) });
+        if (!r.ok) throw new Error(await r.text());
+        var saved = await r.json();
+        editingId = saved.id;
+        document.getElementById('ga-editing-label').textContent = saved.title || '(untitled)';
+        document.getElementById('ga-delete-btn').classList.remove('hidden');
+        setSaveStatus(publish ? 'Published' : 'Draft saved', 'ok');
+        showToast(publish ? 'Guide published!' : 'Draft saved.', 'success');
+        await loadGuides();
+      } catch (e) {
+        setSaveStatus('Error', 'err');
+        showToast('Save failed: ' + String(e.message || e), 'error');
+      }
+    }
+
+    async function confirmDelete(id) {
+      var g = guides.find(function(x) { return x.id === id; });
+      var name = g ? (g.title || 'this guide') : 'this guide';
+      if (!confirm('Delete "' + name + '"? This cannot be undone.')) return;
+      try {
+        var r = await fetch('/api/guides/' + encodeURIComponent(id), { method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Guide deleted.', 'success');
+        if (editingId === id) {
+          editingId = null;
+          document.getElementById('ga-editor-card').classList.add('hidden');
+        }
+        await loadGuides();
+      } catch (e) {
+        showToast('Delete failed: ' + String(e.message || e), 'error');
+      }
+    }
+
+    async function deleteGuide() {
+      if (!editingId) return;
+      confirmDelete(editingId);
+    }
+
+    async function loadGuides() {
+      try {
+        var r = await fetch('/api/guides');
+        if (!r.ok) throw new Error();
+        guides = await r.json();
+        renderList();
+      } catch {
+        document.getElementById('ga-tbody').innerHTML = '<tr class="ga-empty-row"><td colspan="5">Failed to load guides.</td></tr>';
+      }
+    }
+
+    /* ── Toolbar helpers ── */
+    function ins(pre, post, placeholder) {
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart, e = ta.selectionEnd;
+      var sel = ta.value.substring(s, e) || placeholder;
+      var replacement = pre + sel + post;
+      ta.setRangeText(replacement, s, e, 'end');
+      if (!ta.value.substring(s, e)) {
+        ta.selectionStart = s + pre.length;
+        ta.selectionEnd = s + pre.length + placeholder.length;
+      }
+      ta.focus();
+      updatePreview();
+    }
+
+    function insLine(prefix) {
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart;
+      var lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
+      ta.setRangeText(prefix, lineStart, lineStart, 'end');
+      ta.selectionStart = ta.selectionEnd = lineStart + prefix.length + (s - lineStart);
+      ta.focus();
+      updatePreview();
+    }
+
+    function insLink() {
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart, e = ta.selectionEnd;
+      var label = ta.value.substring(s, e) || 'link text';
+      var url = prompt('Link URL:');
+      if (url === null) { ta.focus(); return; }
+      url = url.trim() || 'url';
+      var replacement = '[' + label + '](' + url + ')';
+      ta.setRangeText(replacement, s, e, 'end');
+      ta.selectionStart = ta.selectionEnd = s + replacement.length;
+      ta.focus();
+      updatePreview();
+    }
+
+    function insImg() {
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart, e = ta.selectionEnd;
+      var url = prompt('Image URL:');
+      if (url === null) { ta.focus(); return; }
+      url = url.trim();
+      if (!url) { ta.focus(); return; }
+      var alt = ta.value.substring(s, e) || prompt('Alt text (optional):') || 'image';
+      var widthInput = prompt('Width in px (optional — leave blank for full width):');
+      var width = widthInput && /^\d+$/.test(widthInput.trim()) ? widthInput.trim() : null;
+      var altPart = width ? alt + '|' + width : alt;
+      var replacement = '![' + altPart + '](' + url + ')';
+      ta.setRangeText(replacement, s, e, 'end');
+      ta.selectionStart = ta.selectionEnd = s + replacement.length;
+      ta.focus();
+      updatePreview();
+    }
+
+    function insTable() {
+      var cols = parseInt(prompt('Number of columns:', '3'), 10);
+      if (!cols || cols < 1) return;
+      var rows = parseInt(prompt('Number of data rows:', '2'), 10);
+      if (!rows || rows < 1) return;
+      var headers = [];
+      for (var c = 1; c <= cols; c++) headers.push('Header ' + c);
+      var sep = headers.map(function() { return '--------'; });
+      var dataRow = headers.map(function() { return '        '; });
+      var lines = [
+        '| ' + headers.join(' | ') + ' |',
+        '| ' + sep.join(' | ') + ' |'
+      ];
+      for (var r = 0; r < rows; r++) lines.push('| ' + dataRow.join(' | ') + ' |');
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart;
+      var insert = '\n' + lines.join('\n') + '\n';
+      ta.setRangeText(insert, s, s, 'end');
+      ta.selectionStart = ta.selectionEnd = s + insert.length;
+      ta.focus();
+      updatePreview();
+    }
+
+    function insYoutube() {
+      var url = prompt('YouTube URL:');
+      if (url === null) return;
+      url = url.trim();
+      if (!url) return;
+      var id = null;
+      var patterns = [
+        /(?:youtube\.com\/watch\?.*v=)([^&\s]+)/,
+        /(?:youtu\.be\/)([^?\s]+)/,
+        /(?:youtube\.com\/embed\/)([^?\s]+)/
+      ];
+      for (var i = 0; i < patterns.length; i++) {
+        var m = url.match(patterns[i]);
+        if (m) { id = m[1]; break; }
+      }
+      if (!id) { showToast('Could not find a video ID in that URL.', 'error'); return; }
+      var ta = document.getElementById('ga-md');
+      var s = ta.selectionStart;
+      var embed = '\n<div class="yt-embed"><iframe src="https://www.youtube.com/embed/' + id + '" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>\n';
+      ta.setRangeText(embed, s, s, 'end');
+      ta.selectionStart = ta.selectionEnd = s + embed.length;
+      ta.focus();
+      updatePreview();
+    }
+
+    /* ── Live preview on textarea input ── */
+    document.addEventListener('DOMContentLoaded', function() {
+      var ta = document.getElementById('ga-md');
+      ta.addEventListener('input', function() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(updatePreview, 180);
+      });
+
+      document.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+          e.preventDefault();
+          var editorVisible = !document.getElementById('ga-editor-card').classList.contains('hidden');
+          if (editorVisible) saveGuide(false);
+        }
+      });
+    });
+
+    loadBg();
+    loadGuides();
+  </script>
+</body>
+</html>

@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bracket Manager — Anichess Admin</title>
   <link rel="icon" id="favicon" href="/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
     .panel {
@@ -179,6 +176,40 @@
     .hidden { display: none !important; }
 
     #msg-banner { margin-top: 16px; }
+
+    .bracket-match-pair {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      background: var(--bg-card);
+    }
+    .bracket-match-pair-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+    .bracket-match-pair-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .bracket-match-pair-row .bracket-seed-slot {
+      flex: 1;
+      min-width: 200px;
+    }
+    .bracket-vs-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-3);
+      flex-shrink: 0;
+      align-self: center;
+      padding: 0 2px;
+    }
   </style>
 </head>
 <body>
@@ -236,15 +267,43 @@
             </label>
           </div>
 
+          <!-- Placement Mode -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:12px;font-weight:600;">Placement Mode</p>
+          <div class="radio-group">
+            <label class="radio-label selected" id="lbl-pm-auto">
+              <input type="radio" name="placementMode" value="auto" checked onchange="onPlacementModeChange()" /> Auto Seeding
+            </label>
+            <label class="radio-label" id="lbl-pm-manual">
+              <input type="radio" name="placementMode" value="manual" onchange="onPlacementModeChange()" /> Manual Placement
+            </label>
+          </div>
+          <p id="placement-mode-desc" style="font-size:0.78rem;color:var(--text-3);margin-top:-8px;margin-bottom:20px;">Players are seeded by rank — best vs. worst in Round 1.</p>
+
           <!-- Player Pool -->
-          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Player Pool <span style="font-weight:400;opacity:0.7;">— Qualified players shown first · drag to seed slot</span></p>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <p style="font-size:0.82rem;color:var(--text-2);font-weight:600;margin:0;">Player Pool <span style="font-weight:400;opacity:0.7;">— Qualified players shown first · drag to seed slot</span></p>
+            <button id="btn-refresh-pool" class="btn btn-ghost btn-sm" onclick="refreshPool()" title="Reload player list after importing new wallets" style="flex-shrink:0;">↻ Refresh</button>
+          </div>
+          <input id="pool-search" type="text" placeholder="Search by name or wallet…"
+            style="width:100%;box-sizing:border-box;margin-bottom:8px;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:var(--card);color:var(--text-1);font-size:0.8rem;outline:none;">
           <div class="player-pool-wrap" id="player-pool">
             <span class="player-pool-empty">Loading players…</span>
           </div>
 
           <!-- Seed Grid -->
-          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Seed Order</p>
+          <p id="seed-order-label" style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Seed Order <span style="font-weight:400;opacity:0.7;">— Type a name directly, or drag a player from the pool above</span></p>
           <div class="bracket-seed-grid" id="seed-grid"></div>
+
+          <!-- Edit Player Names -->
+          <div id="alias-editor-wrap" style="margin-top:20px;margin-bottom:4px;display:none;">
+            <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:8px;font-weight:600;">Edit Player Names <span style="font-weight:400;opacity:0.7;">— Override display name in all bracket views</span></p>
+            <div id="alias-editor-grid" style="display:flex;flex-direction:column;gap:6px;"></div>
+          </div>
+
+          <!-- Round Formats -->
+          <p style="font-size:0.82rem;color:var(--text-2);margin-bottom:10px;font-weight:600;margin-top:20px;">Round Formats</p>
+          <div id="round-formats-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;"></div>
+          <div id="formats-result" style="font-size:0.78rem;min-height:18px;margin-top:6px;margin-bottom:14px;"></div>
 
           <!-- Actions -->
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;">
@@ -280,6 +339,22 @@
     let playerMeta = {}; // wallet.toLowerCase() -> { country }
     let saveTimer = null;
     let refreshTimer = null;
+    let userIsEditing = false;
+    let editingTimeout = null;
+
+    function markEditing() {
+      userIsEditing = true;
+      clearTimeout(editingTimeout);
+      // Resume auto-refresh 60s after the last detected interaction
+      editingTimeout = setTimeout(() => { userIsEditing = false; }, 60000);
+    }
+
+    document.addEventListener('focusin', e => {
+      if (e.target.matches('input, select, textarea')) markEditing();
+    });
+    document.addEventListener('input', e => {
+      if (e.target.matches('input, select, textarea')) markEditing();
+    });
 
     // ── Init ──────────────────────────────────────────────────────────────────
 
@@ -304,6 +379,14 @@
       } catch {
         document.getElementById('player-pool').innerHTML = '<span class="player-pool-empty">Could not load players</span>';
       }
+    }
+
+    async function refreshPool() {
+      const btn = document.getElementById('btn-refresh-pool');
+      if (btn) { btn.disabled = true; btn.textContent = '…'; }
+      await loadPlayers();
+      syncPoolChips();
+      if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
     }
 
     function computeQualified(players, quals) {
@@ -353,6 +436,13 @@
       });
       updateRadioLabels();
 
+      // Set placement mode radio
+      const savedMode = data.placementMode || 'auto';
+      document.querySelectorAll('input[name=placementMode]').forEach(r => {
+        r.checked = (r.value === savedMode);
+      });
+      updatePlacementModeLabels();
+
       // Populate seed grid
       buildSeedGrid(data.playerCount, data.seeds || []);
 
@@ -382,6 +472,8 @@
         document.getElementById('champion-display').classList.add('hidden');
       }
 
+      renderRoundFormats();
+      renderAliasEditor();
       checkGenerateBtn();
     }
 
@@ -460,6 +552,30 @@
       if (pool.children.length === 0) {
         pool.innerHTML = '<span class="player-pool-empty">No players tracked</span>';
       }
+
+      // Wire up search filter
+      const searchEl = document.getElementById('pool-search');
+      if (searchEl) {
+        searchEl.value = '';
+        searchEl.oninput = () => {
+          const q = searchEl.value.trim().toLowerCase();
+          pool.querySelectorAll('.bracket-player-chip').forEach(chip => {
+            const wallet = (chip.dataset.wallet || '').toLowerCase();
+            const name   = chip.textContent.toLowerCase();
+            chip.style.display = (!q || name.includes(q) || wallet.includes(q)) ? '' : 'none';
+          });
+          pool.querySelectorAll('div[style*="border-top"]').forEach(lbl => {
+            // Hide section label if all chips in its group are hidden
+            let next = lbl.nextElementSibling;
+            let hasVisible = false;
+            while (next && !next.style?.cssText?.includes('border-top')) {
+              if (next.classList?.contains('bracket-player-chip') && next.style.display !== 'none') hasVisible = true;
+              next = next.nextElementSibling;
+            }
+            lbl.style.display = hasVisible ? '' : 'none';
+          });
+        };
+      }
     }
 
     function escChip(str) {
@@ -468,13 +584,18 @@
 
     function normWallet(w) { return (w || '').trim().toLowerCase(); }
 
+    function slotWallet(slot) {
+      const inp = slot.querySelector('.bracket-seed-input');
+      return inp.dataset.resolvedWallet || inp.value.trim();
+    }
+
     function checkDuplicate(wallet, excludeSlotIndex) {
       const nw = normWallet(wallet);
       if (!nw) return false;
       let found = false;
       document.querySelectorAll('.bracket-seed-slot').forEach((slot, i) => {
         if (i === excludeSlotIndex) return;
-        if (normWallet(slot.querySelector('.bracket-seed-input').value) === nw) found = true;
+        if (normWallet(slotWallet(slot)) === nw) found = true;
       });
       return found;
     }
@@ -482,7 +603,7 @@
     function syncPoolChips() {
       const used = new Set();
       document.querySelectorAll('.bracket-seed-slot').forEach(slot => {
-        const w = normWallet(slot.querySelector('.bracket-seed-input').value);
+        const w = normWallet(slotWallet(slot));
         if (w) used.add(w);
       });
       document.querySelectorAll('#player-pool .bracket-player-chip').forEach(chip => {
@@ -492,154 +613,243 @@
 
     // ── Seed Grid ─────────────────────────────────────────────────────────────
 
+    function makeSlot(i, seedData) {
+      const seed = seedData || { seed: i + 1, wallet: '' };
+      const slot = document.createElement('div');
+      slot.className = 'bracket-seed-slot' + (seed.wallet ? ' filled' : '');
+      slot.dataset.index = i;
+
+      const numBadge = document.createElement('div');
+      numBadge.className = 'bracket-seed-num';
+      numBadge.textContent = '#' + (i + 1);
+
+      const inputWrap = document.createElement('div');
+      inputWrap.style.cssText = 'flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px;';
+
+      const nameTag = document.createElement('div');
+      nameTag.style.cssText = 'font-size:0.88rem;color:var(--text);font-weight:600;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+
+      const input = document.createElement('input');
+      input.className = 'bracket-seed-input';
+      input.type = 'text';
+      input.placeholder = 'Type name, paste wallet, or drag…';
+      // Store resolved EVM wallet separately so display can show the name
+      if (seed.wallet && isEVMAddress(seed.wallet)) {
+        input.dataset.resolvedWallet = seed.wallet;
+        input.value = getDisplayName(seed.wallet);
+      } else {
+        input.value = seed.wallet || '';
+      }
+      input.style.cssText = 'font-size:0.7rem;color:var(--text-3);';
+
+      // Country input + flag preview
+      const countryWrap = document.createElement('div');
+      countryWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
+
+      const flagImg = document.createElement('img');
+      flagImg.style.cssText = 'width:20px;height:15px;border-radius:2px;object-fit:cover;flex-shrink:0;';
+      flagImg.setAttribute('onerror', "this.style.display='none'");
+
+      const countryInput = document.createElement('input');
+      countryInput.type = 'text';
+      countryInput.maxLength = 2;
+      countryInput.placeholder = 'XX';
+      countryInput.title = '2-letter ISO country code (e.g. US, GB, PH)';
+      countryInput.style.cssText = 'width:38px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.76rem;font-family:var(--font-mono,monospace);padding:3px 5px;text-align:center;text-transform:uppercase;letter-spacing:0.06em;outline:none;flex-shrink:0;';
+
+      const refreshFlag = (wallet) => {
+        const code = (playerMeta[(wallet || '').toLowerCase()]?.country || '').toUpperCase();
+        countryInput.value = code;
+        if (code.length === 2) {
+          flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
+          flagImg.style.display = '';
+        } else {
+          flagImg.style.display = 'none';
+        }
+      };
+
+      refreshFlag(seed.wallet);
+
+      countryInput.addEventListener('input', () => {
+        const code = countryInput.value.trim().toUpperCase();
+        if (code.length === 2) {
+          flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
+          flagImg.style.display = '';
+        } else {
+          flagImg.style.display = 'none';
+        }
+      });
+
+      countryInput.addEventListener('blur', () => {
+        const wallet = input.dataset.resolvedWallet || input.value.trim();
+        if (!wallet) return;
+        setSlotCountry(wallet, countryInput.value);
+      });
+
+      countryWrap.appendChild(flagImg);
+      countryWrap.appendChild(countryInput);
+
+      const updateNameTag = () => {
+        const resolved = input.dataset.resolvedWallet;
+        const w = resolved || input.value.trim();
+        if (!w) {
+          nameTag.textContent = '';
+          nameTag.style.display = 'none';
+          input.style.cssText = 'font-size:0.82rem;color:var(--text);';
+        } else {
+          const name = getDisplayName(w);
+          nameTag.textContent = name;
+          nameTag.style.display = '';
+          // When an EVM wallet is resolved, show the name in the input field too
+          if (resolved && input.value !== name) input.value = name;
+          input.style.cssText = resolved
+            ? 'font-size:0.82rem;color:var(--text-2);'
+            : 'font-size:0.82rem;color:var(--text);';
+        }
+      };
+
+      updateNameTag();
+
+      input.addEventListener('input', () => {
+        // User is manually editing — clear the resolved wallet so the typed value is used
+        delete input.dataset.resolvedWallet;
+        const w = input.value.trim();
+        const idx = parseInt(slot.dataset.index);
+        if (w && checkDuplicate(w, idx)) {
+          slot.classList.add('duplicate-error');
+        } else {
+          slot.classList.remove('duplicate-error');
+        }
+        slot.classList.toggle('filled', !!w);
+        updateNameTag();
+        refreshFlag(w);
+        syncPoolChips();
+        debouncedSaveSeeds();
+      });
+
+      // Drag-and-drop onto slot
+      slot.addEventListener('dragover', e => {
+        e.preventDefault();
+        slot.classList.add('dragging-over');
+      });
+      slot.addEventListener('dragleave', () => slot.classList.remove('dragging-over'));
+      slot.addEventListener('drop', e => {
+        e.preventDefault();
+        slot.classList.remove('dragging-over');
+        const wallet = e.dataTransfer.getData('text/plain');
+        if (!wallet) return;
+        const idx = parseInt(slot.dataset.index);
+        if (checkDuplicate(wallet, idx)) {
+          showMsg('This player is already assigned to another seed slot.', 'error');
+          return;
+        }
+        // Store the EVM wallet in data attribute; display the name in the input field
+        if (isEVMAddress(wallet)) {
+          input.dataset.resolvedWallet = wallet;
+          input.value = getDisplayName(wallet);
+        } else {
+          delete input.dataset.resolvedWallet;
+          input.value = wallet;
+        }
+        slot.classList.add('filled');
+        slot.classList.remove('duplicate-error');
+        updateNameTag();
+        refreshFlag(wallet);
+        syncPoolChips();
+        debouncedSaveSeeds();
+      });
+
+      inputWrap.appendChild(nameTag);
+      inputWrap.appendChild(input);
+      slot.appendChild(numBadge);
+      slot.appendChild(inputWrap);
+      slot.appendChild(countryWrap);
+      return slot;
+    }
+
     function buildSeedGrid(count, existingSeeds) {
       const grid = document.getElementById('seed-grid');
       grid.innerHTML = '';
+      if (getPlacementMode() === 'manual') {
+        buildManualGrid(count, existingSeeds, grid);
+        return;
+      }
       for (let i = 0; i < count; i++) {
-        const seed = existingSeeds[i] || { seed: i + 1, wallet: '' };
-        const slot = document.createElement('div');
-        slot.className = 'bracket-seed-slot' + (seed.wallet ? ' filled' : '');
-        slot.dataset.index = i;
-
-        const numBadge = document.createElement('div');
-        numBadge.className = 'bracket-seed-num';
-        numBadge.textContent = '#' + (i + 1);
-
-        const inputWrap = document.createElement('div');
-        inputWrap.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;';
-
-        const nameTag = document.createElement('div');
-        nameTag.style.cssText = 'font-size:0.88rem;color:var(--text);font-weight:600;min-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
-
-        const input = document.createElement('input');
-        input.className = 'bracket-seed-input';
-        input.type = 'text';
-        input.placeholder = 'Wallet address or drag player…';
-        input.value = seed.wallet || '';
-        input.style.cssText = 'font-size:0.7rem;color:var(--text-3);';
-
-        // Country input + flag preview
-        const countryWrap = document.createElement('div');
-        countryWrap.style.cssText = 'display:flex;align-items:center;gap:4px;flex-shrink:0;';
-
-        const flagImg = document.createElement('img');
-        flagImg.style.cssText = 'width:20px;height:15px;border-radius:2px;object-fit:cover;flex-shrink:0;';
-        flagImg.setAttribute('onerror', "this.style.display='none'");
-
-        const countryInput = document.createElement('input');
-        countryInput.type = 'text';
-        countryInput.maxLength = 2;
-        countryInput.placeholder = 'XX';
-        countryInput.title = '2-letter ISO country code (e.g. US, GB, PH)';
-        countryInput.style.cssText = 'width:38px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;color:var(--text);font-size:0.76rem;font-family:var(--font-mono,monospace);padding:3px 5px;text-align:center;text-transform:uppercase;letter-spacing:0.06em;outline:none;flex-shrink:0;';
-
-        const refreshFlag = (wallet) => {
-          const code = (playerMeta[(wallet || '').toLowerCase()]?.country || '').toUpperCase();
-          countryInput.value = code;
-          if (code.length === 2) {
-            flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
-            flagImg.style.display = '';
-          } else {
-            flagImg.style.display = 'none';
-          }
-        };
-
-        refreshFlag(seed.wallet);
-
-        countryInput.addEventListener('input', () => {
-          const code = countryInput.value.trim().toUpperCase();
-          if (code.length === 2) {
-            flagImg.src = `https://flagcdn.com/20x15/${code.toLowerCase()}.png`;
-            flagImg.style.display = '';
-          } else {
-            flagImg.style.display = 'none';
-          }
-        });
-
-        countryInput.addEventListener('blur', () => {
-          const wallet = input.value.trim();
-          if (!wallet) return;
-          setSlotCountry(wallet, countryInput.value);
-        });
-
-        countryWrap.appendChild(flagImg);
-        countryWrap.appendChild(countryInput);
-
-        const updateNameTag = () => {
-          const w = input.value.trim();
-          if (!w) {
-            nameTag.textContent = '';
-            nameTag.style.display = 'none';
-            input.style.cssText = 'font-size:0.82rem;color:var(--text);';
-          } else {
-            const name = getDisplayName(w);
-            nameTag.textContent = name;
-            nameTag.style.display = '';
-            input.style.cssText = 'font-size:0.68rem;color:var(--text-3);font-family:var(--mono,monospace);';
-          }
-        };
-
-        updateNameTag();
-
-        input.addEventListener('input', () => {
-          const w = input.value.trim();
-          const idx = parseInt(slot.dataset.index);
-          if (w && checkDuplicate(w, idx)) {
-            slot.classList.add('duplicate-error');
-          } else {
-            slot.classList.remove('duplicate-error');
-          }
-          slot.classList.toggle('filled', !!w);
-          updateNameTag();
-          refreshFlag(w);
-          syncPoolChips();
-          debouncedSaveSeeds();
-        });
-
-        // Drag-and-drop onto slot
-        slot.addEventListener('dragover', e => {
-          e.preventDefault();
-          slot.classList.add('dragging-over');
-        });
-        slot.addEventListener('dragleave', () => slot.classList.remove('dragging-over'));
-        slot.addEventListener('drop', e => {
-          e.preventDefault();
-          slot.classList.remove('dragging-over');
-          const wallet = e.dataTransfer.getData('text/plain');
-          if (!wallet) return;
-          const idx = parseInt(slot.dataset.index);
-          if (checkDuplicate(wallet, idx)) {
-            showMsg('This player is already assigned to another seed slot.', 'error');
-            return;
-          }
-          input.value = wallet;
-          slot.classList.add('filled');
-          slot.classList.remove('duplicate-error');
-          updateNameTag();
-          refreshFlag(wallet);
-          syncPoolChips();
-          debouncedSaveSeeds();
-        });
-
-        inputWrap.appendChild(nameTag);
-        inputWrap.appendChild(input);
-        slot.appendChild(numBadge);
-        slot.appendChild(inputWrap);
-        slot.appendChild(countryWrap);
-        grid.appendChild(slot);
+        grid.appendChild(makeSlot(i, existingSeeds[i]));
       }
       syncPoolChips();
     }
 
+    function buildManualGrid(count, existingSeeds, grid) {
+      const matchCount = count / 2;
+      for (let m = 0; m < matchCount; m++) {
+        const p1Idx = m * 2;
+        const p2Idx = m * 2 + 1;
+
+        const pair = document.createElement('div');
+        pair.className = 'bracket-match-pair';
+
+        const lbl = document.createElement('div');
+        lbl.className = 'bracket-match-pair-label';
+        lbl.textContent = 'Match ' + (m + 1);
+        pair.appendChild(lbl);
+
+        const row = document.createElement('div');
+        row.className = 'bracket-match-pair-row';
+        row.appendChild(makeSlot(p1Idx, existingSeeds[p1Idx]));
+
+        const vs = document.createElement('div');
+        vs.className = 'bracket-vs-label';
+        vs.textContent = 'vs';
+        row.appendChild(vs);
+
+        row.appendChild(makeSlot(p2Idx, existingSeeds[p2Idx]));
+        pair.appendChild(row);
+        grid.appendChild(pair);
+      }
+      syncPoolChips();
+    }
+
+    function getPlacementMode() {
+      const checked = document.querySelector('input[name=placementMode]:checked');
+      return checked ? checked.value : 'auto';
+    }
+
+    function onPlacementModeChange() {
+      updatePlacementModeLabels();
+      const count = parseInt(document.querySelector('input[name=playerCount]:checked').value);
+      buildSeedGrid(count, []);
+      debouncedSaveSeeds();
+    }
+
+    function updatePlacementModeLabels() {
+      const mode = getPlacementMode();
+      document.querySelectorAll('input[name=placementMode]').forEach(r => {
+        r.closest('.radio-label').classList.toggle('selected', r.checked);
+      });
+      const desc = document.getElementById('placement-mode-desc');
+      if (desc) {
+        desc.textContent = mode === 'manual'
+          ? 'You control who faces who — players are matched in the order you place them.'
+          : 'Players are seeded by rank — best vs. worst in Round 1.';
+      }
+      const seedLabel = document.getElementById('seed-order-label');
+      if (seedLabel) {
+        seedLabel.innerHTML = mode === 'manual'
+          ? 'Match Pairs <span style="font-weight:400;opacity:0.7;">— Assign each player to their side of every first-round match</span>'
+          : 'Seed Order <span style="font-weight:400;opacity:0.7;">— Type a name directly, or drag a player from the pool above</span>';
+      }
+    }
+
     function collectSeeds() {
       const count = parseInt(document.querySelector('input[name=playerCount]:checked').value);
+      const placementMode = getPlacementMode();
       const slots = document.querySelectorAll('.bracket-seed-slot');
       const seeds = [];
       slots.forEach((slot, i) => {
-        const wallet = slot.querySelector('.bracket-seed-input').value.trim();
-        seeds.push({ seed: i + 1, wallet: wallet });
+        seeds.push({ seed: i + 1, wallet: slotWallet(slot) });
       });
-      return { playerCount: count, seeds };
+      return { playerCount: count, seeds, placementMode };
     }
 
     function checkGenerateBtn() {
@@ -657,12 +867,12 @@
     }
 
     async function saveSeeds() {
-      const { playerCount, seeds } = collectSeeds();
+      const { playerCount, seeds, placementMode } = collectSeeds();
       const res = await fetch('/api/brackets/setup', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerCount, seeds })
+        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+        body: JSON.stringify({ playerCount, seeds, placementMode })
       });
       if (!res.ok) {
         let d = {};
@@ -671,10 +881,171 @@
       }
     }
 
+    // ── Player Name Aliases ───────────────────────────────────────────────────
+
+    function renderAliasEditor() {
+      const wrap = document.getElementById('alias-editor-wrap');
+      const grid = document.getElementById('alias-editor-grid');
+      if (!wrap || !grid) return;
+
+      const seeds = bracketData?.seeds || [];
+      const unique = [];
+      const seen = new Set();
+      seeds.forEach(s => {
+        if (!s.wallet) return;
+        const k = s.wallet.toLowerCase();
+        if (!seen.has(k)) { seen.add(k); unique.push(s.wallet); }
+      });
+
+      if (unique.length === 0) { wrap.style.display = 'none'; return; }
+      wrap.style.display = '';
+      grid.innerHTML = '';
+
+      unique.forEach(wallet => {
+        const key = wallet.toLowerCase();
+        const currentAlias = playerMeta[key]?.alias || '';
+        const baseName = (() => {
+          if (!isEVMAddress(wallet)) return wallet;
+          const p = playerMap[key];
+          if (p && p.username && !isEVMAddress(p.username)) return p.username;
+          return shortenWallet(wallet);
+        })();
+
+        const row = document.createElement('div');
+        row.style.cssText = 'display:flex;align-items:center;gap:8px;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;flex-wrap:wrap;';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.style.cssText = 'font-size:0.82rem;color:var(--text-2);flex:0 0 140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;';
+        nameSpan.title = wallet;
+        nameSpan.textContent = baseName;
+
+        const aliasInput = document.createElement('input');
+        aliasInput.type = 'text';
+        aliasInput.maxLength = 100;
+        aliasInput.placeholder = 'Custom display name…';
+        aliasInput.value = currentAlias;
+        aliasInput.style.cssText = 'flex:1;min-width:120px;background:var(--bg-card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:0.84rem;padding:5px 10px;outline:none;transition:border-color 0.2s;';
+        aliasInput.addEventListener('focus', () => aliasInput.style.borderColor = 'var(--accent)');
+        aliasInput.addEventListener('blur',  () => aliasInput.style.borderColor = '');
+
+        const saveBtn = document.createElement('button');
+        saveBtn.className = 'btn btn-ghost btn-sm';
+        saveBtn.textContent = 'Save';
+        saveBtn.style.flexShrink = '0';
+
+        const statusSpan = document.createElement('span');
+        statusSpan.style.cssText = 'font-size:0.74rem;min-width:40px;';
+
+        saveBtn.addEventListener('click', async () => {
+          const alias = aliasInput.value.trim();
+          saveBtn.disabled = true;
+          try {
+            const res = await fetch(`/api/player-meta/${encodeURIComponent(wallet)}`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+              body: JSON.stringify({ alias }),
+            });
+            if (!res.ok) throw new Error('Failed');
+            playerMeta[key] = { ...playerMeta[key], alias: alias || undefined };
+            if (!alias) delete playerMeta[key]?.alias;
+            statusSpan.style.color = '#34d399';
+            statusSpan.textContent = '✓ Saved';
+            setTimeout(() => { statusSpan.textContent = ''; }, 2000);
+          } catch {
+            statusSpan.style.color = '#f87171';
+            statusSpan.textContent = 'Error';
+          } finally {
+            saveBtn.disabled = false;
+          }
+        });
+
+        aliasInput.addEventListener('keydown', e => { if (e.key === 'Enter') saveBtn.click(); });
+
+        row.appendChild(nameSpan);
+        row.appendChild(aliasInput);
+        row.appendChild(saveBtn);
+        row.appendChild(statusSpan);
+        grid.appendChild(row);
+      });
+    }
+
+    // ── Round Formats ─────────────────────────────────────────────────────────
+
+    const ROUND_DEFS_16 = [
+      { id: 'r16', name: 'Round of 16' },
+      { id: 'qf',  name: 'Quarterfinals' },
+      { id: 'sf',  name: 'Semifinals' },
+      { id: '3rd', name: 'Third Place' },
+      { id: 'gf',  name: 'Grand Final' },
+    ];
+    const ROUND_DEFS_8 = [
+      { id: 'qf',  name: 'Quarterfinals' },
+      { id: 'sf',  name: 'Semifinals' },
+      { id: '3rd', name: 'Third Place' },
+      { id: 'gf',  name: 'Grand Final' },
+    ];
+    const DEFAULT_FORMATS = { r16: 1, qf: 1, sf: 3, '3rd': 3, gf: 5 };
+
+    function renderRoundFormats() {
+      const count   = parseInt(document.querySelector('input[name=playerCount]:checked')?.value || '8');
+      const defs    = count === 16 ? ROUND_DEFS_16 : ROUND_DEFS_8;
+      const formats = (bracketData && bracketData.roundFormats) || DEFAULT_FORMATS;
+      const grid    = document.getElementById('round-formats-grid');
+      if (!grid) return;
+      grid.innerHTML = defs.map(({ id, name }) => {
+        const cur = formats[id] ?? DEFAULT_FORMATS[id] ?? 1;
+        const opts = [1, 3, 5].map(v =>
+          `<option value="${v}"${v === cur ? ' selected' : ''}>BO${v}</option>`
+        ).join('');
+        return `<div style="display:flex;align-items:center;justify-content:space-between;
+                    background:var(--surface-2);border:1px solid var(--border);
+                    border-radius:8px;padding:7px 12px;gap:8px;">
+          <span style="font-size:0.82rem;color:var(--text);font-weight:500;">${name}</span>
+          <select id="fmt-${id}" onchange="saveRoundFormats()"
+            style="background:var(--surface-2);border:1px solid var(--border);border-radius:6px;
+                   color:var(--text);font-size:0.82rem;padding:3px 8px;cursor:pointer;outline:none;">
+            ${opts}
+          </select>
+        </div>`;
+      }).join('');
+    }
+
+    async function saveRoundFormats() {
+      const resultEl = document.getElementById('formats-result');
+      const formats  = {};
+      document.querySelectorAll('[id^="fmt-"]').forEach(sel => {
+        const id = sel.id.replace('fmt-', '');
+        formats[id] = parseInt(sel.value);
+      });
+      try {
+        const res = await fetch('/api/brackets/formats', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ formats }),
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Save failed');
+        if (bracketData) bracketData.roundFormats = data.roundFormats;
+        resultEl.style.color = '#34d399';
+        resultEl.textContent = '✓ Saved';
+        // Refresh match manager labels if bracket is live
+        if (bracketData && (bracketData.status === 'active' || bracketData.status === 'complete')) {
+          await loadBracket();
+        }
+        setTimeout(() => { if (resultEl.textContent === '✓ Saved') resultEl.textContent = ''; }, 2000);
+      } catch (err) {
+        resultEl.style.color = '#f87171';
+        resultEl.textContent = 'Save failed: ' + err.message;
+      }
+    }
+
     function onPlayerCountChange() {
       updateRadioLabels();
+      updatePlacementModeLabels();
       const count = parseInt(document.querySelector('input[name=playerCount]:checked').value);
       buildSeedGrid(count, []);
+      renderRoundFormats();
       debouncedSaveSeeds();
     }
 
@@ -700,7 +1071,7 @@
         const res = await fetch('/api/brackets/generate', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({})
         });
         let data = {};
@@ -719,7 +1090,7 @@
     async function resetBracket() {
       if (!confirm('Reset the entire bracket? This cannot be undone.')) return;
       try {
-        const res = await fetch('/api/brackets', { method: 'DELETE', credentials: 'include' });
+        const res = await fetch('/api/brackets', { method: 'DELETE', credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         const data = await res.json();
         if (!res.ok) return showMsg(data.error || 'Failed to reset', 'error');
         showMsg('Bracket reset.', 'success');
@@ -829,7 +1200,7 @@
         const res = await fetch('/api/brackets/game', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ roundId, matchIndex, result })
         });
         const data = await res.json();
@@ -845,7 +1216,7 @@
         const res = await fetch('/api/brackets/undo', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ roundId, matchIndex })
         });
         const data = await res.json();
@@ -862,7 +1233,11 @@
 
     function getDisplayName(wallet) {
       if (!wallet) return 'TBD';
-      const p = playerMap[wallet.toLowerCase()];
+      const key = wallet.toLowerCase();
+      // Alias always wins — set via Edit Player Names
+      if (playerMeta[key]?.alias) return playerMeta[key].alias;
+      if (!isEVMAddress(wallet)) return wallet;
+      const p = playerMap[key];
       if (p && p.username && !isEVMAddress(p.username)) return p.username;
       return shortenWallet(wallet);
     }
@@ -894,7 +1269,7 @@
         const res = await fetch('/api/brackets/name', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           body: JSON.stringify({ name })
         });
         if (!res.ok) showMsg('Failed to save name', 'error');
@@ -925,7 +1300,7 @@
       const fd = new FormData();
       fd.append('background', file);
       try {
-        const res = await fetch('/api/bracket-background', { method: 'POST', credentials: 'include', body: fd });
+        const res = await fetch('/api/bracket-background', { method: 'POST', credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' }, body: fd });
         const data = await res.json();
         if (!res.ok) return showMsg(data.error || 'Failed to upload', 'error');
         document.getElementById('bracket-bg-status').textContent = data.filename;
@@ -937,7 +1312,7 @@
 
     async function removeBracketBg() {
       try {
-        const res = await fetch('/api/bracket-background', { method: 'DELETE', credentials: 'include' });
+        const res = await fetch('/api/bracket-background', { method: 'DELETE', credentials: 'include', headers: { 'X-Requested-With': 'XMLHttpRequest' } });
         if (!res.ok) return showMsg('Failed to remove', 'error');
         document.getElementById('bracket-bg-status').textContent = 'No background set';
         document.getElementById('btn-remove-bracket-bg').classList.add('hidden');
@@ -952,7 +1327,7 @@
       try {
         await fetch(`/api/player-meta/${encodeURIComponent(wallet)}`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
           credentials: 'include',
           body: JSON.stringify({ country: normalized }),
         });
@@ -963,6 +1338,7 @@
     // ── Auto-refresh ──────────────────────────────────────────────────────────
     function startRefresh() {
       refreshTimer = setInterval(async () => {
+        if (userIsEditing) return;
         await loadBracket();
       }, 30000);
     }

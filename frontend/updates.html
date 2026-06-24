@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
+  <title>Game Updates — Anichess Tracker</title>
+  <link rel="icon" id="favicon" href="/favicon.ico">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="fonts.css" />
+  <script>(function(){var u=sessionStorage.getItem('anichess-bg-url');if(u){document.documentElement.style.setProperty('--bg-image','url('+u+')');document.documentElement.classList.add('bg-preloaded');}})();</script>
+
+  <style>
+    .updates-wrap {
+      max-width: 780px;
+      margin: 0 auto;
+      padding: 48px 28px 80px;
+    }
+    .updates-eyebrow {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+    .updates-title {
+      font-size: clamp(1.6rem, 4vw, 2.4rem);
+      font-weight: 800;
+      color: var(--text);
+      line-height: 1.1;
+      margin: 0 0 8px;
+    }
+    .updates-subtitle {
+      font-size: 0.82rem;
+      color: var(--text-3);
+      margin-bottom: 40px;
+    }
+
+    /* Update card */
+    .update-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 12px;
+      padding: 24px 28px;
+      margin-bottom: 16px;
+      transition: border-color 0.2s;
+    }
+    .update-card:hover { border-color: rgba(255,255,255,0.13); }
+    .update-card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .update-card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .update-card-date {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-3);
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+    .update-card-divider {
+      height: 1px;
+      background: rgba(255,255,255,0.06);
+      margin-bottom: 14px;
+    }
+    .update-card-content {
+      font-size: 0.875rem;
+      color: var(--text-2);
+      line-height: 1.75;
+      word-break: break-word;
+    }
+    .update-card-content h2 { font-size: 1rem; font-weight: 700; color: var(--text); margin: 16px 0 7px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+    .update-card-content h3 { font-size: 0.9rem; font-weight: 700; color: var(--text-2); margin: 12px 0 5px; }
+    .update-card-content p { margin: 0 0 8px; }
+    .update-card-content ul, .update-card-content ol { margin: 0 0 8px; padding-left: 20px; }
+    .update-card-content li { margin-bottom: 3px; }
+    .update-card-content strong { font-weight: 700; color: var(--text); }
+    .update-card-content em { color: var(--text-2); font-style: italic; }
+    .update-card-content a { color: var(--accent); text-decoration: none; }
+    .update-card-content a:hover { text-decoration: underline; }
+    .update-card-content code {
+      font-family: monospace; font-size: 0.84em;
+      background: rgba(0,174,250,0.10); color: #00fffb; border-radius: 4px; padding: 2px 5px;
+    }
+    .update-card-content blockquote {
+      border-left: 3px solid rgba(0,174,250,0.4); margin: 0 0 8px;
+      padding: 6px 12px; background: rgba(0,174,250,0.04); border-radius: 0 4px 4px 0;
+      color: var(--text-2); font-style: italic;
+    }
+    .update-card-content hr { border: none; height: 1px; background: rgba(255,255,255,0.07); margin: 14px 0; }
+
+    /* Empty / error state */
+    .updates-empty {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-3);
+      font-size: 0.88rem;
+    }
+    .updates-empty-icon {
+      font-size: 2.4rem;
+      margin-bottom: 12px;
+      opacity: 0.35;
+    }
+
+    @media (max-width: 600px) {
+      .updates-wrap { padding: 32px 16px 60px; }
+      .update-card { padding: 18px 18px; }
+      .update-card-header { flex-direction: column; gap: 4px; }
+    }
+    @media (max-width: 400px) {
+      .updates-wrap { padding: 24px 12px 48px; }
+      .update-card { padding: 14px 14px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="page-loader" class="page-loader">
+    <div class="page-loader-inner">
+      <div class="page-loader-spinner"></div>
+      <span class="page-loader-text">Loading…</span>
+    </div>
+  </div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+          </div>
+        </a>
+        <nav class="header-nav">
+          <a class="header-nav-link internal" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">Tournament Details</a>
+          <a class="header-nav-link internal" href="/guides.html" data-track="Guides" data-track-category="navigation">Guides</a>
+          <a class="header-nav-link internal" href="/past-events.html" data-track="Past Events" data-track-category="navigation">Past Events</a>
+          <a class="header-nav-link internal active-nav-link" href="/updates.html" data-track="Game Updates" data-track-category="navigation">Game Updates</a>
+          <span class="nav-sep"></span>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="Discord Nav" data-track-category="navigation">Discord</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="updates-wrap">
+      <div class="updates-eyebrow">Anichess</div>
+      <h1 class="updates-title">Game Updates</h1>
+      <p class="updates-subtitle">The latest patch notes, feature releases, and changes to Anichess.</p>
+
+      <div id="updates-list">
+        <div class="updates-empty">
+          <div class="updates-empty-icon">📋</div>
+          Loading updates…
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <span>Anichess Ranked Tracker</span>
+    <span class="sep">·</span>
+    <span>Game Updates</span>
+  </footer>
+
+  <script>
+    async function applyLogo() {
+      const logoImg  = document.getElementById('logo-img');
+      const logoIcon = document.getElementById('logo-icon');
+      if (!logoImg || !logoIcon) return;
+      const cached = localStorage.getItem('anichess-logo');
+      if (cached) { logoImg.src = cached; logoImg.style.display = 'block'; logoIcon.style.display = 'none'; }
+      try {
+        const res = await fetch('/api/logo');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.exists && data.filename) {
+          const p = `/${data.filename}`;
+          localStorage.setItem('anichess-logo', p);
+          logoImg.src = p; logoImg.style.display = 'block'; logoIcon.style.display = 'none';
+        } else {
+          localStorage.removeItem('anichess-logo');
+          logoImg.style.display = 'none'; logoIcon.style.display = '';
+        }
+      } catch {}
+    }
+
+    if (document.documentElement.classList.contains('bg-preloaded')) {
+      document.body.classList.add('has-bg');
+    }
+
+    async function applyBackground() {
+      try {
+        let url = sessionStorage.getItem('anichess-bg-url');
+        if (!url) {
+          const res = await fetch('/api/background');
+          if (!res.ok) return;
+          const data = await res.json();
+          if (data.exists && data.filename) {
+            url = `/${data.filename}`;
+            sessionStorage.setItem('anichess-bg-url', url);
+          } else {
+            sessionStorage.removeItem('anichess-bg-url');
+            document.documentElement.style.setProperty('--bg-image', 'none');
+            document.body.classList.remove('has-bg');
+            return;
+          }
+        }
+        document.documentElement.style.setProperty('--bg-image', `url(${url})`);
+        if (!document.body.classList.contains('has-bg')) {
+          requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add('has-bg')));
+        }
+      } catch {}
+    }
+
+    function dismissLoader() {
+      const loader = document.getElementById('page-loader');
+      if (!loader) return;
+      loader.classList.add('fading');
+      loader.addEventListener('transitionend', () => loader.remove(), { once: true });
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDate(str) {
+      if (!str) return '';
+      try {
+        const d = new Date(str + (str.length === 10 ? 'T00:00:00' : ''));
+        return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      } catch { return str; }
+    }
+
+    async function loadUpdates() {
+      const list = document.getElementById('updates-list');
+      try {
+        const res = await fetch('/api/game-updates');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        if (!data.length) {
+          list.innerHTML = `<div class="updates-empty"><div class="updates-empty-icon">📋</div>No updates posted yet. Check back soon.</div>`;
+          return;
+        }
+
+        list.innerHTML = data.map(entry => `
+          <div class="update-card">
+            <div class="update-card-header">
+              <div class="update-card-title">${escapeHtml(entry.title)}</div>
+              <div class="update-card-date">${formatDate(entry.date)}</div>
+            </div>
+            <div class="update-card-divider"></div>
+            <div class="update-card-content">${window._marked ? window._marked.parse(entry.content) : escapeHtml(entry.content)}</div>
+          </div>
+        `).join('');
+      } catch {
+        list.innerHTML = `<div class="updates-empty"><div class="updates-empty-icon">⚠️</div>Failed to load updates. Please try again later.</div>`;
+      } finally {
+        dismissLoader();
+      }
+    }
+
+    applyLogo();
+    applyBackground();
+
+    // Load marked.js then render updates
+    const markedScript = document.createElement('script');
+    markedScript.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+    markedScript.onload = () => {
+      marked.use({ breaks: true, gfm: true });
+      window._marked = marked;
+      loadUpdates();
+    };
+    markedScript.onerror = () => loadUpdates(); // fallback: render as plain escaped text
+    document.head.appendChild(markedScript);
+  </script>
+  <script src="/mobile-nav.js" defer></script>
+</body>
+</html>

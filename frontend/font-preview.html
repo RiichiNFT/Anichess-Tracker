@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Font Style Preview — Anichess Tracker</title>
+  <!-- Load weight 300 + 800 to enable the contrast technique -->
+  <style>
+    :root {
+      --bg:           #101932;
+      --bg-card:      #141d36;
+      --surface-2:    #1a2444;
+      --border:       #1f2d52;
+      --border-light: #283860;
+      --accent:       #00aefa;
+      --accent-dim:   rgba(0,174,250,0.10);
+      --gold:         #edc729;
+      --text:         #e8f0fe;
+      --text-2:       #7a9abf;
+      --text-3:       #3a5070;
+      --green:        #10b981;
+      --red:          #ef4444;
+      --mono:         'Courier New', monospace;
+      --radius:       12px;
+      --grad:         linear-gradient(90deg, #00aefa, #00fffb);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { overflow-x: hidden; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.75)} }
+
+    /* ── Preview bar ─────────────────────────────────────── */
+    .preview-bar {
+      background: linear-gradient(90deg, #7c3aed, #4f46e5);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      text-align: center;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+    .preview-bar a {
+      color: rgba(255,255,255,0.75);
+      text-decoration: underline;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+      font-size: 0.82rem;
+    }
+
+    /* ── Comparison layout ───────────────────────────────── */
+    .compare-wrap {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: calc(100vh - 40px);
+    }
+
+    @media (max-width: 860px) {
+      .compare-wrap { grid-template-columns: 1fr; }
+    }
+
+    .compare-col {
+      padding: 0;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+    .compare-col:last-child { border-right: none; }
+
+    .compare-col-label {
+      padding: 12px 24px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+    .compare-col-label.current {
+      background: rgba(16,25,50,0.95);
+      color: var(--text-3);
+    }
+    .compare-col-label.proposed {
+      background: rgba(30,16,60,0.95);
+      color: #a78bfa;
+    }
+    .col-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .col-dot.current  { background: var(--text-3); }
+    .col-dot.proposed { background: #7c3aed; }
+
+    .col-body {
+      padding: 28px 24px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    /* ── Section label ───────────────────────────────────── */
+    .section-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin-bottom: 10px;
+    }
+
+    /* ── Shared structural pieces ────────────────────────── */
+    header-sim {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 0 20px;
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+      margin-bottom: 4px;
+    }
+
+    .logo-sim {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .logo-icon-sim {
+      font-size: 1.6rem;
+      color: var(--accent);
+      filter: drop-shadow(0 0 8px rgba(0,174,250,.35));
+    }
+
+    /* ─────────────────────────────────────────────────────
+       CURRENT STYLE — weight 700, minimal tracking
+       ───────────────────────────────────────────────────── */
+    .cur-logo-name {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .cur-logo-accent { color: var(--accent); }
+
+    .cur-nav {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .cur-nav a {
+      font-size: 1.14rem;   /* original value */
+      font-weight: 700;
+      color: var(--text-2);
+      text-decoration: none;
+      padding: 4px 9px;
+      border-radius: 6px;
+    }
+
+    .cur-event-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: rgba(0,174,250,0.12);
+      border: 1px solid rgba(0,174,250,0.35);
+      border-radius: 20px;
+      font-size: 0.70rem;
+      font-weight: 800;
+      letter-spacing: 0.13em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .cur-event-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Current event name — gradient, 700 weight */
+    .cur-event-name {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #ffffff, #b0d4f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1.2;
+      margin: 0 0 8px;
+    }
+
+    .cur-prize {
+      display: inline-flex;
+      padding: 3px 10px;
+      background: rgba(237,199,41,0.09);
+      border: 1px solid rgba(237,199,41,0.28);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .cur-meta {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-bottom: 20px;
+    }
+
+    /* Current leaderboard card header — 4rem "Leaderboard" */
+    .cur-card {
+      background: rgba(16,25,50,0.82);
+      border: 1px solid rgba(0,174,250,0.14);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .cur-card-header {
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(0,174,250,0.10);
+      position: relative;
+      overflow: hidden;
+    }
+    .cur-card-header::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 160px;
+      background-image: repeating-conic-gradient(
+        rgba(255,255,255,0.038) 0% 25%, transparent 0% 50%
+      );
+      background-size: 22px 22px;
+      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.50), transparent);
+      mask-image: linear-gradient(to left, rgba(0,0,0,0.50), transparent);
+      pointer-events: none;
+    }
+    .cur-lb-title {
+      font-size: 2.8rem;   /* scaled down from live 4rem to fit column */
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      position: relative;
+      z-index: 1;
+    }
+    .cur-lb-sub {
+      font-size: 0.72rem;
+      color: var(--text-2);
+      margin-top: 4px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Past Events title */
+    .cur-page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      background: linear-gradient(90deg, #ffffff, #b0d4f1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 4px;
+    }
+    .cur-page-sub {
+      font-size: 0.82rem;
+      color: var(--text-2);
+    }
+
+    /* Tournament page title */
+    .cur-tournament-title {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      text-align: center;
+      margin-bottom: 4px;
+    }
+
+    /* ─────────────────────────────────────────────────────
+       PROPOSED STYLE — 300/800 contrast, wide tracking, caps
+       (the "MATCH REPLAYS" technique)
+       ───────────────────────────────────────────────────── */
+
+    /* Logo name — thinner base, bold accent */
+    .new-logo-name {
+      font-size: 0.9rem;
+      font-weight: 300;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .new-logo-accent {
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .new-nav {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .new-nav a {
+      font-size: 0.82rem;   /* trimmed from 1.14rem */
+      font-weight: 300;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--text-2);
+      text-decoration: none;
+      padding: 4px 9px;
+      border-radius: 6px;
+    }
+    .new-nav a.internal {
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+
+    .new-event-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      background: rgba(0,174,250,0.08);
+      border: 1px solid rgba(0,174,250,0.28);
+      border-radius: 6px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+    .new-event-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Proposed event name — 300/800 contrast technique */
+    .new-event-name {
+      font-size: 1.75rem;
+      font-weight: 300;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.15;
+      margin: 0 0 8px;
+    }
+    .new-event-name strong {
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .new-prize {
+      display: inline-flex;
+      padding: 3px 10px;
+      background: rgba(237,199,41,0.09);
+      border: 1px solid rgba(237,199,41,0.28);
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .new-meta {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-bottom: 20px;
+    }
+
+    /* Proposed leaderboard card header */
+    .new-card {
+      background: rgba(16,25,50,0.82);
+      border: 1px solid rgba(0,174,250,0.14);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .new-card-header {
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(0,174,250,0.10);
+      position: relative;
+      overflow: hidden;
+    }
+    .new-card-header::after {
+      content: '';
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 160px;
+      background-image: repeating-conic-gradient(
+        rgba(255,255,255,0.038) 0% 25%, transparent 0% 50%
+      );
+      background-size: 22px 22px;
+      -webkit-mask-image: linear-gradient(to left, rgba(0,0,0,0.50), transparent);
+      mask-image: linear-gradient(to left, rgba(0,0,0,0.50), transparent);
+      pointer-events: none;
+    }
+    /* Proposed: Leaderboard uses the 300/800 split too */
+    .new-lb-title {
+      font-size: 1.5rem;
+      font-weight: 300;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.1;
+      position: relative;
+      z-index: 1;
+    }
+    .new-lb-title strong {
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .new-lb-sub {
+      font-size: 0.72rem;
+      color: var(--text-2);
+      margin-top: 4px;
+      letter-spacing: 0.02em;
+      font-weight: 300;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Past Events proposed title */
+    .new-page-title {
+      font-size: 1.75rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      line-height: 1.1;
+      margin-bottom: 4px;
+    }
+    .new-page-title strong {
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .new-page-sub {
+      font-size: 0.82rem;
+      color: var(--text-2);
+      font-weight: 300;
+      letter-spacing: 0.04em;
+    }
+
+    /* Tournament page proposed title */
+    .new-tournament-title {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .new-tournament-title strong {
+      font-weight: 800;
+      background: var(--grad);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: block;
+    }
+
+    /* ── Shared section divider ──────────────────────────── */
+    .section-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* ── Opinion box ─────────────────────────────────────── */
+    .opinion-wrap {
+      background: #0a0d1a;
+      border-top: 2px solid #7c3aed;
+      padding: 32px 28px;
+    }
+    .opinion-inner {
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .opinion-title {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #a78bfa;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .opinion-title::before {
+      content: '';
+      display: inline-block;
+      width: 14px; height: 2px;
+      background: #7c3aed;
+      border-radius: 1px;
+    }
+    .verdict-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .verdict-card {
+      flex: 1;
+      min-width: 220px;
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .verdict-card.yes {
+      background: rgba(16,185,129,0.07);
+      border: 1px solid rgba(16,185,129,0.25);
+    }
+    .verdict-card.no {
+      background: rgba(239,68,68,0.06);
+      border: 1px solid rgba(239,68,68,0.22);
+    }
+    .verdict-card.maybe {
+      background: rgba(237,199,41,0.06);
+      border: 1px solid rgba(237,199,41,0.22);
+    }
+    .verdict-label {
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .verdict-card.yes   .verdict-label { color: #10b981; }
+    .verdict-card.no    .verdict-label { color: #ef4444; }
+    .verdict-card.maybe .verdict-label { color: #edc729; }
+    .verdict-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .verdict-body {
+      font-size: 0.8rem;
+      color: var(--text-2);
+      line-height: 1.65;
+    }
+
+    .opinion-rec {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.28);
+      border-left: 3px solid #7c3aed;
+      border-radius: 8px;
+      padding: 16px 18px;
+      font-size: 0.84rem;
+      color: var(--text-2);
+      line-height: 1.75;
+    }
+    .opinion-rec strong { color: var(--text); font-weight: 700; }
+    .opinion-rec ul { padding-left: 18px; margin-top: 8px; }
+    .opinion-rec li { margin-bottom: 6px; }
+
+    /* ── Shared table preview ────────────────────────────── */
+    .mini-table { width: 100%; border-collapse: collapse; }
+    .mini-table th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 0.62rem;
+      font-weight: 700;
+      color: var(--text-2);
+      text-transform: uppercase;
+      letter-spacing: 0.10em;
+      background: #141d36;
+      border-bottom: 1px solid var(--border);
+    }
+    .mini-table td {
+      padding: 10px 12px;
+      font-size: 0.88rem;
+      color: var(--text);
+      border-bottom: 1px solid var(--border);
+    }
+    .mini-table tr:last-child td { border-bottom: none; }
+    .mini-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .rank-g {
+      font-weight: 900;
+      background: linear-gradient(135deg,#edc729,#fffbe8,#cd7f32);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .rank-s {
+      font-weight: 900;
+      background: linear-gradient(135deg,#94a3b8,#e2e8f0,#64748b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .rank-q {
+      font-size: 0.72rem;
+      color: transparent;
+      -webkit-text-stroke: 1px #00aefa;
+    }
+    .rating-mono { font-family: var(--mono); font-weight: 800; }
+    .win-green   { color: #10b981; font-family: var(--mono); font-weight: 700; }
+    .winbar-wrap { display:flex;flex-direction:column;align-items:flex-end;gap:3px; }
+    .winbar-track { width:60px;height:4px;background:var(--border);border-radius:2px;overflow:hidden; }
+    .winbar-fill  { height:100%;background:var(--grad);border-radius:2px; }
+  </style>
+</head>
+<body>
+
+  <!-- Preview bar -->
+  <div class="preview-bar">
+    Font Style Preview — live site unchanged
+    <a href="/index.html">← Back to live site</a>
+    <a href="/design-preview.html">← Design preview</a>
+  </div>
+
+  <!-- Side-by-side comparison -->
+  <div class="compare-wrap">
+
+    <!-- ── LEFT: Current style ──────────────────────────── -->
+    <div class="compare-col">
+      <div class="compare-col-label current">
+        <div class="col-dot current"></div>
+        Current — weight 700, gradient text
+      </div>
+      <div class="col-body">
+
+        <!-- Logo -->
+        <div class="section-block">
+          <div class="section-label">Logo</div>
+          <div class="logo-sim">
+            <span class="logo-icon-sim">♟</span>
+            <span class="cur-logo-name">ANICHESS <span class="cur-logo-accent">TRACKER</span></span>
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <div class="section-block">
+          <div class="section-label">Nav links</div>
+          <div class="cur-nav">
+            <a href="#">Tournament Details</a>
+            <a href="#">Past Events</a>
+            <a href="#" style="opacity:0.55;">Play Anichess</a>
+            <a href="#" style="opacity:0.55;">Season 8</a>
+            <a href="#" style="opacity:0.55;">Discord</a>
+          </div>
+        </div>
+
+        <!-- Home page event heading -->
+        <div class="section-block">
+          <div class="section-label">Home — Event heading</div>
+          <div class="cur-event-tag">
+            <span class="cur-event-dot"></span>
+            Upcoming Event
+          </div>
+          <h1 class="cur-event-name">Anichess Rising Stars Tournament #2</h1>
+          <div class="cur-prize">$600 USD Prize Pool</div>
+          <p class="cur-meta">May 23, 2026 · 13:00 UTC</p>
+        </div>
+
+        <!-- Leaderboard card header -->
+        <div class="section-block">
+          <div class="section-label">Leaderboard card header</div>
+          <div class="cur-card">
+            <div class="cur-card-header">
+              <div class="cur-lb-title">Leaderboard</div>
+              <div class="cur-lb-sub">Sorted by rating · Tracked wallets only</div>
+            </div>
+            <table class="mini-table">
+              <thead><tr><th>#</th><th>Player</th><th>Rating</th><th>Wins</th><th>Win Rate</th></tr></thead>
+              <tbody>
+                <tr style="box-shadow:inset 4px 0 0 #edc729;background:linear-gradient(90deg,rgba(237,199,41,.10),rgba(237,199,41,.04) 38%,transparent)">
+                  <td><span class="rank-g">1</span></td><td style="font-weight:700;color:#edc729">OppaQ</td><td class="rating-mono" style="text-align:right">2,140</td><td class="win-green" style="text-align:right">87</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">72%</span><div class="winbar-track"><div class="winbar-fill" style="width:72%"></div></div></div></td>
+                </tr>
+                <tr style="box-shadow:inset 4px 0 0 #94a3b8;background:rgba(148,163,184,0.04)">
+                  <td><span class="rank-s">2</span></td><td style="font-weight:700;color:#94a3b8">Goatistrue</td><td class="rating-mono" style="text-align:right">1,980</td><td class="win-green" style="text-align:right">74</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">65%</span><div class="winbar-track"><div class="winbar-fill" style="width:65%"></div></div></div></td>
+                </tr>
+                <tr style="box-shadow:inset 3px 0 0 rgba(0,174,250,0.40);background:rgba(0,174,250,0.02)">
+                  <td><span class="rank-q">4</span></td><td style="font-weight:700">Nightshade</td><td class="rating-mono" style="text-align:right">1,840</td><td class="win-green" style="text-align:right">55</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">54%</span><div class="winbar-track"><div class="winbar-fill" style="width:54%"></div></div></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Past Events title -->
+        <div class="section-block">
+          <div class="section-label">Past Events — page title</div>
+          <h2 class="cur-page-title">Past Events</h2>
+          <p class="cur-page-sub">View results and match replays from completed tournaments</p>
+        </div>
+
+        <!-- Tournament Details title -->
+        <div class="section-block">
+          <div class="section-label">Tournament Details — page title (centred)</div>
+          <h1 class="cur-tournament-title">Anichess Rising Stars Tournament #2</h1>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── RIGHT: Proposed style ─────────────────────────── -->
+    <div class="compare-col">
+      <div class="compare-col-label proposed">
+        <div class="col-dot proposed"></div>
+        Proposed — 300/800 contrast, wide tracking, caps
+      </div>
+      <div class="col-body">
+
+        <!-- Logo -->
+        <div class="section-block">
+          <div class="section-label">Logo</div>
+          <div class="logo-sim">
+            <span class="logo-icon-sim">♟</span>
+            <span class="new-logo-name">ANICHESS <span class="new-logo-accent">TRACKER</span></span>
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <div class="section-block">
+          <div class="section-label">Nav links</div>
+          <div class="new-nav">
+            <a href="#" class="internal">Tournament Details</a>
+            <a href="#" class="internal">Past Events</a>
+            <a href="#">Play Anichess</a>
+            <a href="#">Season 8</a>
+            <a href="#">Discord</a>
+          </div>
+        </div>
+
+        <!-- Home page event heading -->
+        <div class="section-block">
+          <div class="section-label">Home — Event heading</div>
+          <div class="new-event-tag">
+            <span class="new-event-dot"></span>
+            Upcoming Event
+          </div>
+          <!-- Split: light for descriptor, bold gradient for identity -->
+          <h1 class="new-event-name">Anichess Rising Stars<br><strong>Tournament #2</strong></h1>
+          <div class="new-prize">$600 USD Prize Pool</div>
+          <p class="new-meta">May 23, 2026 · 13:00 UTC</p>
+        </div>
+
+        <!-- Leaderboard card header -->
+        <div class="section-block">
+          <div class="section-label">Leaderboard card header</div>
+          <div class="new-card">
+            <div class="new-card-header">
+              <div class="new-lb-title">Leader<strong>board</strong></div>
+              <div class="new-lb-sub">Sorted by rating · Tracked wallets only</div>
+            </div>
+            <table class="mini-table">
+              <thead><tr><th>#</th><th>Player</th><th>Rating</th><th>Wins</th><th>Win Rate</th></tr></thead>
+              <tbody>
+                <tr style="box-shadow:inset 4px 0 0 #edc729;background:linear-gradient(90deg,rgba(237,199,41,.10),rgba(237,199,41,.04) 38%,transparent)">
+                  <td><span class="rank-g">1</span></td><td style="font-weight:700;color:#edc729">OppaQ</td><td class="rating-mono" style="text-align:right">2,140</td><td class="win-green" style="text-align:right">87</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">72%</span><div class="winbar-track"><div class="winbar-fill" style="width:72%"></div></div></div></td>
+                </tr>
+                <tr style="box-shadow:inset 4px 0 0 #94a3b8;background:rgba(148,163,184,0.04)">
+                  <td><span class="rank-s">2</span></td><td style="font-weight:700;color:#94a3b8">Goatistrue</td><td class="rating-mono" style="text-align:right">1,980</td><td class="win-green" style="text-align:right">74</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">65%</span><div class="winbar-track"><div class="winbar-fill" style="width:65%"></div></div></div></td>
+                </tr>
+                <tr style="box-shadow:inset 3px 0 0 rgba(0,174,250,0.40);background:rgba(0,174,250,0.02)">
+                  <td><span class="rank-q">4</span></td><td style="font-weight:700">Nightshade</td><td class="rating-mono" style="text-align:right">1,840</td><td class="win-green" style="text-align:right">55</td>
+                  <td style="text-align:right"><div class="winbar-wrap"><span style="font-family:var(--mono);font-size:0.8rem;color:var(--text-2)">54%</span><div class="winbar-track"><div class="winbar-fill" style="width:54%"></div></div></div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Past Events title -->
+        <div class="section-block">
+          <div class="section-label">Past Events — page title</div>
+          <h2 class="new-page-title">Past <strong>Events</strong></h2>
+          <p class="new-page-sub">View results and match replays from completed tournaments</p>
+        </div>
+
+        <!-- Tournament Details title -->
+        <div class="section-block">
+          <div class="section-label">Tournament Details — page title (centred)</div>
+          <h1 class="new-tournament-title">
+            Anichess Rising Stars
+            <strong>Tournament #2</strong>
+          </h1>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── UX Designer opinion ───────────────────────────────── -->
+  <div class="opinion-wrap">
+    <div class="opinion-inner">
+
+      <div class="opinion-title">UX Designer Opinion</div>
+
+      <div class="verdict-row">
+        <div class="verdict-card yes">
+          <div class="verdict-label">Works Well</div>
+          <div class="verdict-title">Page-level hero titles</div>
+          <div class="verdict-body">The 300/800 contrast technique looks strong on single-purpose headings — "Past Events", "Tournament #2", the replay page. It gives the site a distinct editorial identity that standard weight-700 headings don't have. The wide tracking adds premium feel.</div>
+        </div>
+        <div class="verdict-card maybe">
+          <div class="verdict-label">Use With Care</div>
+          <div class="verdict-title">Event name on home page</div>
+          <div class="verdict-body">Works if the line break is intentional (descriptor light / identity bold). The risk is that "Anichess Rising Stars" in 300 weight reads as secondary, when it's actually the full name. The split needs to feel natural, not arbitrary.</div>
+        </div>
+        <div class="verdict-card no">
+          <div class="verdict-label">Not Recommended</div>
+          <div class="verdict-title">Card headers + nav links</div>
+          <div class="verdict-body">"Leader<strong>board</strong>" with a gradient in a card header is over-designed for a functional label. Nav links at 300 weight + 0.10em tracking feel spaced out and slow to scan. The technique works as an accent, not a system-wide rule.</div>
+        </div>
+      </div>
+
+      <div class="opinion-rec">
+        <strong>Recommendation: Selective, not global.</strong>
+        <ul>
+          <li><strong>Apply it to page hero titles only</strong> — "Past Events", "Tournament Details", and the main event name. These are the moments that earn the editorial treatment.</li>
+          <li><strong>Keep card headers (Leaderboard, About This Tournament) at weight 600–700</strong>, no gradient — they are functional labels, not brand moments. Applying gradient text to a card header competes with table data below it.</li>
+          <li><strong>Keep nav at weight 600</strong>, normal tracking — uppercase + wide tracking in a nav bar makes each link harder to scan quickly.</li>
+          <li><strong>Logo could adopt it</strong> — thin "ANICHESS" / bold gradient "TRACKER" is a clean application and adds polish to the header without disrupting the page body.</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Road to Magnus — Anichess Tracker</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/fonts.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --dark:   #060914;
+      --text:   #e8f0fe;
+      --text-2: #7a9abf;
+      --text-3: #3a5070;
+      --cyan:   #00aefa;
+      --gold:   #f5b730;
+    }
+
+    html {
+      scrollbar-gutter: stable;
+      overflow-x: hidden;
+    }
+    html, body {
+      height: 100%;
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', 'Open Sans', sans-serif;
+    }
+
+    /* ── Header — matches site standard ─────────────────────── */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      height: 64px;
+      background: rgba(6,9,20,0.75);
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+    }
+    .header-inner {
+      width: 100%;
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+    }
+    .logo-icon {
+      font-size: 1.8rem;
+      color: var(--cyan);
+      line-height: 1;
+      filter: drop-shadow(0 0 10px rgba(0,174,250,0.35));
+      flex-shrink: 0;
+    }
+    .logo-img {
+      width: 36px;
+      height: 36px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .logo-text-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .logo-name {
+      font-size: 1rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: var(--text);
+      line-height: 1;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+    .logo-accent {
+      font-weight: 800;
+      background: linear-gradient(90deg, #00aefa, #00fffb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .header-nav {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .nav-update-wrap {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+    }
+    .nav-update-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 0.46rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      background: linear-gradient(90deg, #00aefa, #00fffb);
+      color: #060914;
+      border-radius: 4px;
+      padding: 2px 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      line-height: 1.4;
+    }
+    .nav-update-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #060914;
+      opacity: 0.7;
+      flex-shrink: 0;
+      animation: nav-dot-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes nav-dot-pulse {
+      0%, 100% { opacity: 0.7; transform: scale(1); }
+      50%       { opacity: 0.25; transform: scale(0.65); }
+    }
+    .header-nav-link {
+      font-size: 1.14rem;
+      font-weight: 700;
+      color: var(--text-2);
+      text-decoration: none;
+      padding: 5px 10px;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: color 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 240px;
+    }
+    .header-nav-link:hover { color: var(--text); }
+    .header-nav-link.internal { color: var(--text); }
+    .header-nav-link.internal:hover { color: var(--cyan); }
+    .nav-sep {
+      width: 1px;
+      height: 16px;
+      background: rgba(255,255,255,0.12);
+      flex-shrink: 0;
+      align-self: center;
+      margin: 0 4px;
+    }
+    @media (max-width: 900px) {
+      header { padding: 0 16px; }
+      .header-nav-link { font-size: 0.88rem; padding: 5px 8px; }
+    }
+    @media (max-width: 640px) {
+      header { height: auto; padding: 0 16px; }
+      .header-inner { flex-wrap: wrap; padding: 8px 0; align-items: flex-start; }
+      .header-left { flex-wrap: wrap; width: 100%; }
+      .header-nav { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px; gap: 2px; width: 100%; }
+      .header-nav::-webkit-scrollbar { display: none; }
+      .header-nav-link { font-size: 0.78rem; white-space: nowrap; flex-shrink: 0; }
+
+    }
+
+    /* ── Page loader ─────────────────────────────────────────────── */
+    .page-loader {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.4s ease;
+    }
+    .page-loader.fading { opacity: 0; pointer-events: none; }
+    .page-loader-inner { display: flex; flex-direction: column; align-items: center; gap: 18px; }
+    .page-loader-spinner {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(0,174,250,0.15);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      animation: spin 0.85s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .page-loader-text {
+      font-size: 0.78rem; font-weight: 500;
+      color: var(--text-3); letter-spacing: 0.14em; text-transform: uppercase;
+    }
+
+    /* ── Page layout — two-column grid ─────────────────────────── */
+    .page {
+      display: grid;
+      grid-template-columns: 1fr 44%;
+      min-height: calc(100vh - 64px);
+      align-items: start;
+    }
+
+    /* ── Left panel — natural scroll ────────────────────────── */
+    .left {
+      position: relative;
+      z-index: 2;
+      padding: 64px 48px 80px 52px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: calc(100vh - 64px);
+    }
+    .left-inner {
+      width: 100%;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    /* Status badge */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 12px;
+      border: 1px solid rgba(0,210,255,0.25);
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 20px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--cyan);
+      animation: pulse 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.75); }
+    }
+
+    /* Headline */
+    .headline-pre {
+      font-size: 0.65rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+    .headline-name {
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      line-height: 1.1;
+      margin-bottom: 36px;
+    }
+
+    /* Facts */
+    .facts {
+      display: flex;
+      flex-direction: column;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      margin-bottom: 44px;
+    }
+    .fact {
+      display: grid;
+      grid-template-columns: 28px 1fr;
+      gap: 18px;
+      padding: 22px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      align-items: start;
+    }
+    .fact-num {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: var(--cyan);
+      padding-top: 3px;
+      opacity: 0.75;
+    }
+    .fact-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .fact-desc {
+      font-size: 1rem;
+      color: var(--text-2);
+      line-height: 1.6;
+    }
+    .fact-desc strong { color: var(--text); font-weight: 600; }
+    .fact-title-prize {
+      font-weight: 800;
+      background: linear-gradient(90deg, #00aefa, #00fffb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* Prize */
+    .prize {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .prize-amount {
+      font-size: clamp(2.8rem, 4vw, 3.6rem);
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      line-height: 1;
+      background: linear-gradient(90deg, #00aefa, #00fffb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .prize-meta { display: flex; flex-direction: column; gap: 4px; }
+    .prize-token {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .prize-token-icon {
+      width: 39px;
+      height: 39px;
+      opacity: 0.8;
+    }
+    .prize-usd {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+    .prize-disclaimer {
+      margin-top: 14px;
+      font-size: 0.62rem;
+      color: rgba(255,255,255,0.22);
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      line-height: 1.5;
+    }
+
+    /* ── Finals CTA banner ──────────────────────────────────── */
+    .finals-cta {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 28px;
+      padding: 22px 24px;
+      background: linear-gradient(135deg, rgba(251,191,36,0.16) 0%, rgba(251,191,36,0.06) 100%);
+      border: 1px solid rgba(251,191,36,0.55);
+      border-radius: 16px;
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 40px rgba(251,191,36,0.14), 0 0 0 1px rgba(251,191,36,0.08);
+      transition: background 0.22s, border-color 0.22s, box-shadow 0.22s, transform 0.18s;
+      cursor: pointer;
+    }
+    .finals-cta:hover {
+      background: linear-gradient(135deg, rgba(251,191,36,0.26) 0%, rgba(251,191,36,0.12) 100%);
+      border-color: rgba(251,191,36,0.85);
+      box-shadow: 0 0 64px rgba(251,191,36,0.26), 0 0 0 1px rgba(251,191,36,0.18);
+      transform: translateY(-2px);
+    }
+    .finals-cta-shine {
+      position: absolute;
+      top: 0; left: -60%;
+      width: 45%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(251,191,36,0.18), transparent);
+      pointer-events: none;
+      animation: finals-shine 3.2s ease-in-out infinite;
+    }
+    @keyframes finals-shine {
+      0%   { left: -60%; opacity: 0; }
+      10%  { opacity: 1; }
+      55%  { left: 130%; opacity: 1; }
+      56%  { opacity: 0; }
+      100% { left: 130%; opacity: 0; }
+    }
+    .finals-cta-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 0;
+    }
+    .finals-cta-eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .finals-cta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      background: rgba(251,191,36,0.18);
+      border: 1px solid rgba(251,191,36,0.45);
+      border-radius: 20px;
+      font-size: 0.58rem;
+      font-weight: 800;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: #fbbf24;
+      white-space: nowrap;
+    }
+    .finals-cta-badge-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #fbbf24;
+      flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .finals-cta-date {
+      font-size: 0.64rem;
+      font-weight: 600;
+      color: rgba(251,191,36,0.55);
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+    }
+    .finals-cta-title {
+      font-size: 1.18rem;
+      font-weight: 800;
+      color: #fbbf24;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+    .finals-cta-sub {
+      font-size: 0.78rem;
+      color: rgba(251,191,36,0.60);
+      font-weight: 500;
+    }
+    .finals-cta-arrow {
+      font-size: 1.4rem;
+      color: rgba(251,191,36,0.55);
+      flex-shrink: 0;
+      transition: transform 0.18s, color 0.18s;
+    }
+    .finals-cta:hover .finals-cta-arrow {
+      transform: translateX(5px);
+      color: rgba(251,191,36,0.90);
+    }
+    .finals-cta-countdown {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 2px;
+    }
+    .finals-cta-countdown-label {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 0.10em;
+      text-transform: uppercase; color: rgba(251,191,36,0.50);
+    }
+    .finals-cta-countdown-time {
+      font-size: 0.82rem; font-weight: 800; letter-spacing: 0.06em;
+      color: #fbbf24; font-variant-numeric: tabular-nums;
+    }
+    .finals-cta-countdown-live {
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #10b981;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @media (max-width: 480px) {
+      .finals-cta { padding: 18px 18px; gap: 14px; }
+      .finals-cta-icon { font-size: 1.8rem; }
+      .finals-cta-title { font-size: 1.05rem; }
+    }
+
+    /* Twitch stream button */
+    .stream-cta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+      padding: 16px 24px;
+      background: linear-gradient(135deg, rgba(145,71,255,0.14) 0%, rgba(145,71,255,0.06) 100%);
+      border: 1px solid rgba(145,71,255,0.45);
+      border-radius: 14px;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .stream-cta:hover {
+      background: linear-gradient(135deg, rgba(145,71,255,0.24) 0%, rgba(145,71,255,0.12) 100%);
+      border-color: rgba(145,71,255,0.75);
+      transform: translateY(-2px);
+    }
+    .stream-cta-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #9147ff; flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(145,71,255,0.7);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    .stream-cta-text {
+      display: flex; flex-direction: column; gap: 2px; flex: 1;
+    }
+    .stream-cta-label {
+      font-size: 0.90rem; font-weight: 700;
+      color: #c9a0ff; letter-spacing: 0.01em;
+    }
+    .stream-cta-sub {
+      font-size: 0.70rem; color: rgba(201,160,255,0.55); font-weight: 500;
+    }
+    .stream-cta-arrow {
+      font-size: 1.2rem; color: rgba(145,71,255,0.55); flex-shrink: 0;
+      transition: transform 0.18s, color 0.18s;
+    }
+    .stream-cta:hover .stream-cta-arrow {
+      transform: translateX(5px); color: rgba(145,71,255,0.90);
+    }
+
+    /* Bracket CTA button */
+    .bracket-cta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 28px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(237,199,41,0.12) 0%, rgba(237,199,41,0.05) 100%);
+      border: 1px solid rgba(237,199,41,0.45);
+      border-radius: 14px;
+      text-decoration: none;
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+      cursor: pointer;
+    }
+    .bracket-cta:hover {
+      background: linear-gradient(135deg, rgba(237,199,41,0.2) 0%, rgba(237,199,41,0.09) 100%);
+      border-color: rgba(237,199,41,0.7);
+      transform: translateY(-2px);
+    }
+    .bracket-cta-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      flex: 1;
+    }
+    .bracket-cta-label {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #edc729;
+      letter-spacing: 0.03em;
+    }
+    .bracket-cta-sub {
+      font-size: 0.78rem;
+      color: rgba(237,199,41,0.6);
+      font-weight: 400;
+    }
+    .bracket-cta-arrow {
+      font-size: 1.3rem;
+      color: rgba(237,199,41,0.5);
+      flex-shrink: 0;
+      transition: transform 0.15s;
+    }
+    .bracket-cta:hover .bracket-cta-arrow { transform: translateX(4px); }
+
+    /* CTA buttons */
+    .ctas {
+      display: flex;
+      gap: 10px;
+      margin-top: 32px;
+      flex-wrap: wrap;
+    }
+    .cta-primary, .cta-secondary {
+      display: inline-flex;
+      align-items: center;
+      padding: 10px 22px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-decoration: none;
+      transition: opacity 0.18s, transform 0.18s;
+    }
+    .cta-primary {
+      background: var(--cyan);
+      color: #060914;
+    }
+    .cta-secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .cta-primary:hover  { opacity: 0.88; transform: translateY(-1px); }
+    .cta-secondary:hover { border-color: rgba(255,255,255,0.45); transform: translateY(-1px); }
+
+    .discord-note {
+      margin-top: 16px;
+      font-size: 0.78rem;
+      color: var(--text-3);
+    }
+    .discord-note a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .discord-note a:hover { text-decoration: underline; }
+
+    /* ── Right panel — sticky photo column ──────────────────── */
+    .right {
+      position: sticky;
+      top: 64px;
+      height: calc(100vh - 64px);
+      overflow: hidden;
+      z-index: 0;
+    }
+    .photo-wrap {
+      position: absolute;
+      inset: 0;
+    }
+    .photo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: 40% 12%;
+      display: block;
+      filter: saturate(0.78) contrast(1.06) brightness(0.96);
+    }
+    .photo-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to right,
+        #060914 0%,
+        rgba(6,9,20,0.5) 12%,
+        rgba(6,9,20,0.08) 32%,
+        transparent 52%
+      );
+      z-index: 1;
+    }
+    .photo-wrap::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 140px;
+      background: linear-gradient(to top, #060914, transparent);
+      z-index: 1;
+    }
+    .photo-placeholder {
+      width: 100%;
+      height: 100%;
+      background: #0a1020;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 6rem;
+      opacity: 0.08;
+    }
+    .photo-credit {
+      position: absolute;
+      bottom: 10px;
+      right: 14px;
+      font-size: 0.52rem;
+      color: rgba(255,255,255,0.18);
+      letter-spacing: 0.04em;
+      z-index: 2;
+      font-weight: 500;
+    }
+
+    /* ── Laptop (1024–1280px) ───────────────────────────────── */
+    @media (max-width: 1280px) {
+      .page { grid-template-columns: 1fr 42%; }
+      .left { padding: 56px 40px 72px 44px; }
+    }
+    @media (max-width: 1100px) {
+      .page { grid-template-columns: 1fr 40%; }
+      .left { padding: 48px 32px 64px 40px; }
+      .left-inner { max-width: 460px; }
+      .headline-name { font-size: clamp(2.6rem, 5vw, 4rem); }
+    }
+
+    /* ── Tablet / mobile ────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .page { grid-template-columns: 1fr; }
+      .right {
+        position: relative;
+        top: 0;
+        width: 100%;
+        height: 56vw;
+        max-height: 380px;
+        min-height: 220px;
+        order: -1;
+      }
+      .photo-wrap img { object-position: 50% 8%; }
+      .photo-wrap::before {
+        background: linear-gradient(to bottom, transparent 0%, rgba(6,9,20,0.45) 65%, #060914 100%);
+      }
+      .photo-wrap::after { height: 80px; }
+      .left { padding: 40px 28px 64px; min-height: unset; }
+      .left-inner { max-width: 100%; margin: 0; }
+      .headline-name { font-size: clamp(2.8rem, 7vw, 4.2rem); }
+      .facts { margin-bottom: 32px; }
+      .fact { padding: 18px 0; }
+    }
+    @media (max-width: 480px) {
+      .left { padding: 32px 20px 56px; }
+      .headline-name { font-size: 2.4rem; }
+      .fact-desc { font-size: 0.9rem; }
+      .ctas { flex-direction: column; }
+      .cta-primary, .cta-secondary { justify-content: center; min-height: 44px; }
+      /* Fix 1: prize number too wide at narrow widths */
+      .prize-amount { font-size: 2rem; }
+      /* Fix 6: show more of Magnus's face on small screens */
+      .photo-wrap img { object-position: 50% 15%; }
+    }
+
+    /* ── Mobile Hamburger Drawer ──────────────────────────────────── */
+    .mob-menu-btn {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .mob-menu-btn:hover { background: rgba(255,255,255,0.06); }
+    .mob-menu-btn.active .mob-menu-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .mob-menu-btn.active .mob-menu-line:nth-child(2) { opacity: 0; }
+    .mob-menu-btn.active .mob-menu-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mob-menu-line {
+      width: 22px;
+      height: 2px;
+      background: #f4f6fb;
+      border-radius: 2px;
+      display: block;
+      transition: transform 0.22s ease, opacity 0.15s;
+    }
+    .mob-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1200;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .mob-overlay.open { display: block; opacity: 1; }
+    .mob-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(320px, 85vw);
+      background: #1a1f2e;
+      border-left: 1px solid rgba(255,255,255,0.08);
+      z-index: 1300;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .mob-drawer.open { transform: translateX(0); }
+    .mob-drawer-inner { display: flex; flex-direction: column; min-height: 100%; padding-bottom: env(safe-area-inset-bottom); }
+    .mob-drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .mob-drawer-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.06em; color: #f4f6fb; }
+    .mob-drawer-accent { color: #00aefa; }
+    .mob-drawer-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mob-drawer-close:hover { background: rgba(255,255,255,0.07); color: #f4f6fb; }
+    .mob-drawer-links { display: flex; flex-direction: column; padding: 12px 0; flex: 1; }
+    .mob-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 20px;
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .mob-drawer-link:hover { background: rgba(255,255,255,0.05); color: #f4f6fb; }
+    .mob-drawer-link.active { color: #00aefa; border-left-color: #00aefa; background: rgba(0,174,250,0.06); font-weight: 600; }
+    .mob-drawer-link-label { flex: 1; }
+    .mob-drawer-ext { color: #6b7280; }
+    .mob-drawer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,174,250,0.12);
+      color: #00aefa;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 2px 7px 2px 5px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,174,250,0.25);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mob-drawer-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #00aefa;
+      display: inline-block;
+      animation: mob-dot-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes mob-dot-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .mob-drawer-arrow { color: #6b7280; display: flex; align-items: center; flex-shrink: 0; }
+    .mob-drawer-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 8px 20px; }
+    @media (max-width: 640px) {
+      .mob-menu-btn { display: flex !important; }
+      .header-nav { display: none !important; }
+      .nav-update-wrap { display: none !important; }
+      header { height: 56px !important; padding: 0 16px !important; }
+      .header-inner { flex-wrap: nowrap !important; align-items: center !important; padding: 0 !important; }
+      .header-left { display: flex !important; width: auto !important; flex: 1 !important; flex-wrap: nowrap !important; }
+      .logo { order: unset !important; flex: unset !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+          </div>
+        </a>
+        <nav class="header-nav">
+          <a class="header-nav-link internal" href="/tournament.html">Tournament Details</a>
+          <a class="header-nav-link internal" href="/guides.html">Guides</a>
+          <a class="header-nav-link internal" href="/past-events.html">Past Events</a>
+          <span class="nav-update-wrap">
+            <a class="header-nav-link internal" href="/updates.html">Game Updates</a>
+            <span class="nav-update-chip"><span class="nav-update-dot"></span>Jun 10</span>
+          </span>
+          <span class="nav-sep"></span>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+
+    <div class="left">
+      <div class="left-inner">
+      <p class="headline-pre">Road to</p>
+      <h1 class="headline-name">Magnus</h1>
+
+      <div class="facts">
+        <div class="fact">
+          <span class="fact-num">01</span>
+          <div>
+            <div class="fact-title">Qualifiers — <span class="fact-title-prize">100,000 CHECK</span></div>
+            <p class="fact-desc">
+              <strong>Day 1 · Qualifying Arena</strong> — The top four advance to the Day 2 Knockout Bracket as <strong>Wild Cards</strong>.<br>
+              <strong>Day 2 · Knockout Bracket</strong> — Wild Cards will compete alongside 12 <strong>Elite Entrants</strong>, with only the top 4 advancing to the Finals.
+            </p>
+          </div>
+        </div>
+        <div class="fact">
+          <span class="fact-num">02</span>
+          <div>
+            <div class="fact-title">Finals — <span class="fact-title-prize">1,000,000 CHECK</span></div>
+            <p class="fact-desc">
+              The 4 qualifiers will face <strong>Magnus Carlsen</strong> and a guest <strong>Grandmaster</strong> in a 6-player Round Robin Final on Anichess.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="prize">
+        <span class="prize-token">
+          <img class="prize-token-icon" src="/images/icon_check.svg" alt="CHECK token">
+        </span>
+        <div class="prize-amount">1,100,000</div>
+        <div class="prize-meta">
+          <span class="prize-usd">≈ $50,000 USD</span>
+        </div>
+      </div>
+
+      <p class="prize-disclaimer">* USD value is approximate and subject to change based on real-time CHECK token price.</p>
+
+      <a class="finals-cta" href="/magnus-finals.html">
+        <div class="finals-cta-shine"></div>
+        <div class="finals-cta-body">
+          <div class="finals-cta-eyebrow">
+            <span class="finals-cta-badge"><span class="finals-cta-badge-dot"></span>Finals · Day 3</span>
+            <span class="finals-cta-date">Jun 16, 2026</span>
+          </div>
+          <div class="finals-cta-title">Road to Magnus Finals</div>
+          <div class="finals-cta-sub">6-Player Round Robin · Live Scoreboard</div>
+          <div class="finals-cta-countdown" id="finals-countdown"></div>
+        </div>
+        <div class="finals-cta-arrow">→</div>
+      </a>
+
+      <a class="stream-cta" href="https://www.twitch.tv/openseagg" target="_blank" rel="noopener">
+        <div class="stream-cta-dot"></div>
+        <div class="stream-cta-text">
+          <span class="stream-cta-label">Watch Live on Twitch</span>
+          <span class="stream-cta-sub">twitch.tv/openseagg · Magnus in action</span>
+        </div>
+        <span class="stream-cta-arrow">→</span>
+      </a>
+
+      <a class="bracket-cta" href="/bracket-public.html">
+        <span class="bracket-cta-text">
+          <span class="bracket-cta-label">View Day 2 Live Bracket</span>
+          <span class="bracket-cta-sub">See all matches &amp; results</span>
+        </span>
+        <span class="bracket-cta-arrow">→</span>
+      </a>
+
+      <div class="ctas">
+        <a class="cta-primary" href="https://www.anichess.com" target="_blank" rel="noopener">Play Anichess</a>
+        <a class="cta-secondary" href="/tournament.html">Tournament Details</a>
+      </div>
+
+      <div class="discord-note">
+        Got questions? Visit our <a href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Official Discord</a>.
+      </div>
+      </div><!-- /left-inner -->
+    </div>
+
+    <div class="right">
+      <div class="photo-wrap">
+        <img
+          src="/images/magnus.png"
+          alt="Magnus Carlsen"
+          onerror="this.style.display='none';document.getElementById('photo-placeholder').style.display='flex';">
+        <div id="photo-placeholder" class="photo-placeholder" style="display:none">♟</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    (function finalsCountdown() {
+      const TARGET = new Date('2026-06-16T09:30:00Z').getTime();
+      const el = document.getElementById('finals-countdown');
+      if (!el) return;
+
+      function pad(n) { return String(n).padStart(2, '0'); }
+
+      function tick() {
+        const diff = TARGET - Date.now();
+        if (diff <= 0) {
+          el.innerHTML = '<span class="finals-cta-countdown-live">Live Now</span>';
+          return;
+        }
+        const h = Math.floor(diff / 3600000);
+        const m = Math.floor((diff % 3600000) / 60000);
+        const s = Math.floor((diff % 60000) / 1000);
+        const timeStr = h > 0
+          ? `${h}h ${pad(m)}m ${pad(s)}s`
+          : `${pad(m)}m ${pad(s)}s`;
+        el.innerHTML = `<span class="finals-cta-countdown-label">Starts in</span><span class="finals-cta-countdown-time">${timeStr}</span>`;
+        setTimeout(tick, 1000);
+      }
+      tick();
+    })();
+  </script>
+  <script>
+    (async function applyLogo() {
+      const img = document.getElementById('logo-img');
+      const icon = document.getElementById('logo-icon');
+      const cached = localStorage.getItem('anichess-logo');
+      if (cached && img && icon) {
+        img.src = cached; img.style.display = 'block'; icon.style.display = 'none';
+      }
+      try {
+        const res = await fetch('/api/logo');
+        if (!res.ok) return;
+        const d = await res.json();
+        if (d.exists && d.filename && img && icon) {
+          const p = '/' + d.filename;
+          localStorage.setItem('anichess-logo', p);
+          img.src = p; img.style.display = 'block'; icon.style.display = 'none';
+        }
+      } catch {}
+    })();
+  </script>
+  <script src="/mobile-nav.js" defer></script>
+
+</body>
+</html>

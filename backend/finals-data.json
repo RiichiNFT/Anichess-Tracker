@@ -1,0 +1,160 @@
+{
+  "status": "complete",
+  "players": [
+    {
+      "id": 1,
+      "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a",
+      "name": "Magnus Carlsen",
+      "title": "GM",
+      "country": "NO",
+      "avatar": "/finals-avatars/player-1.png"
+    },
+    {
+      "id": 2,
+      "wallet": "",
+      "name": "Oleksandr Bortnyk",
+      "title": "GM",
+      "country": "UA",
+      "avatar": "/finals-avatars/player-2.png"
+    },
+    {
+      "id": 3,
+      "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7",
+      "name": "Anna-Maja Kazarian",
+      "title": "FM & WIM",
+      "country": "NL",
+      "avatar": "/finals-avatars/player-3.png"
+    },
+    {
+      "id": 4,
+      "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9",
+      "name": "Oleg Badmatsyrenov",
+      "title": "IM",
+      "country": "RU",
+      "avatar": "/finals-avatars/player-4.png"
+    },
+    {
+      "id": 5,
+      "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092",
+      "name": "Dachey Lin",
+      "title": "FM",
+      "country": "US",
+      "avatar": "/finals-avatars/player-5.png"
+    },
+    {
+      "id": 6,
+      "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d",
+      "name": "Yoseph Theolifus Taher",
+      "title": "IM",
+      "country": "ID",
+      "avatar": "/finals-avatars/player-6.png"
+    }
+  ],
+  "rounds": [
+    {
+      "n": 1,
+      "games": [
+        {
+          "white": 3,
+          "black": 1,
+          "result": "white"
+        },
+        {
+          "white": 2,
+          "black": 5,
+          "result": "black"
+        },
+        {
+          "white": 6,
+          "black": 4,
+          "result": "black"
+        }
+      ]
+    },
+    {
+      "n": 2,
+      "games": [
+        {
+          "white": 1,
+          "black": 6,
+          "result": "black"
+        },
+        {
+          "white": 4,
+          "black": 2,
+          "result": "white"
+        },
+        {
+          "white": 5,
+          "black": 3,
+          "result": "white"
+        }
+      ]
+    },
+    {
+      "n": 3,
+      "games": [
+        {
+          "white": 5,
+          "black": 1,
+          "result": "white"
+        },
+        {
+          "white": 2,
+          "black": 6,
+          "result": "black"
+        },
+        {
+          "white": 3,
+          "black": 4,
+          "result": "black"
+        }
+      ]
+    },
+    {
+      "n": 4,
+      "games": [
+        {
+          "white": 1,
+          "black": 4,
+          "result": "black"
+        },
+        {
+          "white": 2,
+          "black": 3,
+          "result": "white"
+        },
+        {
+          "white": 6,
+          "black": 5,
+          "result": "white"
+        }
+      ]
+    },
+    {
+      "n": 5,
+      "games": [
+        {
+          "white": 1,
+          "black": 2,
+          "result": "black"
+        },
+        {
+          "white": 4,
+          "black": 5,
+          "result": "draw"
+        },
+        {
+          "white": 3,
+          "black": 6,
+          "result": "draw"
+        }
+      ]
+    }
+  ],
+  "grandFinal": {
+    "p1": 4,
+    "p2": 6,
+    "result": "p1"
+  }
+}

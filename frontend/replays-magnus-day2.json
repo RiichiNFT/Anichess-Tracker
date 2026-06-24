@@ -1,0 +1,301 @@
+{
+  "eventId": "magnus-day2",
+  "title": "Road to Magnus: Day 2 Knockout",
+  "date": "June 14, 2026",
+  "rounds": [
+    {
+      "id": "qf",
+      "name": "Quarterfinals",
+      "format": "Best of 3",
+      "matches": [
+        {
+          "matchLabel": "Match 1",
+          "winner": {
+            "username": "annamaja",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "loser": {
+            "username": "Illek",
+            "wallet": "0xba784aa29daf51fc6fa33fd766530ca83941f969"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848736"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848750"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 2",
+          "winner": {
+            "username": "Ellaijio",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Marka",
+            "wallet": "0xc37565663206693faa6cfa5c917f724680ae0e30"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848777"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848797"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 3",
+          "winner": {
+            "username": "Cabbage",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "loser": {
+            "username": "Freysa",
+            "wallet": "0xd4ee3eb7a77a2dcbca82727d6d8434353e66910f"
+          },
+          "winnerScore": 2,
+          "loserScore": 1,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848743"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848763"
+            },
+            {
+              "label": "Game 3",
+              "url": "https://anichess.com/pvp/matches/2848770"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 4",
+          "winner": {
+            "username": "Dreams",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "mmeow",
+            "wallet": "0xece53b3ad93b51a4ee0ba1588981df1c8eba210f"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848752"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848738"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r16",
+      "name": "Round of 16",
+      "format": "Best of 3",
+      "matches": [
+        {
+          "matchLabel": "Match 1",
+          "winner": {
+            "username": "annamaja",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "loser": {
+            "username": "phoebe",
+            "wallet": "0x22e2c7808e2bec40cfd7577eefbf7c890f2b1e23"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848672"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848686"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 2",
+          "winner": {
+            "username": "Illek",
+            "wallet": "0xba784aa29daf51fc6fa33fd766530ca83941f969"
+          },
+          "loser": {
+            "username": "chessborn",
+            "wallet": "0xc1792df8b2f7733fb6b0f2b3275e0860a706b419"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848682"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848716"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 3",
+          "winner": {
+            "username": "Ellaijio",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Sakuragi",
+            "wallet": "0x1a3977c2931b13980c8e7c84c90f288b46151155"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848754"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848744"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 4",
+          "winner": {
+            "username": "Marka",
+            "wallet": "0xc37565663206693faa6cfa5c917f724680ae0e30"
+          },
+          "loser": {
+            "username": "OG howlz27",
+            "wallet": "0x64912c338087e8d0a7e5d92c1c26a3d6857ac085"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848698"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848713"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 5",
+          "winner": {
+            "username": "Freysa",
+            "wallet": "0xd4ee3eb7a77a2dcbca82727d6d8434353e66910f"
+          },
+          "loser": {
+            "username": "T3lbatz",
+            "wallet": "0x951ca4c274fd3ec4f617683d53941d106d5e6620"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848701"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848724"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 6",
+          "winner": {
+            "username": "Cabbage",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "loser": {
+            "username": "BlitzChess",
+            "wallet": "0xaff1f06107535fcea40df38217408fbb3e84efd4"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848685"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848709"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 7",
+          "winner": {
+            "username": "mmeow",
+            "wallet": "0xece53b3ad93b51a4ee0ba1588981df1c8eba210f"
+          },
+          "loser": {
+            "username": "Masruri",
+            "wallet": "0xaa44f221851bf345f4f4e04d6c0f8b1901e6962e"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848699"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848706"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Match 8",
+          "winner": {
+            "username": "Dreams",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Seagull12",
+            "wallet": "0x28b20075fa2c4ad42ae249c750b470babde917ba"
+          },
+          "winnerScore": 2,
+          "loserScore": 0,
+          "games": [
+            {
+              "label": "Game 1",
+              "url": "https://anichess.com/pvp/matches/2848693"
+            },
+            {
+              "label": "Game 2",
+              "url": "https://anichess.com/pvp/matches/2848711"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

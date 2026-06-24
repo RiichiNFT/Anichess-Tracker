@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /brackets.html
+Disallow: /guides-admin.html
+
+Sitemap: https://anichesstracker.com/sitemap.xml

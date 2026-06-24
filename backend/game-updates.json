@@ -1,0 +1,18 @@
+[
+  {
+    "id": "mqfjzxod",
+    "title": "Anichess Release Notes",
+    "date": "2026-06-10",
+    "content": "# Version 14.3.10\n\n## ♟️ Spell Balance\n\n**Juke** → Now has **4 Casts**.\n**Shift** → Now has **6 Casts** and **can be Cast on King**.\n**Plasma Beam** → Now has a **Range of 4**.\n**Bis-Hop** → Now has **6 Casts**.\n\n## 💡Optimizations\n- Spell preview video now correctly displays the updated spell abilities\n- Laptop view has been optimized",
+    "createdAt": "2026-06-15T18:35:32.797Z",
+    "updatedAt": "2026-06-15T18:41:45.876Z"
+  },
+  {
+    "id": "mq0ct2lh",
+    "title": "Anichess Release Notes",
+    "date": "2026-06-05",
+    "content": "# Version 14.3.9\n**Release Date: Friday, June 5 2026**\n\n## ♟️ Spell Balance\n\nA new balance pass has been applied to improve spell diversity and strategic decision-making.\n\n**Tactical Necessity** → Casts reduced to 4.\n**Slip** → Now **steals 1 Mana**.\n**Juke** → Now **steals 1 Mana** and has 8 Casts.\n**Shift** → 2 Mana, 5 Casts, **can move unlimited spaces horizontally, can move through pieces, and cannot be cast on King.***\n**Pengu Dive** → 3 Mana, 6 Casts, **can no longer be cast on Pawns.**\n**Bis-Hop** → 3 Mana, 5 Casts.\n**Pengu Blast** → 5 Mana, 2 Casts.\n**Shot in the Dark** → 3 Mana, 3 Casts, **can no longer be cast on Queen.**\n**Imposter** → 4 Mana, 3 Casts, **can no longer be cast on Pawns and King.**\n**Parkour Mech** → 3 Mana, 2 Casts.\n**House Recruit** → 4 Mana, 2 Casts.\n**Power Infusion** → 8 Mana, 5 Casts.\n**Queen Time** → 7 Mana, 1 Cast, **Can no longer capture King.**\n**Pounce and Purr** → 4 Mana, 2 Casts.\n**Transcendence** → 5 Mana, 2 Casts.\n\n##  🔮 New Spell\n**Chaos Summon**\n**Mana Cost: 6**\n**Casts: 2**\n**Ability: Summons a Knight, Bishop, or Rook (30% chance each) on a square between ranks 2–7. Has a 10% chance to summon a Pawn instead.**\n\n## 🖼️ Cosmetics Update\n\nThe following cosmetic set will be **unlocked for all players** for better visibility.\n\n**ChessPiece: Chess.com**\n**Chessboard: Chess.com**\n\nThe Chess.com **Background will remain exclusive** to the participants of the Chess.com Pre-Season Cup.",
+    "createdAt": "2026-06-05T03:17:42.629Z",
+    "updatedAt": "2026-06-15T18:40:58.911Z"
+  }
+]

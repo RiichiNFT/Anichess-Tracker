@@ -83,3 +83,27 @@ Card padding:       __px __px
 
 ## Coding Standards Awareness
 You do not write code. You write specs that the Frontend Developer can implement with zero ambiguity.
+
+---
+
+## Mobile UX Conventions (apply to every new page)
+
+These rules apply to any page that has a sticky header, a fixed background image, or a round/stage navigation bar.
+
+### Header on mobile (≤1023px)
+- **Action buttons** (e.g. Save as JPG) must be **icon-only** — hide the text label, keep a square touch target (min 44×44px). Never place a labelled button next to the logo in the same header row; it crowds or overlaps the wordmark on small phones.
+- **Status indicators** (e.g. LIVE / COMPLETE dot + text) must **not appear in the header**. They clutter the header and are redundant context. Keep DOM nodes hidden (`display:none`) so JS references don't throw, but spec them as invisible.
+- Mobile header should contain only: **logo (left)** + **icon-only action button (right)**.
+
+### Back navigation on mobile
+- Never place a standalone back pill/button between the sticky header and a sticky round-nav bar — it reads as a stranded, orphaned element.
+- **Integrate back navigation into the round-nav bar** as a dual-purpose left button:
+  - On the **first panel**: `←` in brand accent colour → navigates to the parent page (e.g. Past Events).
+  - On **any subsequent panel**: `‹` in white → navigates to the previous round.
+- The desktop back pill stays visible at ≥1024px (where there is no round-nav bar); hide it at ≤1023px.
+
+### Fixed background image
+- Always spec fixed background layers with **100px overhang using `top: -100px; left: -100px; width: calc(100vw + 200px); height: calc(var(--vh, 100vh) + 200px)`**. Never spec `inset: 0`, `right/bottom: -100px`, `width: 100%`, or `height: 100%`.
+- The height must use `--vh` (a frozen custom property set by a small inline script at page load) rather than any dynamic viewport unit. Using `right: -100px` or `bottom: -100px` makes the element size react to iOS browser chrome show/hide, causing a visible background shift on every scroll-to-top.
+- `overscroll-behavior: none` does not work on iOS and is not a substitute for the `--vh` freeze.
+- Do not spec `will-change: transform` on fixed background layers — it creates a compositing layer that desyncs during scroll on mobile.

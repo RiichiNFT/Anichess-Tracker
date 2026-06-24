@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finals Admin — Road to Magnus</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/fonts.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #090c16;
+      --bg-card: rgba(255,255,255,0.04);
+      --border:  rgba(255,255,255,0.09);
+      --text:    #e2e8f0;
+      --text-2:  rgba(226,232,240,0.60);
+      --text-3:  rgba(226,232,240,0.32);
+      --accent:  #00aefa;
+      --gold:    #fbbf24;
+      --green:   #4ade80;
+      --red:     #f87171;
+    }
+    body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:32px 20px 80px; }
+    .page { max-width:860px; margin:0 auto; display:flex; flex-direction:column; gap:32px; }
+
+    h1 { font-size:1.5rem; font-weight:800; color:#fff; letter-spacing:0.04em; }
+    .eyebrow { font-size:0.60rem; font-weight:800; letter-spacing:0.18em; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
+    p.sub { font-size:0.80rem; color:var(--text-2); margin-top:4px; }
+
+    .section { background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:20px 22px; display:flex; flex-direction:column; gap:16px; }
+    .section-title {
+      font-size:0.62rem; font-weight:800; letter-spacing:0.16em; text-transform:uppercase;
+      color:var(--accent); display:flex; align-items:center; gap:10px;
+    }
+    .section-title::after { content:''; flex:1; height:1px; background:var(--border); }
+    .section-title.collapsible { cursor:pointer; user-select:none; }
+    .section-title.collapsible:hover { color:var(--text); }
+    .section-chevron { font-size:0.60rem; color:var(--text-3); transition:transform 0.18s; flex-shrink:0; margin-left:-4px; }
+    .section-collapsed .section-chevron { transform:rotate(-90deg); }
+    .section-collapsible-body { display:flex; flex-direction:column; gap:16px; overflow:hidden; }
+    .section-collapsed .section-collapsible-body { display:none; }
+
+    /* Status toggle */
+    .status-btns { display:flex; gap:8px; flex-wrap:wrap; }
+    .status-btn {
+      padding:8px 18px; border-radius:8px; border:1px solid var(--border);
+      background:transparent; color:var(--text-2); font-size:0.80rem; font-weight:700;
+      font-family:inherit; cursor:pointer; transition:all 0.15s;
+    }
+    .status-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .status-btn.active-upcoming { background:rgba(255,255,255,0.07); border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .status-btn.active-active   { background:rgba(16,185,129,0.15); border-color:#10b981; color:#10b981; }
+    .status-btn.active-complete { background:rgba(251,191,36,0.12); border-color:var(--gold); color:var(--gold); }
+
+    /* Players grid */
+    .players-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    @media(max-width:600px){ .players-grid{ grid-template-columns:1fr; } }
+    .player-card {
+      background:rgba(255,255,255,0.025); border:1px solid var(--border);
+      border-radius:8px; padding:12px 14px;
+      display:flex; flex-direction:column; gap:7px;
+    }
+    .player-card-header { display:flex; align-items:center; gap:8px; margin-bottom:2px; }
+    .player-num { font-size:0.70rem; font-weight:800; color:var(--text-3); flex-shrink:0; }
+    .resolve-status {
+      font-size:0.68rem; font-weight:700; flex:1;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      transition:color 0.15s;
+    }
+    .resolve-status.ok       { color:var(--green); }
+    .resolve-status.notfound { color:var(--gold); }
+    .resolve-status.loading  { color:var(--text-3); }
+    .wallet-input { font-family:monospace; font-size:0.72rem !important; letter-spacing:0.02em; }
+    input[type=text], select {
+      background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10);
+      border-radius:6px; padding:7px 10px; color:var(--text); font-size:0.82rem;
+      font-family:inherit; outline:none; width:100%;
+      transition:border-color 0.15s;
+    }
+    input[type=text]:focus, select:focus { border-color:rgba(0,174,250,0.5); }
+    input[type=text]::placeholder { color:var(--text-3); }
+    .input-sub { display:flex; gap:6px; }
+    .input-sub input { font-size:0.74rem; }
+    .field-label { font-size:0.56rem; font-weight:800; letter-spacing:0.10em; text-transform:uppercase; color:var(--text-3); margin-bottom:2px; }
+
+    /* Save button */
+    .save-btn {
+      padding:9px 22px; border-radius:8px;
+      background:rgba(0,174,250,0.15); border:1px solid rgba(0,174,250,0.35);
+      color:var(--accent); font-size:0.80rem; font-weight:700; font-family:inherit;
+      cursor:pointer; transition:all 0.15s; align-self:flex-start;
+    }
+    .save-btn:hover { background:rgba(0,174,250,0.25); border-color:rgba(0,174,250,0.6); }
+    .save-btn:disabled { opacity:0.45; cursor:not-allowed; }
+
+    /* Round blocks */
+    .rounds-wrap { display:flex; flex-direction:column; gap:14px; }
+    .round-block { border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+    .round-block-header {
+      padding:11px 14px; background:rgba(255,255,255,0.03);
+      border-bottom:1px solid var(--border);
+      font-size:0.70rem; font-weight:800; letter-spacing:0.10em; text-transform:uppercase; color:var(--text-2);
+    }
+    .game-row {
+      display:grid; grid-template-columns:1fr 28px 1fr 140px;
+      align-items:center; gap:8px;
+      padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .game-row:last-child { border-bottom:none; }
+    select { background:rgba(255,255,255,0.06); cursor:pointer; }
+    select option { background:#141826; }
+    .vs-sep { text-align:center; font-size:0.70rem; font-weight:800; color:var(--text-3); }
+    .player-side { display:flex; align-items:center; gap:6px; }
+    .player-side select { flex:1; min-width:0; }
+    .color-dot {
+      width:11px; height:11px; border-radius:2px; flex-shrink:0;
+    }
+    .color-dot.white { background:#ddd; border:1px solid rgba(255,255,255,0.25); }
+    .color-dot.black { background:#1c1c2e; border:1px solid rgba(255,255,255,0.15); }
+    .result-btns { display:flex; gap:4px; }
+    .result-btn {
+      flex:1; padding:6px 2px; border-radius:6px; border:1px solid var(--border);
+      background:transparent; color:var(--text-3); font-size:0.68rem; font-weight:800;
+      font-family:inherit; cursor:pointer; text-align:center; transition:all 0.15s;
+    }
+    .result-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .result-btn.sel-white  { background:rgba(255,255,255,0.14); border-color:rgba(255,255,255,0.35); color:#fff; }
+    .result-btn.sel-draw   { background:rgba(0,174,250,0.15);   border-color:rgba(0,174,250,0.45);   color:var(--accent); }
+    .result-btn.sel-black  { background:rgba(239,68,68,0.12);   border-color:rgba(239,68,68,0.35);   color:var(--red); }
+    .result-btn.sel-clear  { color:var(--text-3); }
+    @media(max-width:640px){
+      .game-row { grid-template-columns:1fr 20px 1fr; grid-template-rows:auto auto; gap:6px; }
+      .result-btns { grid-column:1/-1; }
+    }
+
+    /* Grand final */
+    .gf-grid { display:grid; grid-template-columns:1fr 28px 1fr 140px; align-items:center; gap:8px; padding:4px 0; }
+    @media(max-width:640px){ .gf-grid{ grid-template-columns:1fr 20px 1fr; grid-template-rows:auto auto; } .gf-result-btns{ grid-column:1/-1; } }
+
+    /* Toast */
+    #toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      background:rgba(16,185,129,0.92); color:#fff; padding:10px 22px;
+      border-radius:8px; font-size:0.80rem; font-weight:700; pointer-events:none;
+      opacity:0; transition:opacity 0.2s; z-index:999; white-space:nowrap;
+    }
+    #toast.err { background:rgba(239,68,68,0.92); }
+    #toast.show { opacity:1; }
+
+    .preview-link {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:0.72rem; font-weight:700; color:var(--accent); text-decoration:none;
+      padding:6px 12px; border:1px solid rgba(0,174,250,0.25); border-radius:6px;
+      transition:all 0.15s;
+    }
+    .preview-link:hover { background:rgba(0,174,250,0.10); }
+
+    .randomize-btn {
+      padding:9px 18px; border-radius:8px;
+      background:rgba(251,191,36,0.10); border:1px solid rgba(251,191,36,0.30);
+      color:var(--gold); font-size:0.80rem; font-weight:700; font-family:inherit;
+      cursor:pointer; transition:all 0.15s; display:flex; align-items:center; gap:7px;
+      align-self:flex-start;
+    }
+    .randomize-btn:hover { background:rgba(251,191,36,0.20); border-color:rgba(251,191,36,0.55); }
+    .randomize-btn:disabled { opacity:0.40; cursor:not-allowed; }
+
+    /* Avatar upload */
+    .avatar-row { display:flex; align-items:center; gap:10px; }
+    .avatar-thumb {
+      width:48px; height:48px; border-radius:50%; flex-shrink:0;
+      object-fit:cover; background:rgba(255,255,255,0.08);
+      display:flex; align-items:center; justify-content:center;
+      font-size:1rem; font-weight:800; color:#fff; text-transform:uppercase;
+      border:1px solid var(--border);
+    }
+    .avatar-thumb img { width:100%; height:100%; border-radius:50%; object-fit:cover; display:block; }
+    .avatar-upload-btn {
+      padding:5px 12px; border-radius:6px;
+      background:rgba(255,255,255,0.05); border:1px solid var(--border);
+      color:var(--text-2); font-size:0.72rem; font-weight:700; font-family:inherit;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .avatar-upload-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    .avatar-remove-btn {
+      padding:5px 10px; border-radius:6px;
+      background:transparent; border:1px solid rgba(239,68,68,0.25);
+      color:rgba(239,68,68,0.6); font-size:0.68rem; font-weight:700; font-family:inherit;
+      cursor:pointer; transition:all 0.15s;
+    }
+    .avatar-remove-btn:hover { border-color:var(--red); color:var(--red); }
+    .avatar-file-input { display:none; }
+
+    /* Crop modal */
+    #crop-modal {
+      display:none; position:fixed; inset:0; z-index:1000;
+      background:rgba(5,8,18,0.93); backdrop-filter:blur(6px);
+      align-items:center; justify-content:center;
+    }
+    #crop-modal.open { display:flex; }
+    #crop-panel {
+      background:#141826; border:1px solid rgba(255,255,255,0.12);
+      border-radius:16px; padding:24px; width:300px;
+      display:flex; flex-direction:column; align-items:center; gap:18px;
+    }
+    .crop-title {
+      font-size:0.62rem; font-weight:800; letter-spacing:0.18em;
+      text-transform:uppercase; color:var(--accent); align-self:flex-start;
+    }
+    #crop-viewport {
+      width:240px; height:240px; border-radius:50%; overflow:hidden;
+      background:#0a0d1a; cursor:grab; position:relative; flex-shrink:0;
+      border:2px solid rgba(0,174,250,0.35);
+      box-shadow:0 0 0 5px rgba(0,174,250,0.07);
+    }
+    #crop-viewport.dragging { cursor:grabbing; }
+    #crop-img { position:absolute; user-select:none; -webkit-user-drag:none; pointer-events:none; }
+    .crop-hint { font-size:0.64rem; color:var(--text-3); text-align:center; line-height:1.5; }
+    .crop-zoom-row { display:flex; align-items:center; gap:10px; width:100%; }
+    .crop-zoom-icon { font-size:0.90rem; color:var(--text-3); flex-shrink:0; width:14px; text-align:center; }
+    #crop-zoom-slider {
+      flex:1; -webkit-appearance:none; appearance:none;
+      height:4px; background:rgba(255,255,255,0.10); border-radius:4px;
+      outline:none; cursor:pointer;
+    }
+    #crop-zoom-slider::-webkit-slider-thumb {
+      -webkit-appearance:none; width:16px; height:16px; border-radius:50%;
+      background:var(--accent); cursor:pointer;
+    }
+    #crop-zoom-slider::-moz-range-thumb {
+      width:16px; height:16px; border-radius:50%;
+      background:var(--accent); cursor:pointer; border:none;
+    }
+    .crop-actions { display:flex; gap:8px; width:100%; }
+    #crop-cancel-btn {
+      flex:1; padding:9px; border-radius:8px;
+      background:transparent; border:1px solid var(--border);
+      color:var(--text-2); font-size:0.78rem; font-weight:700; font-family:inherit; cursor:pointer;
+      transition:all 0.15s;
+    }
+    #crop-cancel-btn:hover { border-color:rgba(255,255,255,0.2); color:var(--text); }
+    #crop-apply-btn {
+      flex:2; padding:9px; border-radius:8px;
+      background:rgba(0,174,250,0.15); border:1px solid rgba(0,174,250,0.35);
+      color:var(--accent); font-size:0.78rem; font-weight:700; font-family:inherit; cursor:pointer;
+      transition:all 0.15s;
+    }
+    #crop-apply-btn:hover { background:rgba(0,174,250,0.25); border-color:rgba(0,174,250,0.6); }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <div>
+    <div class="eyebrow">Admin Panel</div>
+    <h1>Finals Scoreboard</h1>
+    <p class="sub">Road to Magnus · Jun 16, 2026 · Single Round Robin · 6 Players</p>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <a class="preview-link" href="/magnus-finals.html" target="_blank">↗ View Public Page</a>
+    <span id="last-saved" style="font-size:0.70rem;color:var(--text-3);"></span>
+  </div>
+
+  <!-- STATUS -->
+  <div class="section">
+    <div class="section-title">Event Status</div>
+    <div class="status-btns">
+      <button class="status-btn" data-status="upcoming" onclick="setStatus('upcoming')">Upcoming</button>
+      <button class="status-btn" data-status="active"   onclick="setStatus('active')">🔴 Live</button>
+      <button class="status-btn" data-status="complete" onclick="setStatus('complete')">✓ Complete</button>
+    </div>
+  </div>
+
+  <!-- PLAYERS -->
+  <div class="section section-collapsed" id="players-section">
+    <div class="section-title collapsible" onclick="togglePlayersSection()">
+      Players <span class="section-chevron">▼</span>
+    </div>
+    <div class="section-collapsible-body">
+      <p class="sub">Set the 6 participants. Title is optional (e.g. GM, WC). Country is the 2-letter ISO code (e.g. NO, PH).</p>
+      <div class="players-grid" id="players-grid">
+        <!-- injected by JS -->
+      </div>
+      <button class="save-btn" onclick="savePlayers()">Save Players</button>
+    </div>
+  </div>
+
+  <!-- ROUNDS -->
+  <div class="section">
+    <div class="section-title">Round Pairings &amp; Results</div>
+    <p class="sub" style="margin-top:-8px;">Set who plays who (white/black) per round, then enter the result as each game finishes.</p>
+    <div class="rounds-wrap" id="rounds-wrap">
+      <!-- injected by JS -->
+    </div>
+  </div>
+
+  <!-- GRAND FINAL -->
+  <div class="section">
+    <div class="section-title">Grand Final (BO1)</div>
+    <p class="sub" style="margin-top:-8px">Top 2 from Round Robin. Specify the players and enter the result.</p>
+    <div class="gf-grid" id="gf-grid">
+      <!-- injected by JS -->
+    </div>
+    <button class="save-btn" onclick="saveGrandFinal()">Save Grand Final</button>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<div id="crop-modal">
+  <div id="crop-panel">
+    <div class="crop-title">Position &amp; Zoom Photo</div>
+    <div id="crop-viewport">
+      <img id="crop-img" draggable="false" alt="">
+    </div>
+    <p class="crop-hint">Drag to reposition &nbsp;·&nbsp; Scroll or pinch to zoom</p>
+    <div class="crop-zoom-row">
+      <span class="crop-zoom-icon">−</span>
+      <input type="range" id="crop-zoom-slider" min="100" max="400" step="1" value="100">
+      <span class="crop-zoom-icon">+</span>
+    </div>
+    <div class="crop-actions">
+      <button id="crop-cancel-btn" type="button">Cancel</button>
+      <button id="crop-apply-btn" type="button">Apply Photo</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentData = null;
+  let playerMap   = {}; // wallet.toLowerCase() → { username, country, avatar }
+
+  // ── Helpers ──
+  function isEVMAddress(s) { return /^0x[0-9a-fA-F]{40}$/i.test(s || ''); }
+
+  // ── Auth helper ──
+  function authHeaders() {
+    return {
+      'Authorization': 'Basic ' + btoa(
+        (sessionStorage.getItem('mf-user') || '') + ':' + (sessionStorage.getItem('mf-pass') || '')
+      ),
+      'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
+    };
+  }
+
+  async function apiPost(url, body) {
+    const r = await fetch(url, { method: 'POST', headers: authHeaders(), body: JSON.stringify(body) });
+    if (r.status === 401) {
+      promptCredentials();
+      throw new Error('401');
+    }
+    return r;
+  }
+
+  function promptCredentials() {
+    const u = prompt('Admin username:');
+    const p = prompt('Admin password:');
+    if (u !== null) sessionStorage.setItem('mf-user', u);
+    if (p !== null) sessionStorage.setItem('mf-pass', p);
+  }
+
+  // ── Toast ──
+  function toast(msg, isErr) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className = isErr ? 'err show' : 'show';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 2400);
+  }
+
+  // ── Players section toggle ──
+  function togglePlayersSection() {
+    document.getElementById('players-section').classList.toggle('section-collapsed');
+  }
+
+  // ── Load ──
+  async function load() {
+    try {
+      const [finalsRes] = await Promise.all([
+        fetch('/api/finals'),
+        loadPlayerMap(),
+      ]);
+      currentData = await finalsRes.json();
+      renderAll(currentData);
+    } catch { toast('Failed to load data', true); }
+  }
+
+  async function loadPlayerMap() {
+    try {
+      const r = await fetch('/api/players');
+      if (!r.ok) return;
+      const list = await r.json();
+      playerMap = {};
+      list.forEach(p => { if (p.wallet) playerMap[p.wallet.toLowerCase()] = p; });
+    } catch {}
+  }
+
+  function renderAll(d) {
+    renderStatus(d.status);
+    renderPlayers(d.players || []);
+    renderRounds(d.rounds || [], d.players || []);
+    renderGrandFinal(d.grandFinal || {}, d.players || []);
+  }
+
+  // ── Status ──
+  function renderStatus(status) {
+    document.querySelectorAll('.status-btn').forEach(btn => {
+      btn.className = 'status-btn' + (btn.dataset.status === status ? ` active-${status}` : '');
+    });
+  }
+
+  async function setStatus(status) {
+    try {
+      const r = await apiPost('/api/finals/status', { status });
+      if (!r.ok) { toast('Failed to update status', true); return; }
+      currentData.status = status;
+      renderStatus(status);
+      toast('Status updated');
+    } catch(e) { if (e.message !== '401') toast('Error', true); }
+  }
+
+  // ── Players ──
+  function renderPlayers(players) {
+    const grid = document.getElementById('players-grid');
+    grid.innerHTML = '';
+    for (let i = 0; i < 6; i++) {
+      const p = players[i] || { id: i+1, wallet:'', name:'', title:'', country:'' };
+
+      const card = document.createElement('div');
+      card.className = 'player-card';
+      card.dataset.id = i + 1;
+
+      // Header: number + resolve status
+      const hdr = document.createElement('div');
+      hdr.className = 'player-card-header';
+      const numEl = document.createElement('span');
+      numEl.className = 'player-num';
+      numEl.textContent = `Player ${i + 1}`;
+      const statusEl = document.createElement('span');
+      statusEl.className = 'resolve-status';
+      statusEl.id = `resolve-p${i + 1}`;
+      hdr.appendChild(numEl);
+      hdr.appendChild(statusEl);
+      card.appendChild(hdr);
+
+      // Wallet field
+      const walletLbl = document.createElement('label');
+      walletLbl.className = 'field-label'; walletLbl.textContent = 'Wallet Address (optional)';
+      const walletInput = document.createElement('input');
+      walletInput.type = 'text';
+      walletInput.className = 'wallet-input';
+      walletInput.placeholder = '0x… paste address to auto-fill name';
+      walletInput.value = p.wallet || '';
+      walletInput.dataset.field = 'wallet';
+      card.appendChild(walletLbl);
+      card.appendChild(walletInput);
+
+      // Name field
+      const nameLbl = document.createElement('label');
+      nameLbl.className = 'field-label'; nameLbl.textContent = 'Display Name';
+      const nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.placeholder = 'Player name';
+      nameInput.value = p.name || '';
+      nameInput.dataset.field = 'name';
+      card.appendChild(nameLbl);
+      card.appendChild(nameInput);
+
+      // Title + Country row
+      const subRow = document.createElement('div');
+      subRow.className = 'input-sub';
+      subRow.innerHTML = `
+        <div>
+          <label class="field-label">Title</label>
+          <input type="text" placeholder="GM" maxlength="20" value="${esc(p.title)}" data-field="title" style="font-size:0.74rem;">
+        </div>
+        <div>
+          <label class="field-label">Country</label>
+          <input type="text" placeholder="NO" maxlength="2" value="${esc(p.country)}" data-field="country" style="font-size:0.74rem;text-transform:uppercase;">
+        </div>`;
+      card.appendChild(subRow);
+
+      // Avatar upload row
+      const avLbl = document.createElement('label');
+      avLbl.className = 'field-label'; avLbl.textContent = 'Profile Picture';
+      card.appendChild(avLbl);
+
+      const avRow = document.createElement('div');
+      avRow.className = 'avatar-row';
+
+      const avThumb = document.createElement('div');
+      avThumb.className = 'avatar-thumb';
+      avThumb.id = `av-thumb-p${i + 1}`;
+      if (p.avatar) {
+        avThumb.innerHTML = `<img src="${esc(p.avatar)}?t=${Date.now()}" alt="">`;
+      } else {
+        avThumb.textContent = (p.name || String(i + 1))[0].toUpperCase();
+      }
+      avRow.appendChild(avThumb);
+
+      const avInput = document.createElement('input');
+      avInput.type = 'file';
+      avInput.accept = 'image/png,image/jpeg,image/webp,image/gif';
+      avInput.className = 'avatar-file-input';
+      avInput.id = `av-input-p${i + 1}`;
+
+      const avUploadBtn = document.createElement('button');
+      avUploadBtn.className = 'avatar-upload-btn';
+      avUploadBtn.textContent = p.avatar ? '↺ Replace Photo' : '+ Upload Photo';
+      avUploadBtn.addEventListener('click', () => avInput.click());
+
+      const avRemoveBtn = document.createElement('button');
+      avRemoveBtn.className = 'avatar-remove-btn';
+      avRemoveBtn.textContent = '✕';
+      avRemoveBtn.title = 'Remove photo';
+      avRemoveBtn.style.display = p.avatar ? '' : 'none';
+      avRemoveBtn.addEventListener('click', () => removeAvatar(i + 1, avThumb, avUploadBtn, avRemoveBtn, p.name || String(i + 1)));
+
+      avInput.addEventListener('change', () => {
+        const file = avInput.files[0];
+        if (!file) return;
+        openCropModal(i + 1, file, avThumb, avUploadBtn, avRemoveBtn);
+        avInput.value = '';
+      });
+
+      avRow.appendChild(avInput);
+      avRow.appendChild(avUploadBtn);
+      avRow.appendChild(avRemoveBtn);
+      card.appendChild(avRow);
+
+      grid.appendChild(card);
+
+      const countryInput = card.querySelector('[data-field=country]');
+
+      // If wallet already stored, show resolved state immediately
+      if (p.wallet && isEVMAddress(p.wallet)) {
+        resolveWallet(p.wallet, nameInput, countryInput, statusEl, true);
+      }
+
+      // Wire up live wallet resolution on input
+      let debounceTimer = null;
+      walletInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const val = walletInput.value.trim();
+        if (!val) { statusEl.textContent = ''; statusEl.className = 'resolve-status'; return; }
+        if (!isEVMAddress(val)) { statusEl.textContent = ''; statusEl.className = 'resolve-status'; return; }
+        statusEl.textContent = 'Looking up…';
+        statusEl.className = 'resolve-status loading';
+        debounceTimer = setTimeout(() => resolveWallet(val, nameInput, countryInput, statusEl, false), 350);
+      });
+
+      // Clear auto-fill flag and update thumb initial when user manually edits name
+      nameInput.addEventListener('input', () => {
+        delete nameInput.dataset.autoFilled;
+        const thumb = document.getElementById(`av-thumb-p${i + 1}`);
+        if (thumb && !thumb.querySelector('img')) {
+          thumb.textContent = (nameInput.value.trim() || String(i + 1))[0].toUpperCase();
+        }
+      });
+    }
+  }
+
+  function resolveWallet(wallet, nameInput, countryInput, statusEl, silent) {
+    const key = wallet.toLowerCase();
+    const p = playerMap[key];
+    if (!p) {
+      if (!silent) {
+        statusEl.textContent = '— Not in tracker (name required)';
+        statusEl.className = 'resolve-status notfound';
+      }
+      return;
+    }
+    const resolvedName = (p.username && !isEVMAddress(p.username)) ? p.username : null;
+    if (resolvedName) {
+      // Auto-fill name only if empty or previously auto-filled
+      if (!nameInput.value.trim() || nameInput.dataset.autoFilled === 'true') {
+        nameInput.value = resolvedName;
+        nameInput.dataset.autoFilled = 'true';
+      }
+      // Auto-fill country only if empty
+      if (p.country && !countryInput.value.trim()) {
+        countryInput.value = p.country.toUpperCase();
+      }
+      statusEl.textContent = `✓ ${resolvedName}`;
+      statusEl.className = 'resolve-status ok';
+    } else {
+      statusEl.textContent = '⚠ No username found';
+      statusEl.className = 'resolve-status notfound';
+    }
+  }
+
+  async function savePlayers() {
+    const cards = document.querySelectorAll('#players-grid .player-card');
+    const players = [...cards].map(card => ({
+      wallet:  card.querySelector('[data-field=wallet]')?.value.trim() || '',
+      name:    card.querySelector('[data-field=name]').value.trim(),
+      title:   card.querySelector('[data-field=title]').value.trim(),
+      country: card.querySelector('[data-field=country]').value.trim().toUpperCase().slice(0, 2),
+    }));
+    try {
+      const r = await apiPost('/api/finals/players', { players });
+      if (!r.ok) { toast('Failed to save players', true); return; }
+      currentData.players = players.map((p, i) => ({ ...p, id: i + 1 }));
+      renderRounds(currentData.rounds || [], currentData.players);
+      renderGrandFinal(currentData.grandFinal || {}, currentData.players);
+      toast('Players saved');
+      markSaved();
+    } catch(e) { if (e.message !== '401') toast('Error saving players', true); }
+  }
+
+  // ── Rounds ──
+  function renderRounds(rounds, players) {
+    const wrap = document.getElementById('rounds-wrap');
+    wrap.innerHTML = '';
+    rounds.forEach(rd => {
+      const block = document.createElement('div');
+      block.className = 'round-block';
+      block.innerHTML = `<div class="round-block-header">Round ${rd.n}</div>`;
+      const gamesWrap = document.createElement('div');
+      (rd.games || []).forEach((g, gi) => {
+        gamesWrap.appendChild(makeGameRow(rd.n, gi, g, players));
+      });
+      block.appendChild(gamesWrap);
+      wrap.appendChild(block);
+    });
+  }
+
+  function makeGameRow(roundN, gameIdx, game, players) {
+    const row = document.createElement('div');
+    row.className = 'game-row';
+    row.dataset.round = roundN;
+    row.dataset.game  = gameIdx;
+
+    const mkSelect = (selected, side) => {
+      const sel = document.createElement('select');
+      sel.dataset.side = side;
+      const opt0 = document.createElement('option');
+      opt0.value = ''; opt0.textContent = side === 'white' ? '— White —' : '— Black —';
+      sel.appendChild(opt0);
+      players.forEach(p => {
+        if (!p.name) return;
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name;
+        if (p.id === selected) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      sel.addEventListener('change', () => saveGamePairing(roundN, gameIdx, row));
+      return sel;
+    };
+
+    const mkSide = (selected, side) => {
+      const wrap = document.createElement('div');
+      wrap.className = 'player-side';
+      const dot = document.createElement('div');
+      dot.className = `color-dot ${side}`;
+      wrap.appendChild(dot);
+      wrap.appendChild(mkSelect(selected, side));
+      return wrap;
+    };
+
+    row.appendChild(mkSide(game.white, 'white'));
+    const vs = document.createElement('div'); vs.className = 'vs-sep'; vs.textContent = 'vs'; row.appendChild(vs);
+    row.appendChild(mkSide(game.black, 'black'));
+
+    const btns = document.createElement('div'); btns.className = 'result-btns';
+    [['white','1-0'],['draw','½-½'],['black','0-1'],['clear','✕']].forEach(([val, lbl]) => {
+      const btn = document.createElement('button');
+      btn.className = 'result-btn' + (game.result === val ? ` sel-${val}` : val === 'clear' ? ' sel-clear' : '');
+      btn.textContent = lbl;
+      btn.addEventListener('click', () => setGameResult(roundN, gameIdx, val === 'clear' ? null : val, row));
+      btns.appendChild(btn);
+    });
+    row.appendChild(btns);
+    return row;
+  }
+
+  async function saveGamePairing(roundN, gameIdx, row) {
+    const whiteSel = row.querySelector('[data-side=white]');
+    const blackSel = row.querySelector('[data-side=black]');
+    const white = parseInt(whiteSel.value) || null;
+    const black = parseInt(blackSel.value) || null;
+
+    const rounds = currentData.rounds;
+    const g = rounds[roundN-1].games[gameIdx];
+    const newGame = { white, black, result: g.result };
+
+    // Save full round (pairings + existing results)
+    const gamesPayload = rounds[roundN-1].games.map((og, i) =>
+      i === gameIdx ? newGame : og
+    );
+    try {
+      const r = await apiPost('/api/finals/round', { round: roundN, games: gamesPayload });
+      if (!r.ok) { toast('Failed to save pairing', true); return; }
+      rounds[roundN-1].games[gameIdx] = newGame;
+      toast(`R${roundN} G${gameIdx+1} pairing saved`);
+      markSaved();
+    } catch(e) { if (e.message !== '401') toast('Error', true); }
+  }
+
+  async function setGameResult(roundN, gameIdx, result, row) {
+    try {
+      const r = await apiPost('/api/finals/game', { round: roundN, game: gameIdx, result });
+      if (!r.ok) { toast('Failed to save result', true); return; }
+      currentData.rounds[roundN-1].games[gameIdx].result = result;
+      // Update button styles
+      row.querySelectorAll('.result-btn').forEach(b => b.className = 'result-btn');
+      const vals = ['white','draw','black','clear'];
+      row.querySelectorAll('.result-btn').forEach((b, i) => {
+        if (result && vals[i] === result) b.classList.add(`sel-${result}`);
+        if (vals[i] === 'clear') b.classList.add('sel-clear');
+      });
+      toast(`Round ${roundN} game ${gameIdx+1}: ${result || 'cleared'}`);
+      markSaved();
+    } catch(e) { if (e.message !== '401') toast('Error', true); }
+  }
+
+  // ── Grand Final ──
+  function renderGrandFinal(gf, players) {
+    const grid = document.getElementById('gf-grid');
+    grid.innerHTML = '';
+
+    const mkSel = (selected, label) => {
+      const sel = document.createElement('select');
+      sel.dataset.gfSide = label;
+      const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = `— ${label} —`;
+      sel.appendChild(opt0);
+      players.forEach(p => {
+        if (!p.name) return;
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.name;
+        if (p.id === selected) opt.selected = true;
+        sel.appendChild(opt);
+      });
+      return sel;
+    };
+
+    grid.appendChild(mkSel(gf.p1, 'Player 1'));
+    const vs = document.createElement('div'); vs.className = 'vs-sep'; vs.textContent = 'vs'; grid.appendChild(vs);
+    grid.appendChild(mkSel(gf.p2, 'Player 2'));
+
+    const btns = document.createElement('div'); btns.className = 'result-btns gf-result-btns';
+    [['p1','P1 Wins'],['draw','Draw'],['p2','P2 Wins'],['clear','✕']].forEach(([val, lbl]) => {
+      const btn = document.createElement('button');
+      btn.className = 'result-btn' + (gf.result === val ? ` sel-${val === 'p1' ? 'white' : val === 'p2' ? 'black' : 'draw'}` : val === 'clear' ? ' sel-clear' : '');
+      btn.textContent = lbl;
+      btn.dataset.gfResult = val;
+      btns.appendChild(btn);
+    });
+    grid.appendChild(btns);
+  }
+
+  async function saveGrandFinal() {
+    const p1Sel = document.querySelector('[data-gf-side="Player 1"]');
+    const p2Sel = document.querySelector('[data-gf-side="Player 2"]');
+    const resultBtn = document.querySelector('.gf-result-btns .result-btn.sel-white, .gf-result-btns .result-btn.sel-black, .gf-result-btns .result-btn.sel-draw');
+
+    const p1 = parseInt(p1Sel?.value) || null;
+    const p2 = parseInt(p2Sel?.value) || null;
+    const result = resultBtn ? resultBtn.dataset.gfResult : null;
+    const finalResult = result === 'clear' ? null : result;
+
+    try {
+      const r = await apiPost('/api/finals/grand-final', { p1, p2, result: finalResult });
+      if (!r.ok) { toast('Failed to save grand final', true); return; }
+      currentData.grandFinal = { p1, p2, result: finalResult };
+      toast('Grand Final saved');
+      markSaved();
+    } catch(e) { if (e.message !== '401') toast('Error', true); }
+  }
+
+  // GF result button click handler (delegated)
+  document.getElementById('gf-grid').addEventListener('click', e => {
+    const btn = e.target.closest('.gf-result-btns .result-btn');
+    if (!btn) return;
+    const gfBtns = document.querySelectorAll('.gf-result-btns .result-btn');
+    gfBtns.forEach(b => b.className = 'result-btn' + (b === btn ? '' : ''));
+    btn.dataset.gfResult !== 'clear'
+      ? btn.classList.add(btn.dataset.gfResult === 'p1' ? 'sel-white' : btn.dataset.gfResult === 'p2' ? 'sel-black' : 'sel-draw')
+      : btn.classList.add('sel-clear');
+  });
+
+  // ── Avatar upload / remove ──
+  async function uploadAvatar(playerId, file, thumbEl, uploadBtn, removeBtn) {
+    const origText = uploadBtn.textContent;
+    uploadBtn.textContent = '⏳ Uploading…';
+    uploadBtn.disabled = true;
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file, 'avatar.png');
+      const r = await fetch(`/api/finals/avatar/${playerId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Basic ' + btoa(
+            (sessionStorage.getItem('mf-user') || '') + ':' + (sessionStorage.getItem('mf-pass') || '')
+          ),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+        body: fd,
+      });
+      if (r.status === 401) { promptCredentials(); return; }
+      if (!r.ok) { const e = await r.json().catch(() => ({})); toast(e.error || 'Upload failed', true); return; }
+      const { avatar } = await r.json();
+      // Update preview
+      thumbEl.innerHTML = `<img src="${esc(avatar)}?t=${Date.now()}" alt="">`;
+      uploadBtn.textContent = '↺ Replace Photo';
+      removeBtn.style.display = '';
+      // Update local player cache
+      if (currentData?.players) {
+        const p = currentData.players.find(p => p.id === playerId);
+        if (p) p.avatar = avatar;
+      }
+      toast(`Player ${playerId} photo updated`);
+    } catch { toast('Upload error', true); }
+    finally { uploadBtn.disabled = false; if (uploadBtn.textContent === '⏳ Uploading…') uploadBtn.textContent = origText; }
+  }
+
+  async function removeAvatar(playerId, thumbEl, uploadBtn, removeBtn, playerName) {
+    try {
+      const r = await fetch(`/api/finals/avatar/${playerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': 'Basic ' + btoa(
+            (sessionStorage.getItem('mf-user') || '') + ':' + (sessionStorage.getItem('mf-pass') || '')
+          ),
+          'X-Requested-With': 'XMLHttpRequest',
+        },
+      });
+      if (r.status === 401) { promptCredentials(); return; }
+      if (!r.ok) { toast('Failed to remove photo', true); return; }
+      // Reset preview to initial
+      thumbEl.innerHTML = '';
+      thumbEl.textContent = (playerName || String(playerId))[0].toUpperCase();
+      uploadBtn.textContent = '+ Upload Photo';
+      removeBtn.style.display = 'none';
+      if (currentData?.players) {
+        const p = currentData.players.find(p => p.id === playerId);
+        if (p) p.avatar = null;
+      }
+      toast(`Player ${playerId} photo removed`);
+    } catch { toast('Error removing photo', true); }
+  }
+
+  function markSaved() {
+    document.getElementById('last-saved').textContent = 'Last saved: ' + new Date().toLocaleTimeString();
+  }
+
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+  // ── Round-robin pairing generator (Berger circle method) ──
+  function generateRoundRobin(playerIds) {
+    // Shuffle players for randomization
+    const players = [...playerIds];
+    for (let i = players.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [players[i], players[j]] = [players[j], players[i]];
+    }
+
+    // Circle method: fix players[0], rotate the rest each round
+    const n = players.length; // 6
+    const rotating = players.slice(1);
+    const rounds = [];
+
+    for (let round = 0; round < n - 1; round++) {
+      const circle = [players[0], ...rotating];
+      const games = [];
+      for (let i = 0; i < n / 2; i++) {
+        const a = circle[i];
+        const b = circle[n - 1 - i];
+        // Randomly assign colors
+        const [white, black] = Math.random() < 0.5 ? [a, b] : [b, a];
+        games.push({ white, black, result: null });
+      }
+      rounds.push({ n: round + 1, games });
+      // Rotate: last element moves to front
+      rotating.unshift(rotating.pop());
+    }
+
+    return rounds;
+  }
+
+  async function randomizePairings() {
+    const players = currentData?.players || [];
+    const named = players.filter(p => p.name);
+    if (named.length < 6) {
+      toast('Save all 6 players first before randomizing', true);
+      return;
+    }
+
+    // Warn if any results already exist
+    const hasResults = (currentData?.rounds || []).some(rd =>
+      (rd.games || []).some(g => g.result)
+    );
+    if (hasResults) {
+      if (!confirm('Some games already have results. Randomizing will regenerate ALL pairings and clear all results. Continue?')) return;
+    }
+
+    const btn = document.getElementById('randomize-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Generating…';
+
+    try {
+      const playerIds = players.map(p => p.id);
+      const newRounds = generateRoundRobin(playerIds);
+
+      // Save all 5 rounds sequentially
+      for (const rd of newRounds) {
+        const r = await apiPost('/api/finals/round', { round: rd.n, games: rd.games });
+        if (!r.ok) { toast(`Failed to save Round ${rd.n}`, true); return; }
+      }
+
+      // Update local state and re-render
+      currentData.rounds = newRounds;
+      renderRounds(newRounds, currentData.players);
+      toast('All 5 rounds randomized ✓');
+      markSaved();
+    } catch(e) {
+      if (e.message !== '401') toast('Error generating pairings', true);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '🎲 Randomize All Pairings';
+    }
+  }
+
+  // ── Crop modal ──
+  const CROP_SIZE   = 240; // viewport px
+  const CROP_OUTPUT = 420; // exported canvas px
+
+  const cropState = {
+    playerId: null, thumbEl: null, uploadBtn: null, removeBtn: null,
+    naturalW: 0, naturalH: 0,
+    imgX: 0, imgY: 0, zoom: 1, minZoom: 1,
+    dragging: false,
+    dragStartX: 0, dragStartY: 0, dragImgX: 0, dragImgY: 0,
+    pinchStartDist: 0, pinchStartZoom: 1,
+  };
+
+  function openCropModal(playerId, file, thumbEl, uploadBtn, removeBtn) {
+    cropState.playerId  = playerId;
+    cropState.thumbEl   = thumbEl;
+    cropState.uploadBtn = uploadBtn;
+    cropState.removeBtn = removeBtn;
+    const img = document.getElementById('crop-img');
+    const reader = new FileReader();
+    reader.onload = e => {
+      img.onload = () => {
+        const minZoom = Math.max(CROP_SIZE / img.naturalWidth, CROP_SIZE / img.naturalHeight);
+        cropState.naturalW = img.naturalWidth;
+        cropState.naturalH = img.naturalHeight;
+        cropState.minZoom  = minZoom;
+        cropState.zoom     = minZoom;
+        cropState.imgX     = (CROP_SIZE - img.naturalWidth  * minZoom) / 2;
+        cropState.imgY     = (CROP_SIZE - img.naturalHeight * minZoom) / 2;
+        applyCropTransform();
+        const slider = document.getElementById('crop-zoom-slider');
+        slider.min   = 100;
+        slider.max   = 400;
+        slider.value = 100;
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('crop-modal').classList.add('open');
+  }
+
+  function applyCropTransform() {
+    const img = document.getElementById('crop-img');
+    img.style.left   = cropState.imgX + 'px';
+    img.style.top    = cropState.imgY + 'px';
+    img.style.width  = cropState.naturalW * cropState.zoom + 'px';
+    img.style.height = cropState.naturalH * cropState.zoom + 'px';
+  }
+
+  function clampCropPos() {
+    const dw = cropState.naturalW * cropState.zoom;
+    const dh = cropState.naturalH * cropState.zoom;
+    cropState.imgX = Math.min(0, Math.max(CROP_SIZE - dw, cropState.imgX));
+    cropState.imgY = Math.min(0, Math.max(CROP_SIZE - dh, cropState.imgY));
+  }
+
+  function applyZoom(newZoom) {
+    const clamped = Math.max(cropState.minZoom, Math.min(cropState.minZoom * 4, newZoom));
+    const ratio   = clamped / cropState.zoom;
+    const cx = CROP_SIZE / 2, cy = CROP_SIZE / 2;
+    cropState.imgX = cx + (cropState.imgX - cx) * ratio;
+    cropState.imgY = cy + (cropState.imgY - cy) * ratio;
+    cropState.zoom = clamped;
+    clampCropPos();
+    applyCropTransform();
+    document.getElementById('crop-zoom-slider').value =
+      Math.round(((clamped - cropState.minZoom) / (cropState.minZoom * 3)) * 300 + 100);
+  }
+
+  // ── Drag to pan ──
+  const cropViewport = document.getElementById('crop-viewport');
+
+  cropViewport.addEventListener('mousedown', e => {
+    e.preventDefault();
+    cropState.dragging  = true;
+    cropState.dragStartX = e.clientX; cropState.dragStartY = e.clientY;
+    cropState.dragImgX   = cropState.imgX; cropState.dragImgY = cropState.imgY;
+    cropViewport.classList.add('dragging');
+  });
+  document.addEventListener('mousemove', e => {
+    if (!cropState.dragging) return;
+    cropState.imgX = cropState.dragImgX + (e.clientX - cropState.dragStartX);
+    cropState.imgY = cropState.dragImgY + (e.clientY - cropState.dragStartY);
+    clampCropPos(); applyCropTransform();
+  });
+  document.addEventListener('mouseup', () => {
+    if (!cropState.dragging) return;
+    cropState.dragging = false;
+    cropViewport.classList.remove('dragging');
+  });
+
+  // ── Touch: drag + pinch ──
+  cropViewport.addEventListener('touchstart', e => {
+    if (e.touches.length === 1) {
+      e.preventDefault();
+      cropState.dragging   = true;
+      cropState.dragStartX = e.touches[0].clientX; cropState.dragStartY = e.touches[0].clientY;
+      cropState.dragImgX   = cropState.imgX;        cropState.dragImgY   = cropState.imgY;
+    } else if (e.touches.length === 2) {
+      e.preventDefault();
+      cropState.dragging       = false;
+      cropState.pinchStartDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      cropState.pinchStartZoom = cropState.zoom;
+    }
+  }, { passive: false });
+
+  cropViewport.addEventListener('touchmove', e => {
+    e.preventDefault();
+    if (e.touches.length === 1 && cropState.dragging) {
+      cropState.imgX = cropState.dragImgX + (e.touches[0].clientX - cropState.dragStartX);
+      cropState.imgY = cropState.dragImgY + (e.touches[0].clientY - cropState.dragStartY);
+      clampCropPos(); applyCropTransform();
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      applyZoom(cropState.pinchStartZoom * (dist / cropState.pinchStartDist));
+    }
+  }, { passive: false });
+
+  cropViewport.addEventListener('touchend', () => { cropState.dragging = false; });
+
+  // ── Scroll to zoom ──
+  cropViewport.addEventListener('wheel', e => {
+    e.preventDefault();
+    applyZoom(cropState.zoom * (e.deltaY > 0 ? 0.93 : 1.07));
+  }, { passive: false });
+
+  // ── Zoom slider ──
+  document.getElementById('crop-zoom-slider').addEventListener('input', e => {
+    const pct    = parseInt(e.target.value);          // 100–400
+    const newZoom = cropState.minZoom + ((pct - 100) / 300) * (cropState.minZoom * 3);
+    const clamped = Math.max(cropState.minZoom, Math.min(cropState.minZoom * 4, newZoom));
+    const ratio   = clamped / cropState.zoom;
+    const cx = CROP_SIZE / 2, cy = CROP_SIZE / 2;
+    cropState.imgX = cx + (cropState.imgX - cx) * ratio;
+    cropState.imgY = cy + (cropState.imgY - cy) * ratio;
+    cropState.zoom = clamped;
+    clampCropPos(); applyCropTransform();
+  });
+
+  // ── Cancel ──
+  document.getElementById('crop-cancel-btn').addEventListener('click', () => {
+    document.getElementById('crop-modal').classList.remove('open');
+  });
+
+  // ── Apply: render to canvas → upload ──
+  document.getElementById('crop-apply-btn').addEventListener('click', () => {
+    const img    = document.getElementById('crop-img');
+    const canvas = document.createElement('canvas');
+    canvas.width  = CROP_OUTPUT;
+    canvas.height = CROP_OUTPUT;
+    const ctx   = canvas.getContext('2d');
+    const scale = CROP_OUTPUT / CROP_SIZE;
+    ctx.drawImage(img,
+      cropState.imgX * scale, cropState.imgY * scale,
+      cropState.naturalW * cropState.zoom * scale,
+      cropState.naturalH * cropState.zoom * scale
+    );
+    document.getElementById('crop-modal').classList.remove('open');
+    canvas.toBlob(blob => {
+      if (!blob) { toast('Failed to process image', true); return; }
+      uploadAvatar(cropState.playerId, blob, cropState.thumbEl, cropState.uploadBtn, cropState.removeBtn);
+    }, 'image/png');
+  });
+
+  load();
+</script>
+</body>
+</html>

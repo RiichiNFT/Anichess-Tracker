@@ -10,11 +10,17 @@
     gtag('js', new Date());
     gtag('config', 'G-C5P8BG33DT');
   </script>
-  <title>Confirmed Finalists — Anichess Tracker</title>
+  <title>Rising Stars Tournament #2 — Anichess Tracker</title>
+  <meta name="description" content="Results and bracket for Anichess Rising Stars Tournament #2. See the finalists, bracket results, and final standings.">
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://anichesstracker.com/">
+  <meta property="og:title"       content="Anichess Rising Stars #2 — Results">
+  <meta property="og:description" content="Final bracket, finalists, and standings for Anichess Rising Stars Tournament #2. $600 USD prize pool in CHECK tokens.">
+  <meta property="og:image"       content="https://anichesstracker.com/og-preview.png">
+  <meta name="twitter:card"       content="summary_large_image">
+  <meta name="twitter:title"      content="Anichess Rising Stars #2 — Results">
+  <meta name="twitter:image"      content="https://anichesstracker.com/og-preview.png">
   <link rel="icon" id="favicon" href="/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
   <style>
     .admin-bar {
@@ -168,7 +174,7 @@
     @media (max-width: 700px) {
       .bracket-embed-outer { display: none; }
       .bracket-section-link { display: block; font-size: 0.82rem; color: #00aefa; }
-      .bracket-section-link::after { content: ' ↗'; }
+      .bracket-section-link::after { content: ''; }
     }
 
     /* ── Mobile ── */
@@ -220,14 +226,23 @@
     <div class="header-inner">
       <div class="header-left">
         <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
-          <span class="logo-icon" id="logo-icon">♟</span>
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
           <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
                onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
           <div class="logo-text-group">
             <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
           </div>
         </a>
         <nav class="header-nav">
+          <a class="header-nav-link internal" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">Tournament Details</a>
+          <a class="header-nav-link internal" href="/guides.html" data-track="Guides" data-track-category="navigation">Guides</a>
+          <a class="header-nav-link internal" href="/past-events.html" data-track="Past Events" data-track-category="navigation">Past Events</a>
+          <span class="nav-update-wrap">
+            <a class="header-nav-link internal" href="/updates.html" data-track="Game Updates" data-track-category="navigation">Game Updates</a>
+            <span class="nav-update-chip"><span class="nav-update-dot"></span>Jun 10</span>
+          </span>
+          <span class="nav-sep"></span>
           <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
           <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
           <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
@@ -249,24 +264,53 @@
       Could not reach the server — showing last cached data.
     </div>
 
+    <!-- ── Hero Banner ─────────────────────────────────────────── -->
+    <div class="hero-banner">
+      <div class="hero-banner-inner">
+        <div class="hero-banner-left">
+          <div class="hero-eyebrow">ANICHESS RISING STARS</div>
+          <h1 class="hero-title"><strong>Tournament #2</strong></h1>
+          <div class="hero-divider"></div>
+          <div class="hero-meta">
+            <span class="hero-prize">$600 USD</span>
+            <span class="hero-sep">·</span>
+            <span>16 Finalists</span>
+            <span class="hero-sep">·</span>
+            <span>May 24, 2026</span>
+          </div>
+          <p class="hero-explainer">Spell-chess newcomer tournament — 16 finalists competed in single-elimination Best of 3 matches for $600 USD in CHECK tokens. See the bracket below for full results.</p>
+          <div class="hero-ctas">
+            <a class="hero-cta-primary" href="/bracket.html?event=rs2" data-track="Hero View Bracket" data-track-category="conversion">🏆 View Bracket</a>
+            <a class="hero-cta-secondary" href="/replay-rs2.html" data-track="Hero Match Replays" data-track-category="conversion">▶ Match Replays</a>
+          </div>
+        </div>
+        <div class="hero-banner-right">
+          <div class="hero-prize-card">
+            <div class="hero-prize-label">PRIZE POOL</div>
+            <div class="hero-prize-amount">$600</div>
+            <div class="hero-prize-currency">USD in CHECK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-heading-wrap">
       <div class="section-heading-group">
-        <h2 class="section-heading">Anichess Rising Stars Tournament #1</h2>
+        <h2 class="section-heading">Anichess Rising Stars <strong>Tournament #2</strong></h2>
         <div class="prize-pool-tag">$600 USD Prize Pool</div>
-        <p class="section-heading-sub">16 players qualify for the playoff finals · May 10, 2026 · 13:00 UTC · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
+        <p class="section-heading-sub">16 players · Finals · <strong>May 24, 2026 · 12:00 UTC</strong> · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
       </div>
       <a class="tournament-cta-btn" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">
         <span>Tournament Details</span>
-        <span class="tournament-cta-arrow">↗</span>
       </a>
     </div>
 
-    <div id="qualified-section" class="hidden"></div>
+    <div id="champion-card" class="hidden"></div>
 
     <div class="bracket-section">
       <div class="bracket-section-head">
         <span class="bracket-section-label">Top 16 · Tournament Bracket</span>
-        <a class="bracket-section-link" href="/bracket-public.html" target="_blank">Open full view ↗</a>
+        <a class="bracket-section-link" href="/bracket.html?event=rs2" target="_blank">Open full view</a>
       </div>
       <div class="bracket-embed-outer" id="bracket-embed-outer">
         <div class="bracket-embed-sizer"></div>
@@ -275,13 +319,18 @@
           <span>Loading bracket…</span>
         </div>
         <iframe
-          src="/bracket-public.html?embed=1"
+          src="/bracket-public.html?embed=1&event=rs2"
           id="bracket-iframe"
           title="Tournament Bracket"
           scrolling="no"
           onload="onBracketLoad()">
         </iframe>
       </div>
+    </div>
+
+    <div class="rs-next-banner">
+      <span class="rs-next-text"><strong>Rising Stars Tournament #3</strong> is coming — stay tuned for registration details.</span>
+      <a class="rs-next-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="RS3 Discord CTA" data-track-category="retention">Join Discord for updates</a>
     </div>
 
     <div class="table-card">
@@ -398,5 +447,6 @@
       if (res.ok) { siteState = newState; renderAdminBar(); }
     }
   </script>
+  <script src="/mobile-nav.js" defer></script>
 </body>
 </html>

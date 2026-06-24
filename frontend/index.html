@@ -3,7 +3,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anichess Tracker</title>
+  <title>Anichess Tracker — Rising Stars Tournament #2</title>
+  <meta name="description" content="Live leaderboard and tournament tracker for Anichess Rising Stars — a competitive spell-chess tournament with a $600 USD prize pool in CHECK tokens.">
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://anichesstracker.com/">
+  <meta property="og:title"       content="Anichess Tracker — Rising Stars Tournament #2">
+  <meta property="og:description" content="Live leaderboard and bracket tracker for Anichess Rising Stars #2. $600 USD prize pool. 16 finalists compete on May 24, 2026.">
+  <meta property="og:image"       content="https://anichesstracker.com/og-preview.png">
+  <meta name="twitter:card"       content="summary_large_image">
+  <meta name="twitter:title"      content="Anichess Tracker — Rising Stars #2">
+  <meta name="twitter:description" content="Live standings and bracket for the Anichess Rising Stars #2 tournament. $600 USD in CHECK tokens up for grabs.">
+  <meta name="twitter:image"      content="https://anichesstracker.com/og-preview.png">
+  <!-- JSON-LD Event schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SportsEvent",
+    "name": "Anichess Rising Stars Tournament #2",
+    "startDate": "2026-05-24T12:00:00Z",
+    "location": { "@type": "VirtualLocation", "url": "https://anichess.com/" },
+    "organizer": { "@type": "Organization", "name": "Anichess", "url": "https://anichess.com/" },
+    "url": "https://anichesstracker.com/",
+    "description": "Single-elimination spell-chess tournament for newcomer players. $600 USD prize pool in CHECK tokens.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" }
+  }
+  </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -12,10 +37,8 @@
     gtag('config', 'G-C5P8BG33DT');
   </script>
   <link rel="icon" id="favicon" href="/favicon.ico">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
+  <script>(function(){var u=sessionStorage.getItem('anichess-bg-url');if(u){document.documentElement.style.setProperty('--bg-image','url('+u+')');document.documentElement.classList.add('bg-preloaded');}})();</script>
 </head>
 <body>
   <div id="page-loader" class="page-loader">
@@ -29,29 +52,24 @@
     <div class="header-inner">
       <div class="header-left">
         <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
-          <span class="logo-icon" id="logo-icon">♟</span>
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
           <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
                onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
           <div class="logo-text-group">
             <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
           </div>
         </a>
         <nav class="header-nav">
+          <a class="header-nav-link internal" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">Tournament Details</a>
+          <a class="header-nav-link internal" href="/guides.html" data-track="Guides" data-track-category="navigation">Guides</a>
+          <a class="header-nav-link internal" href="/past-events.html" data-track="Past Events" data-track-category="navigation">Past Events</a>
+          <span class="nav-sep"></span>
           <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener" data-track="Play Anichess" data-track-category="navigation">Play Anichess</a>
           <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener" data-track="Season 8" data-track-category="navigation">Season 8</a>
           <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener" data-track="Lichess Team" data-track-category="navigation">Lichess Team</a>
           <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener" data-track="Discord Nav" data-track-category="navigation">Discord</a>
         </nav>
-      </div>
-      <div class="header-right">
-        <div class="live-badge" aria-label="Live data" role="status">
-          <span class="live-dot"></span>
-          <span>Live</span>
-        </div>
-        <span id="last-updated" class="last-updated-text"></span>
-        <button id="refresh-btn" class="btn-refresh" aria-label="Refresh leaderboard" onclick="forceRefresh()">
-          <span class="refresh-icon">↻</span><span class="refresh-text"> Refresh</span>
-        </button>
       </div>
     </div>
   </header>
@@ -65,37 +83,70 @@
       <span class="finalized-text">RESULTS BEING FINALIZED</span>
     </div>
 
+    <!-- ── Hero Banner ─────────────────────────────────────────── -->
+    <div class="hero-banner">
+      <div class="hero-banner-inner">
+        <div class="hero-banner-left">
+          <div class="hero-eyebrow">ANICHESS RISING STARS</div>
+          <h1 class="hero-title"><strong id="hero-tournament-num">Tournament #2</strong></h1>
+          <div class="hero-divider"></div>
+          <div class="hero-meta">
+            <span class="hero-prize" id="hero-prize">$600 USD</span>
+            <span class="hero-sep">·</span>
+            <span>16 Players</span>
+            <span class="hero-sep">·</span>
+            <span id="hero-date">May 24, 2026</span>
+          </div>
+          <p class="hero-explainer">Real-time standings for the Anichess newcomer tournament. Top 8 by rating + top 2 by matches played since May 11 qualify for the finals. Prize paid in CHECK tokens.</p>
+          <div class="hero-ctas">
+            <a class="hero-cta-primary" href="/bracket.html?event=rs2" data-track="Hero View Bracket" data-track-category="conversion">🏆 View Bracket</a>
+            <a class="hero-cta-secondary" href="https://forms.gle/9XGbYmgyP6PNHQbA7" target="_blank" rel="noopener" id="hero-register-link" data-track="Hero Register" data-track-category="conversion">Register →</a>
+          </div>
+        </div>
+        <div class="hero-banner-right">
+          <div class="hero-prize-card">
+            <div class="hero-prize-label">PRIZE POOL</div>
+            <div class="hero-prize-amount" id="hero-prize-big">$600</div>
+            <div class="hero-prize-currency">USD in CHECK</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-heading-wrap">
       <div class="section-heading-group">
-        <h2 class="section-heading">Anichess Rising Stars Tournament #1</h2>
-        <div class="prize-pool-tag">$600 USD Prize Pool</div>
-        <p class="section-heading-sub">16 players qualify for the playoff finals · May 10, 2026 · 13:00 UTC · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
+        <div class="upcoming-event-tag">
+          <span class="upcoming-event-dot"></span>
+          <span>UPCOMING EVENT</span>
+        </div>
+        <h2 class="section-heading">Anichess Rising Stars <strong id="tournament-num">Tournament #2</strong></h2>
+        <div class="prize-pool-tag" id="prize-pool-tag">$600 USD Prize Pool</div>
+        <p class="section-heading-sub">16 players qualify for the playoff finals · <strong id="final-date-time">May 24, 2026 · 12:00 UTC</strong> · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
       </div>
-      <a class="tournament-cta-btn" href="/tournament.html" data-track="Tournament Details" data-track-category="navigation">
-        <span>Tournament Details</span>
-        <span class="tournament-cta-arrow">↗</span>
-      </a>
     </div>
 
     <div class="eligibility-banner">
       <div class="eligibility-row">
         <span class="eligibility-item">
           <span class="eligibility-label">New Players Only</span>
+          <span class="eligibility-tooltip-wrap">
+            <span class="eligibility-tooltip-icon">!</span>
+            <span class="eligibility-tooltip-box">Top 4 finishers from past Rising Stars Tournaments are not eligible.</span>
+          </span>
         </span>
         <span class="eligibility-sep"></span>
         <span class="eligibility-item">
           <span class="eligibility-label">REGISTER </span>
-          <a class="eligibility-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener" data-track="Register" data-track-category="conversion">HERE</a>
+          <a class="eligibility-link" id="register-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener" data-track="Register" data-track-category="conversion">HERE</a>
         </span>
         <span class="eligibility-sep"></span>
         <span class="eligibility-item">
           <span class="eligibility-label">Submission Cutoff</span>
-          <span class="eligibility-value cutoff">MAY 8TH · UTC 00:00</span>
+          <span class="eligibility-value cutoff" id="cutoff-display">MAY 21ST · UTC 00:00</span>
           <span class="eligibility-note">(SUBMISSIONS AFTER CUTOFF APPLIES FOR NEXT TOURNAMENT)</span>
         </span>
       </div>
     </div>
-
     <div id="qualified-section" class="hidden"></div>
 
     <div class="table-card">
@@ -104,9 +155,10 @@
           <div>
             <div class="table-card-title">Leaderboard</div>
           </div>
+          <button id="export-csv-btn" class="btn btn-secondary" style="font-size:0.78rem;padding:5px 10px;" title="Download leaderboard as CSV">Export CSV</button>
         </div>
         <div class="table-card-title-row">
-          <div class="table-card-subtitle">Sorted by rating · Tracked wallets only</div>
+          <div class="table-card-subtitle">Sorted by rating · Tracked wallets only<span id="last-updated" style="font-size:0.75rem;color:var(--text-3);margin-left:8px;"></span></div>
           <span class="qualify-badge">✦ TOP 8 QUALIFIES FOR PLAYOFF</span>
         </div>
       </div>
@@ -116,11 +168,11 @@
             <tr>
               <th class="col-rank">#</th>
               <th class="col-player">Player</th>
-              <th class="col-tier">Tier</th>
-              <th class="col-rating">Rating</th>
-              <th class="col-matches">Matches</th>
-              <th class="col-wins">Wins</th>
-              <th class="col-winrate">Win Rate</th>
+              <th class="col-tier col-hide-mobile">Tier</th>
+              <th class="col-rating th-sortable" data-sort="rating" aria-sort="descending">Rating</th>
+              <th class="col-matches col-hide-mobile th-sortable" data-sort="matches" aria-sort="none">Matches</th>
+              <th class="col-wins col-hide-mobile">Wins</th>
+              <th class="col-winrate col-hide-mobile">Win Rate</th>
               <th class="col-expand"></th>
             </tr>
           </thead>

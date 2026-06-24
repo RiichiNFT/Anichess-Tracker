@@ -1,0 +1,70 @@
+[
+  {
+    "id": "magnus-finals",
+    "title": "Road to Magnus: Finals Round Robin",
+    "date": "June 16, 2026",
+    "time": "9:30 UTC",
+    "prizePool": "1,000,000 CHECK",
+    "format": "6-player Single Round Robin",
+    "eligibility": "Invitational · GMs + 4 Challengers",
+    "podium": [
+      { "place": 1, "username": "Oleg Badmatsyrenov (Ellaijio)",     "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9" },
+      { "place": 2, "username": "Yoseph Theolifus Taher (Dreams)",   "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d" },
+      { "place": 3, "username": "Dachey Lin (Cabbage)",             "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092" }
+    ],
+    "replayUrl": "/replay.html?event=magnus-finals",
+    "bracketUrl": "/magnus-finals.html",
+    "bracketLabel": "View Scoreboard"
+  },
+  {
+    "id": "magnus-day2",
+    "title": "Road to Magnus: Day 2 Knockout",
+    "date": "June 14, 2026",
+    "time": "12:00 UTC",
+    "prizePool": "80,000 CHECK",
+    "format": "16-player Playoff Bracket",
+    "eligibility": "4 Wild Cards + 12 Elite Entrants",
+    "qualified": true,
+    "resultsLabel": "Qualified for Finals",
+    "podium": [
+      { "place": 1, "username": "annamaja", "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7" },
+      { "place": 2, "username": "Ellaijio", "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9" },
+      { "place": 3, "username": "Cabbage",  "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092" },
+      { "place": 4, "username": "Dreams",   "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d" }
+    ],
+    "replayUrl": "/replay.html?event=magnus-day2",
+    "bracketUrl": "/bracket.html?event=magnus-day2"
+  },
+  {
+    "id": "rs2",
+    "title": "Anichess Rising Stars Tournament #2",
+    "date": "May 24, 2026",
+    "time": "12:00 UTC",
+    "prizePool": "$600 USD",
+    "format": "16-player Playoff Bracket",
+    "eligibility": "New Players Only",
+    "podium": [
+      { "place": 1, "username": "BJackl21",   "wallet": "0x5eba87400a53e9b19cb514577704c61a6d7b138a" },
+      { "place": 2, "username": "TheMeowGuy", "wallet": "0x5b62481ac8148d0752c0b2c1b1ab584924ac22b9" },
+      { "place": 3, "username": "Serene",     "wallet": "0x59e6555b5fdbb3626cfe3520c3191c2d23d2d1ec" }
+    ],
+    "replayUrl": "/replay-rs2.html",
+    "bracketUrl": "/bracket.html?event=rs2"
+  },
+  {
+    "id": "rs1",
+    "title": "Anichess Rising Stars Tournament #1",
+    "date": "May 10, 2026",
+    "time": "13:00 UTC",
+    "prizePool": "$600 USD",
+    "format": "16-player Playoff Bracket",
+    "eligibility": "New Players Only",
+    "podium": [
+      { "place": 1, "username": "OppaQ",      "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e" },
+      { "place": 2, "username": "Goatistrue", "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817" },
+      { "place": 3, "username": "Ciment",     "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f" }
+    ],
+    "replayUrl": "/replay.html?event=rs1",
+    "bracketUrl": "/bracket.html?event=rs1"
+  }
+]

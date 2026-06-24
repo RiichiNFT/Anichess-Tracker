@@ -1,0 +1,232 @@
+{
+  "status": "complete",
+  "playerCount": 16,
+  "bracketName": "Anichess Rising Stars Tournament #1",
+  "champion": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
+  "roundFormats": { "r16": 1, "qf": 1, "sf": 3, "3rd": 3, "gf": 5 },
+  "seeds": [
+    { "seed": 1,  "wallet": "0x28b20075fa2c4ad42ae249c750b470babde917ba" },
+    { "seed": 2,  "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817" },
+    { "seed": 3,  "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f" },
+    { "seed": 4,  "wallet": "0xecc35dc1a0b890ab757e1453954fe594a9f47f42" },
+    { "seed": 5,  "wallet": "0x9758ee854902e65193c6f84a99175eafd0a79e1f" },
+    { "seed": 6,  "wallet": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44" },
+    { "seed": 7,  "wallet": "0xaed34f07fed8af8356caeec905e5ab475e1313bc" },
+    { "seed": 8,  "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e" },
+    { "seed": 9,  "wallet": "0x73cd3e744099a2303b4182d522ea973abc742165" },
+    { "seed": 10, "wallet": "0x1857b8281a5994e70e4ee44daa2082c8958a853e" },
+    { "seed": 11, "wallet": "0xf67ec215a31703d0df7424a59d2e01c127bed1bd" },
+    { "seed": 12, "wallet": "0x0ad0605f46512b5fa2467c94b8e03230dcb70758" },
+    { "seed": 13, "wallet": "0x09f63e09c3ab6acf0d4ae4c23832c4fa34e5c5a2" },
+    { "seed": 14, "wallet": "0x118936a22ea5c53a0b44ebebd5597e516f3f0922" },
+    { "seed": 15, "wallet": "0xa326bb5ca540d290b75e24b645a9669605cdce94" },
+    { "seed": 16, "wallet": "0xaff1f06107535fcea40df38217408fbb3e84efd4" }
+  ],
+  "rounds": [
+    {
+      "id": "r16",
+      "name": "Round of 16",
+      "bestOf": 1,
+      "matchCount": 8,
+      "winsNeeded": 1,
+      "matches": [
+        {
+          "id": "r16-0",
+          "p1": { "wallet": "0x28b20075fa2c4ad42ae249c750b470babde917ba", "seed": 1 },
+          "p2": { "wallet": "0xaff1f06107535fcea40df38217408fbb3e84efd4", "seed": 16 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x28b20075fa2c4ad42ae249c750b470babde917ba",
+          "loser":  "0xaff1f06107535fcea40df38217408fbb3e84efd4",
+          "status": "done"
+        },
+        {
+          "id": "r16-1",
+          "p1": { "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817", "seed": 2 },
+          "p2": { "wallet": "0xa326bb5ca540d290b75e24b645a9669605cdce94", "seed": 15 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x63b1749efc2bcd116609ab622481fe13656ac817",
+          "loser":  "0xa326bb5ca540d290b75e24b645a9669605cdce94",
+          "status": "done"
+        },
+        {
+          "id": "r16-2",
+          "p1": { "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f", "seed": 3 },
+          "p2": { "wallet": "0x118936a22ea5c53a0b44ebebd5597e516f3f0922", "seed": 14 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f",
+          "loser":  "0x118936a22ea5c53a0b44ebebd5597e516f3f0922",
+          "status": "done"
+        },
+        {
+          "id": "r16-3",
+          "p1": { "wallet": "0xecc35dc1a0b890ab757e1453954fe594a9f47f42", "seed": 4 },
+          "p2": { "wallet": "0x09f63e09c3ab6acf0d4ae4c23832c4fa34e5c5a2", "seed": 13 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0xecc35dc1a0b890ab757e1453954fe594a9f47f42",
+          "loser":  "0x09f63e09c3ab6acf0d4ae4c23832c4fa34e5c5a2",
+          "status": "done"
+        },
+        {
+          "id": "r16-4",
+          "p1": { "wallet": "0x9758ee854902e65193c6f84a99175eafd0a79e1f", "seed": 5 },
+          "p2": { "wallet": "0x0ad0605f46512b5fa2467c94b8e03230dcb70758", "seed": 12 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x9758ee854902e65193c6f84a99175eafd0a79e1f",
+          "loser":  "0x0ad0605f46512b5fa2467c94b8e03230dcb70758",
+          "status": "done"
+        },
+        {
+          "id": "r16-5",
+          "p1": { "wallet": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44", "seed": 6 },
+          "p2": { "wallet": "0xf67ec215a31703d0df7424a59d2e01c127bed1bd", "seed": 11 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44",
+          "loser":  "0xf67ec215a31703d0df7424a59d2e01c127bed1bd",
+          "status": "done"
+        },
+        {
+          "id": "r16-6",
+          "p1": { "wallet": "0xaed34f07fed8af8356caeec905e5ab475e1313bc", "seed": 7 },
+          "p2": { "wallet": "0x1857b8281a5994e70e4ee44daa2082c8958a853e", "seed": 10 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0xaed34f07fed8af8356caeec905e5ab475e1313bc",
+          "loser":  "0x1857b8281a5994e70e4ee44daa2082c8958a853e",
+          "status": "done"
+        },
+        {
+          "id": "r16-7",
+          "p1": { "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e", "seed": 8 },
+          "p2": { "wallet": "0x73cd3e744099a2303b4182d522ea973abc742165", "seed": 9 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
+          "loser":  "0x73cd3e744099a2303b4182d522ea973abc742165",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "qf",
+      "name": "Quarterfinals",
+      "bestOf": 1,
+      "matchCount": 4,
+      "winsNeeded": 1,
+      "matches": [
+        {
+          "id": "qf-0",
+          "p1": { "wallet": "0x28b20075fa2c4ad42ae249c750b470babde917ba", "seed": 1 },
+          "p2": { "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817", "seed": 2 },
+          "games": ["p2"],
+          "score": { "p1": 0, "p2": 1 },
+          "winner": "0x63b1749efc2bcd116609ab622481fe13656ac817",
+          "loser":  "0x28b20075fa2c4ad42ae249c750b470babde917ba",
+          "status": "done"
+        },
+        {
+          "id": "qf-1",
+          "p1": { "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f", "seed": 3 },
+          "p2": { "wallet": "0xecc35dc1a0b890ab757e1453954fe594a9f47f42", "seed": 4 },
+          "games": ["p1"],
+          "score": { "p1": 1, "p2": 0 },
+          "winner": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f",
+          "loser":  "0xecc35dc1a0b890ab757e1453954fe594a9f47f42",
+          "status": "done"
+        },
+        {
+          "id": "qf-2",
+          "p1": { "wallet": "0x9758ee854902e65193c6f84a99175eafd0a79e1f", "seed": 5 },
+          "p2": { "wallet": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44", "seed": 6 },
+          "games": ["p2"],
+          "score": { "p1": 0, "p2": 1 },
+          "winner": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44",
+          "loser":  "0x9758ee854902e65193c6f84a99175eafd0a79e1f",
+          "status": "done"
+        },
+        {
+          "id": "qf-3",
+          "p1": { "wallet": "0xaed34f07fed8af8356caeec905e5ab475e1313bc", "seed": 7 },
+          "p2": { "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e", "seed": 8 },
+          "games": ["p2"],
+          "score": { "p1": 0, "p2": 1 },
+          "winner": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
+          "loser":  "0xaed34f07fed8af8356caeec905e5ab475e1313bc",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "sf",
+      "name": "Semifinals",
+      "bestOf": 3,
+      "matchCount": 2,
+      "winsNeeded": 2,
+      "matches": [
+        {
+          "id": "sf-0",
+          "p1": { "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817", "seed": 2 },
+          "p2": { "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f", "seed": 3 },
+          "games": ["p1", "p1"],
+          "score": { "p1": 2, "p2": 0 },
+          "winner": "0x63b1749efc2bcd116609ab622481fe13656ac817",
+          "loser":  "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f",
+          "status": "done"
+        },
+        {
+          "id": "sf-1",
+          "p1": { "wallet": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44", "seed": 6 },
+          "p2": { "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e", "seed": 8 },
+          "games": ["p2", "p2"],
+          "score": { "p1": 0, "p2": 2 },
+          "winner": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
+          "loser":  "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "3rd",
+      "name": "Third Place",
+      "bestOf": 3,
+      "matchCount": 1,
+      "winsNeeded": 2,
+      "matches": [
+        {
+          "id": "3rd-0",
+          "p1": { "wallet": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f", "seed": 3 },
+          "p2": { "wallet": "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44", "seed": 6 },
+          "games": ["p1", "p1"],
+          "score": { "p1": 2, "p2": 0 },
+          "winner": "0x60a9f84b70e2bcddd6fc7ac6144cc415e065177f",
+          "loser":  "0x7e25c2ef59f4dfdada13151c8298b7e130d26c44",
+          "status": "done"
+        }
+      ]
+    },
+    {
+      "id": "gf",
+      "name": "Grand Final",
+      "bestOf": 5,
+      "matchCount": 1,
+      "winsNeeded": 3,
+      "matches": [
+        {
+          "id": "gf-0",
+          "p1": { "wallet": "0x63b1749efc2bcd116609ab622481fe13656ac817", "seed": 2 },
+          "p2": { "wallet": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e", "seed": 8 },
+          "games": ["p2", "p2", "p2"],
+          "score": { "p1": 0, "p2": 3 },
+          "winner": "0x9dd4a39173abd5106d88edbac7c2e1624d68ef3e",
+          "loser":  "0x63b1749efc2bcd116609ab622481fe13656ac817",
+          "status": "done"
+        }
+      ]
+    }
+  ]
+}

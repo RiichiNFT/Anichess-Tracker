@@ -1,0 +1,401 @@
+{
+  "eventId": "magnus-finals",
+  "title": "Road to Magnus: Finals Round Robin",
+  "date": "June 16, 2026",
+  "rounds": [
+    {
+      "id": "r1",
+      "name": "Round 1",
+      "tabLabel": "R1",
+      "format": "Round Robin · BO1",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Anna-Maja Kazarian",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "loser": {
+            "username": "Magnus Carlsen",
+            "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850333"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "winner": {
+            "username": "Dachey Lin",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "loser": {
+            "username": "Oleksandr Bortnyk",
+            "wallet": ""
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850331"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850280"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r2",
+      "name": "Round 2",
+      "tabLabel": "R2",
+      "format": "Round Robin · BO1",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Magnus Carlsen",
+            "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850342"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Oleksandr Bortnyk",
+            "wallet": ""
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850339"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "winner": {
+            "username": "Dachey Lin",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "loser": {
+            "username": "Anna-Maja Kazarian",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2849744"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r3",
+      "name": "Round 3",
+      "tabLabel": "R3",
+      "format": "Round Robin · BO1",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Dachey Lin",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "loser": {
+            "username": "Magnus Carlsen",
+            "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850345"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "winner": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Oleksandr Bortnyk",
+            "wallet": ""
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850346"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Anna-Maja Kazarian",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850292"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r4",
+      "name": "Round 4",
+      "tabLabel": "R4",
+      "format": "Round Robin · BO1",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Magnus Carlsen",
+            "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850348"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "winner": {
+            "username": "Oleksandr Bortnyk",
+            "wallet": ""
+          },
+          "loser": {
+            "username": "Anna-Maja Kazarian",
+            "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850350"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "winner": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Dachey Lin",
+            "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2849750"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "r5",
+      "name": "Round 5",
+      "tabLabel": "R5",
+      "format": "Round Robin · BO1",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Oleksandr Bortnyk",
+            "wallet": ""
+          },
+          "loser": {
+            "username": "Magnus Carlsen",
+            "wallet": "0x7fd2f380dfdfea71244894d128d8ef1fef16133a"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850355"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "draw": true,
+          "players": [
+            {
+              "username": "Oleg Badmatsyrenov",
+              "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+            },
+            {
+              "username": "Dachey Lin",
+              "wallet": "0x3588f6e62f9018a82ba7b28d3d8d5a73b00d2092"
+            }
+          ],
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850300"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "draw": true,
+          "players": [
+            {
+              "username": "Anna-Maja Kazarian",
+              "wallet": "0xb216e615c458367a3cb56d172e392ab58b821ec7"
+            },
+            {
+              "username": "Yoseph Theolifus Taher",
+              "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+            }
+          ],
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2850287"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "grandfinals",
+      "name": "Grand Finals",
+      "tabLabel": "Grand Finals",
+      "format": "Best of 5 · Oleg Badmatsyrenov won 3–2",
+      "matches": [
+        {
+          "matchLabel": "Game 1",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2852455"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 2",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2852464"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 3",
+          "winner": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2852474"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 4",
+          "winner": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "loser": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2852488"
+            }
+          ]
+        },
+        {
+          "matchLabel": "Game 5",
+          "winner": {
+            "username": "Oleg Badmatsyrenov",
+            "wallet": "0xf767bbe6035c6976c17d6a43b78bbc0842b745e9"
+          },
+          "loser": {
+            "username": "Yoseph Theolifus Taher",
+            "wallet": "0x4b73c6af7a1479c505a502f286345179ef4fab2d"
+          },
+          "games": [
+            {
+              "label": "Replay",
+              "url": "https://anichess.com/pvp/matches/2852499"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

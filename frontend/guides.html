@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Strategy Guides — Anichess Tracker</title>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-C5P8BG33DT');
+  </script>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/fonts.css">
+  <script>(function(){var u=sessionStorage.getItem('anichess-bg-url');if(u)document.documentElement.style.setProperty('--bg-preload','url('+u+')');})();</script>
+  <script>(function(){var d=document.documentElement;function setVh(){d.style.setProperty('--vh',window.innerHeight+'px');}setVh();window.addEventListener('orientationchange',function(){setTimeout(setVh,200);});})();</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --grad-start: var(--accent);
+      --grad-end:   #00fffb;
+      --grad:       linear-gradient(90deg, #00aefa, #00fffb);
+      --dark:       #101932;
+      --surface:    rgba(16,25,50,0.82);
+      --surface-2:  rgba(16,25,50,0.95);
+      --border:     rgba(0,174,250,0.14);
+      --border-dim: rgba(255,255,255,0.07);
+      --text:       #e8f0fe;
+      --text-2:     #7a9abf;
+      --text-3:     #3a5070;
+    }
+
+    html { scrollbar-gutter: stable; }
+    html, body {
+      min-height: 100%;
+      background: #090c16;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overscroll-behavior: none;
+    }
+
+    /* ── Background ── */
+    .gd-bg {
+      position: fixed;
+      top: -100px; left: -100px;
+      width: calc(100vw + 200px);
+      height: calc(var(--vh, 100vh) + 200px);
+      background-image: var(--bg-preload, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+    }
+    .gd-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(6,9,20,0.92) 0%, rgba(6,9,20,0.80) 40%, rgba(6,9,20,0.92) 100%);
+    }
+
+    /* ── Header (shared pattern) ── */
+    header {
+      background: rgba(6,9,20,0.75);
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .header-inner { width: 100%; max-width: 1280px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .header-left  { display: flex; align-items: center; gap: 24px; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+    .logo-icon  { font-size: 1.8rem; color: #00aefa; line-height: 1; filter: drop-shadow(0 0 10px rgba(0,174,250,0.35)); flex-shrink: 0; }
+    .logo-img   { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+    .logo-text-group { display: flex; flex-direction: column; gap: 2px; }
+    .logo-name  { font-size: 1rem; font-weight: 800; letter-spacing: 0.14em; color: var(--text); line-height: 1; white-space: nowrap; text-transform: uppercase; }
+    .logo-accent { font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .header-nav { display: flex; align-items: center; gap: 4px; }
+    .header-nav-link { font-size: 1.14rem; font-weight: 700; color: var(--text-2); text-decoration: none; padding: 5px 10px; border-radius: 8px; border: 1px solid transparent; transition: color 0.2s; white-space: nowrap; }
+    .header-nav-link:hover { color: var(--text); }
+    .header-nav-link.internal { color: var(--text); }
+    .header-nav-link.internal:hover { color: #00aefa; }
+    .nav-sep { width: 1px; height: 16px; background: rgba(255,255,255,0.12); flex-shrink: 0; align-self: center; margin: 0 4px; }
+    .nav-update-wrap { position: relative; display: inline-flex; align-items: center; }
+    .nav-update-chip { display: inline-flex; align-items: center; gap: 4px; font-size: 0.46rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; background: linear-gradient(90deg,#00aefa,#00fffb); color: #060914; border-radius: 4px; padding: 2px 6px; white-space: nowrap; pointer-events: none; line-height: 1.4; }
+    .nav-update-dot { width: 5px; height: 5px; border-radius: 50%; background: #060914; opacity: 0.7; flex-shrink: 0; animation: nav-dot-pulse 1.8s ease-in-out infinite; }
+    @keyframes nav-dot-pulse { 0%, 100% { opacity: 0.7; transform: scale(1); } 50% { opacity: 0.25; transform: scale(0.65); } }
+    /* Prevent overflowing children from widening the page on mobile */
+    body { overflow-x: hidden; }
+    /* Tables scroll horizontally instead of pushing the page wider */
+    .gd-prose table { display: block; overflow-x: auto; max-width: 100%; }
+    @media (max-width: 900px) { header { padding-left: 16px; padding-right: 16px; } }
+    @media (max-width: 640px) {
+      header { height: auto; padding: 0 16px; }
+      .header-inner { align-items: flex-start; padding: 8px 0; flex-wrap: wrap; }
+      .header-left { flex-wrap: wrap; width: 100%; }
+      .header-nav { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 6px 0 4px; gap: 2px; }
+      .header-nav::-webkit-scrollbar { display: none; }
+      .header-nav-link { min-height: 44px; padding: 10px 8px; line-height: 1; font-size: 0.88rem; white-space: nowrap; flex-shrink: 0; }
+    }
+    @media (max-width: 540px) {
+      header { padding: 0 12px; }
+      .logo-name { font-size: 0.88rem; }
+      .header-inner { flex-wrap: wrap; align-items: center; padding: 8px 0; }
+      .header-left { display: contents; }
+      .logo { order: 1; flex: 1; min-width: 0; }
+      .header-nav { order: 2; width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-wrap: nowrap; padding: 4px 0 2px; }
+      .header-nav::-webkit-scrollbar { display: none; }
+      .header-nav-link { font-size: 0.78rem; white-space: nowrap; padding: 4px 8px; flex-shrink: 0; }
+    }
+
+    /* ── Page ── */
+    .gd-page { position: relative; z-index: 2; min-height: calc(100vh - 64px); display: flex; flex-direction: column; }
+
+    /* ── Hero ── */
+    .gd-hero { text-align: center; padding: 52px 24px 36px; }
+    .gd-hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--grad-start); margin-bottom: 14px;
+    }
+    .gd-hero-eyebrow::before, .gd-hero-eyebrow::after { content: ''; display: block; width: 28px; height: 1px; background: var(--grad); opacity: 0.6; }
+    .gd-hero-title { font-size: clamp(2rem,5vw,3.4rem); font-weight: 300; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); line-height: 1.05; margin-bottom: 12px; }
+    .gd-hero-title strong { font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gd-hero-sub { font-size: 0.78rem; font-weight: 400; color: var(--text-2); letter-spacing: 0.04em; }
+
+    /* ── Layout ── */
+    .gd-layout { flex: 1; display: flex; gap: 24px; max-width: 1180px; width: 100%; margin: 0 auto; padding: 0 20px 80px; align-items: flex-start; }
+
+    /* ── Sidebar ── */
+    .gd-sidebar {
+      width: 256px;
+      flex-shrink: 0;
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(0,174,250,0.2) transparent;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      padding: 14px 0;
+    }
+    .gd-sidebar::-webkit-scrollbar { width: 4px; }
+    .gd-sidebar::-webkit-scrollbar-track { background: transparent; }
+    .gd-sidebar::-webkit-scrollbar-thumb { background: rgba(0,174,250,0.2); border-radius: 2px; }
+
+    .gd-cat-label {
+      padding: 8px 18px 4px;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.18em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .gd-cat-label:not(:first-child) { margin-top: 8px; border-top: 1px solid var(--border-dim); padding-top: 14px; }
+
+    .gd-sidebar-item {
+      display: block; padding: 9px 18px; cursor: pointer;
+      font-size: 0.82rem; font-weight: 600; color: var(--text-2);
+      border-left: 3px solid transparent;
+      transition: color 0.15s, background 0.15s;
+      position: relative;
+    }
+    .gd-sidebar-item:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+    .gd-sidebar-item.active {
+      color: var(--text);
+      background: rgba(0,174,250,0.07);
+      border-left: none;
+    }
+    .gd-sidebar-item.active::before {
+      content: '';
+      position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+      border-radius: 0 2px 2px 0;
+      background: var(--grad);
+    }
+    .gd-sidebar-draft {
+      display: inline-block; margin-left: 6px;
+      font-size: 0.54rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--text-3); vertical-align: middle;
+    }
+
+    /* ── Mobile tab bar ── */
+    .gd-tabs {
+      display: none;
+      gap: 2px;
+      margin-bottom: 20px;
+      background: rgba(6,9,20,0.6);
+      border: 1px solid var(--border-dim);
+      border-radius: 12px;
+      padding: 5px;
+      backdrop-filter: blur(8px);
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .gd-tabs::-webkit-scrollbar { display: none; }
+    .gd-tab {
+      flex-shrink: 0; padding: 9px 14px;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--text-3); background: none; border: none; border-radius: 8px;
+      cursor: pointer; transition: color 0.2s, background 0.2s; white-space: nowrap;
+    }
+    .gd-tab:hover { color: var(--text-2); background: rgba(255,255,255,0.04); }
+    .gd-tab.active { background: linear-gradient(135deg,rgba(0,174,250,0.18),rgba(0,255,251,0.10)); color: #fff; box-shadow: inset 0 0 0 1px rgba(0,174,250,0.30); }
+
+    /* ── Main content ── */
+    .gd-main { flex: 1; min-width: 0; }
+
+    .gd-article-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .gd-article-header {
+      padding: 24px 32px 20px;
+      border-bottom: 1px solid var(--border-dim);
+    }
+    .gd-article-meta {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap;
+    }
+    .gd-article-cat {
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .gd-article-sep { width: 3px; height: 3px; border-radius: 50%; background: var(--text-3); }
+    .gd-article-date { font-size: 0.65rem; font-weight: 500; color: var(--text-3); }
+    .gd-article-draft-badge {
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase;
+      color: #fff; background: rgba(255,255,255,0.12); border-radius: 4px; padding: 2px 7px;
+    }
+    .gd-article-title { font-size: clamp(1.3rem,3vw,1.9rem); font-weight: 800; color: var(--text); line-height: 1.2; }
+
+    .gd-article-body { padding: 28px 32px 36px; }
+
+    /* ── Prose (Markdown rendered output) ── */
+    .gd-prose { line-height: 1.72; color: var(--text); }
+    .gd-prose h1 { font-size: 1.9rem; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 18px; line-height: 1.15; }
+    .gd-prose h2 { font-size: 1.3rem; font-weight: 700; color: var(--text); margin: 32px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-dim); }
+    .gd-prose h3 { font-size: 1.05rem; font-weight: 700; color: var(--text-2); margin: 24px 0 8px; }
+    .gd-prose h4 { font-size: 0.92rem; font-weight: 700; color: var(--text-3); margin: 18px 0 6px; text-transform: uppercase; letter-spacing: 0.08em; }
+    .gd-prose p  { font-size: 0.92rem; margin: 0 0 14px; }
+    .gd-prose ul, .gd-prose ol { font-size: 0.92rem; margin: 0 0 14px; padding-left: 22px; }
+    .gd-prose li { margin-bottom: 5px; }
+    .gd-prose li > ul, .gd-prose li > ol { margin-bottom: 0; margin-top: 4px; }
+    .gd-prose strong { font-weight: 700; color: #fff; }
+    .gd-prose em { color: var(--text-2); }
+    .gd-prose a { color: var(--grad-start); text-decoration: none; }
+    .gd-prose a:hover { text-decoration: underline; }
+    .gd-prose code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84em;
+      background: rgba(0,174,250,0.10);
+      color: #00fffb;
+      border-radius: 4px;
+      padding: 2px 6px;
+    }
+    .gd-prose pre {
+      background: rgba(6,9,20,0.80);
+      border: 1px solid var(--border-dim);
+      border-left: 3px solid var(--grad-start);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 0 0 18px;
+    }
+    .gd-prose pre code { background: none; padding: 0; color: #e8f0fe; font-size: 0.86rem; }
+    .gd-prose blockquote {
+      border-left: 3px solid;
+      border-image: linear-gradient(to bottom, #00aefa, #00fffb) 1;
+      margin: 0 0 18px;
+      padding: 10px 18px;
+      background: rgba(0,174,250,0.05);
+      border-radius: 0 6px 6px 0;
+      color: var(--text-2);
+      font-style: italic;
+    }
+    .gd-prose hr { border: none; height: 1px; background: linear-gradient(90deg, rgba(0,174,250,0.4), transparent); margin: 28px 0; }
+    .gd-prose table { width: 100%; border-collapse: collapse; font-size: 0.88rem; margin: 0 0 18px; }
+    .gd-prose th { background: rgba(0,174,250,0.10); color: var(--grad-start); font-weight: 700; text-align: left; padding: 9px 14px; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .gd-prose td { padding: 9px 14px; border-bottom: 1px solid var(--border-dim); color: var(--text); }
+    .gd-prose tr:last-child td { border-bottom: none; }
+    .gd-prose tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+    .gd-prose img { max-width: 100%; border-radius: 8px; margin: 8px 0; }
+    .gd-prose .yt-embed { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; border-radius: 10px; margin: 16px 0; background: #000; }
+    .gd-prose .yt-embed iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: none; border-radius: 10px; }
+
+    /* ── Empty / loading states ── */
+    .gd-empty {
+      text-align: center; padding: 80px 24px;
+      color: rgba(255,255,255,0.28); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.04em;
+    }
+    .gd-empty-icon { font-size: 2.8rem; margin-bottom: 16px; opacity: 0.4; }
+
+    /* ── Footer ── */
+    .gd-footer {
+      position: relative; z-index: 5;
+      display: flex; align-items: center; justify-content: center;
+      padding: 12px 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .gd-footer-text { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(255,255,255,0.20); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .gd-sidebar { display: none; }
+      .gd-tabs { display: flex; }
+      .gd-layout { flex-direction: column; padding: 0 14px 60px; }
+      .gd-article-header { padding: 18px 20px 14px; }
+      .gd-article-body { padding: 20px 20px 28px; }
+      .gd-hero { padding: 36px 16px 24px; }
+    }
+    @media (max-width: 480px) {
+      .gd-layout { padding: 0 10px 48px; }
+      .gd-article-header { padding: 14px 16px 10px; }
+      .gd-article-body { padding: 16px 16px 22px; }
+      .gd-hero { padding: 24px 12px 18px; }
+      /* Reduce the dramatic letter-spacing so the title fits on narrow screens */
+      .gd-hero-title { font-size: 1.7rem; letter-spacing: 0.06em; }
+      .gd-prose h1 { font-size: 1.5rem; }
+      .gd-prose h2 { font-size: 1.1rem; }
+      .gd-prose h3 { font-size: 0.98rem; }
+      .gd-tabs { margin-bottom: 14px; }
+    }
+    @media (max-width: 380px) {
+      .gd-layout { padding: 0 8px 40px; }
+      .gd-article-header { padding: 12px 14px 10px; }
+      .gd-article-body { padding: 14px 14px 20px; }
+      .gd-hero-title { font-size: 1.4rem; letter-spacing: 0.04em; }
+    }
+
+    /* ── Mobile Hamburger Drawer ──────────────────────────────────── */
+    .mob-menu-btn {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 8px;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .mob-menu-btn:hover { background: rgba(255,255,255,0.06); }
+    .mob-menu-btn.active .mob-menu-line:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .mob-menu-btn.active .mob-menu-line:nth-child(2) { opacity: 0; }
+    .mob-menu-btn.active .mob-menu-line:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+    .mob-menu-line {
+      width: 22px;
+      height: 2px;
+      background: #e8f0fe;
+      border-radius: 2px;
+      display: block;
+      transition: transform 0.22s ease, opacity 0.15s;
+    }
+    .mob-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 1200;
+      opacity: 0;
+      transition: opacity 0.25s;
+    }
+    .mob-overlay.open { display: block; opacity: 1; }
+    .mob-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(320px, 85vw);
+      background: #1a1f2e;
+      border-left: 1px solid rgba(255,255,255,0.08);
+      z-index: 1300;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      overflow-y: auto;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .mob-drawer.open { transform: translateX(0); }
+    .mob-drawer-inner { display: flex; flex-direction: column; min-height: 100%; padding-bottom: env(safe-area-inset-bottom); }
+    .mob-drawer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 20px 16px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      flex-shrink: 0;
+    }
+    .mob-drawer-title { font-size: 0.85rem; font-weight: 800; letter-spacing: 0.06em; color: #e8f0fe; }
+    .mob-drawer-accent { color: #00aefa; }
+    .mob-drawer-close {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 1rem;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s;
+    }
+    .mob-drawer-close:hover { background: rgba(255,255,255,0.07); color: #e8f0fe; }
+    .mob-drawer-links { display: flex; flex-direction: column; padding: 12px 0; flex: 1; }
+    .mob-drawer-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 13px 20px;
+      color: #9ca3af;
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 500;
+      border-left: 3px solid transparent;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+    .mob-drawer-link:hover { background: rgba(255,255,255,0.05); color: #e8f0fe; }
+    .mob-drawer-link.active { color: #00aefa; border-left-color: #00aefa; background: rgba(0,174,250,0.06); font-weight: 600; }
+    .mob-drawer-link-label { flex: 1; }
+    .mob-drawer-ext { color: #6b7280; }
+    .mob-drawer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0,174,250,0.12);
+      color: #00aefa;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      padding: 2px 7px 2px 5px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,174,250,0.25);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .mob-drawer-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #00aefa;
+      display: inline-block;
+      animation: mob-dot-pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes mob-dot-pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .mob-drawer-arrow { color: #6b7280; display: flex; align-items: center; flex-shrink: 0; }
+    .mob-drawer-sep { height: 1px; background: rgba(255,255,255,0.07); margin: 8px 20px; }
+    @media (max-width: 640px) {
+      .mob-menu-btn { display: flex !important; }
+      .header-nav { display: none !important; }
+      .nav-update-wrap { display: none !important; }
+      header { height: 56px !important; padding: 0 16px !important; }
+      .header-inner { flex-wrap: nowrap !important; align-items: center !important; padding: 0 !important; }
+      .header-left { display: flex !important; width: auto !important; flex: 1 !important; flex-wrap: nowrap !important; }
+      .logo { order: unset !important; flex: unset !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="gd-bg" id="gd-bg"></div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+          </div>
+        </a>
+        <nav class="header-nav">
+          <a class="header-nav-link internal" href="/tournament.html">Tournament Details</a>
+          <a class="header-nav-link internal active-nav-link" href="/guides.html">Guides</a>
+          <a class="header-nav-link internal" href="/past-events.html">Past Events</a>
+          <span class="nav-update-wrap">
+            <a class="header-nav-link internal" href="/updates.html">Game Updates</a>
+            <span class="nav-update-chip"><span class="nav-update-dot"></span>Jun 10</span>
+          </span>
+          <span class="nav-sep"></span>
+          <a class="header-nav-link" href="https://www.anichess.com/login?referralWallet=0xaa4ebe9298445ae81e993ebd15b05b074c62b267" target="_blank" rel="noopener">Play Anichess</a>
+          <a class="header-nav-link" href="https://medium.com/@Anichess/anichess-season-8-overpowered-7c45ebe483f5" target="_blank" rel="noopener">Season 8</a>
+          <a class="header-nav-link" href="https://lichess.org/team/anichess-community" target="_blank" rel="noopener">Lichess Team</a>
+          <a class="header-nav-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a>
+        </nav>
+      </div>
+    </div>
+  </header>
+
+  <div class="gd-page">
+    <div class="gd-hero">
+      <div class="gd-hero-eyebrow">Strategy Guides</div>
+      <h1 class="gd-hero-title">Anichess <strong>Guides</strong></h1>
+      <p class="gd-hero-sub">In-depth strategies · tactics · game knowledge</p>
+    </div>
+
+    <div class="gd-layout" id="gd-layout">
+      <aside class="gd-sidebar" id="gd-sidebar"></aside>
+      <div class="gd-tabs" id="gd-tabs"></div>
+      <main class="gd-main" id="gd-main">
+        <div class="gd-empty"><div class="gd-empty-icon">📖</div>Loading guides…</div>
+      </main>
+    </div>
+  </div>
+
+  <div class="gd-footer">
+    <span class="gd-footer-text">Anichess Strategy Guides</span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+  <script>
+    marked.use({
+      breaks: true,
+      gfm: true,
+      renderer: {
+        image(hrefOrToken, title, text) {
+          var href, alt;
+          if (hrefOrToken && typeof hrefOrToken === 'object') {
+            href = hrefOrToken.href || '';
+            alt  = hrefOrToken.text || '';
+          } else {
+            href = hrefOrToken || '';
+            alt  = text || '';
+          }
+          var width = null, height = null;
+          var pipe = alt.lastIndexOf('|');
+          if (pipe !== -1) {
+            var sizeStr = alt.slice(pipe + 1).trim();
+            var parts = sizeStr.split('x');
+            if (/^\d+$/.test(parts[0])) {
+              alt = alt.slice(0, pipe).trim();
+              width = parts[0];
+              if (parts[1] && /^\d+$/.test(parts[1].trim())) height = parts[1].trim();
+            }
+          }
+          var attrs = 'src="' + href + '" alt="' + alt + '"';
+          if (width)  attrs += ' width="' + width + '"';
+          if (height) attrs += ' height="' + height + '"';
+          return '<img ' + attrs + ' style="max-width:100%;height:auto;border-radius:8px;margin:8px 0">';
+        }
+      }
+    });
+
+    let guides = [];
+    let activeId = null;
+
+    async function loadBg() {
+      try {
+        let url = sessionStorage.getItem('anichess-bg-url');
+        if (!url) {
+          const r = await fetch('/api/bracket-background');
+          if (!r.ok) return;
+          const d = await r.json();
+          if (!d.exists || !d.filename) return;
+          url = '/' + d.filename;
+          sessionStorage.setItem('anichess-bg-url', url);
+        }
+        document.getElementById('gd-bg').style.backgroundImage = 'url(' + url + ')';
+      } catch {}
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function fmtDate(ts) {
+      if (!ts) return '';
+      return new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function groupByCategory(list) {
+      const map = {};
+      list.forEach(g => {
+        const cat = g.category || 'General';
+        if (!map[cat]) map[cat] = [];
+        map[cat].push(g);
+      });
+      return map;
+    }
+
+    function renderSidebar() {
+      const sidebar = document.getElementById('gd-sidebar');
+      const tabs    = document.getElementById('gd-tabs');
+      if (!guides.length) {
+        sidebar.innerHTML = '<div style="padding:20px 18px;font-size:0.8rem;color:var(--text-3)">No guides yet.</div>';
+        tabs.innerHTML = '';
+        return;
+      }
+      const grouped = groupByCategory(guides);
+      let sidebarHtml = '';
+      Object.keys(grouped).forEach(cat => {
+        sidebarHtml += '<div class="gd-cat-label">' + esc(cat) + '</div>';
+        grouped[cat].forEach(g => {
+          const active = g.id === activeId ? ' active' : '';
+          const draft  = !g.published ? '<span class="gd-sidebar-draft">Draft</span>' : '';
+          sidebarHtml += '<div class="gd-sidebar-item' + active + '" data-id="' + esc(g.id) + '">' + esc(g.title) + draft + '</div>';
+        });
+      });
+      sidebar.innerHTML = sidebarHtml;
+      sidebar.querySelectorAll('.gd-sidebar-item').forEach(el => {
+        el.addEventListener('click', () => selectGuide(el.dataset.id));
+      });
+
+      tabs.innerHTML = guides.map((g, i) =>
+        '<button class="gd-tab' + (g.id === activeId ? ' active' : '') + '" data-id="' + esc(g.id) + '">' + esc(g.title) + (!g.published ? ' (Draft)' : '') + '</button>'
+      ).join('');
+      tabs.querySelectorAll('.gd-tab').forEach(el => {
+        el.addEventListener('click', () => selectGuide(el.dataset.id));
+      });
+    }
+
+    function renderArticle(guide) {
+      if (!guide) {
+        document.getElementById('gd-main').innerHTML = '<div class="gd-empty"><div class="gd-empty-icon">📖</div>Select a guide to read.</div>';
+        return;
+      }
+      const draftBadge = !guide.published ? '<span class="gd-article-draft-badge">Draft</span>' : '';
+      const html =
+        '<div class="gd-article-card">' +
+          '<div class="gd-article-header">' +
+            '<div class="gd-article-meta">' +
+              '<span class="gd-article-cat">' + esc(guide.category) + '</span>' +
+              '<span class="gd-article-sep"></span>' +
+              '<span class="gd-article-date">' + esc(fmtDate(guide.updatedAt)) + '</span>' +
+              draftBadge +
+            '</div>' +
+            '<h1 class="gd-article-title">' + esc(guide.title) + '</h1>' +
+          '</div>' +
+          '<div class="gd-article-body"><div class="gd-prose" id="gd-prose"></div></div>' +
+        '</div>';
+      document.getElementById('gd-main').innerHTML = html;
+      document.getElementById('gd-prose').innerHTML = DOMPurify.sanitize(marked.parse(guide.content || ''));
+    }
+
+    function selectGuide(id) {
+      activeId = id;
+      const guide = guides.find(g => g.id === id);
+      renderSidebar();
+      renderArticle(guide);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function init() {
+      loadBg();
+      try {
+        const r = await fetch('/api/guides');
+        if (!r.ok) throw new Error();
+        guides = await r.json();
+      } catch {
+        document.getElementById('gd-main').innerHTML = '<div class="gd-empty"><div class="gd-empty-icon">⚠️</div>Failed to load guides.</div>';
+        return;
+      }
+      if (!guides.length) {
+        document.getElementById('gd-sidebar').innerHTML = '<div style="padding:20px 18px;font-size:0.8rem;color:var(--text-3)">No guides yet.</div>';
+        document.getElementById('gd-main').innerHTML = '<div class="gd-empty"><div class="gd-empty-icon">📖</div>No guides have been published yet.</div>';
+        return;
+      }
+      activeId = guides[0].id;
+      renderSidebar();
+      renderArticle(guides[0]);
+    }
+
+    init();
+  </script>
+  <script src="/mobile-nav.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Game Updates Admin — Anichess Tracker</title>
+  <link rel="icon" href="/favicon.ico">
+  <script>(function(){var d=document.documentElement;function setVh(){d.style.setProperty('--vh',window.innerHeight+'px');}setVh();window.addEventListener('orientationchange',function(){setTimeout(setVh,200);});})();</script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --grad-start: #00aefa;
+      --grad-end:   #00fffb;
+      --grad:       linear-gradient(90deg, #00aefa, #00fffb);
+      --dark:       #101932;
+      --surface:    rgba(16,25,50,0.82);
+      --surface-2:  rgba(16,25,50,0.95);
+      --border:     rgba(0,174,250,0.14);
+      --border-dim: rgba(255,255,255,0.07);
+      --text:       #e8f0fe;
+      --text-2:     #7a9abf;
+      --text-3:     #3a5070;
+    }
+
+    html { scrollbar-gutter: stable; }
+    html, body {
+      min-height: 100%;
+      background: #090c16;
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overscroll-behavior: none;
+    }
+
+    .ga-bg {
+      position: fixed;
+      top: -100px; left: -100px;
+      width: calc(100vw + 200px);
+      height: calc(var(--vh, 100vh) + 200px);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      z-index: 0;
+    }
+    .ga-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(6,9,20,0.96) 0%, rgba(6,9,20,0.90) 100%);
+    }
+
+    header {
+      background: rgba(6,9,20,0.80);
+      border-bottom: 1px solid rgba(0,174,250,0.12);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .header-inner { width: 100%; max-width: 1400px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .header-left  { display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+    .logo-icon  { font-size: 1.8rem; color: #00aefa; line-height: 1; filter: drop-shadow(0 0 10px rgba(0,174,250,0.35)); flex-shrink: 0; }
+    .logo-img   { width: 36px; height: 36px; object-fit: contain; flex-shrink: 0; }
+    .logo-text-group { display: flex; flex-direction: column; gap: 2px; }
+    .logo-name  { font-size: 1rem; font-weight: 800; letter-spacing: 0.14em; color: var(--text); line-height: 1; white-space: nowrap; text-transform: uppercase; }
+    .logo-accent { font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .admin-badge {
+      font-size: 0.56rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      color: #00aefa; border: 1px solid rgba(0,174,250,0.35); border-radius: 4px; padding: 3px 8px;
+      background: rgba(0,174,250,0.08); flex-shrink: 0;
+    }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .ga-view-btn {
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.08em;
+      color: var(--text-2); background: none; border: 1px solid var(--border-dim); border-radius: 8px;
+      padding: 8px 14px; cursor: pointer; text-decoration: none; transition: color 0.2s, border-color 0.2s;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .ga-view-btn:hover { color: var(--text); border-color: rgba(0,174,250,0.3); }
+    @media (max-width: 600px) { header { padding: 0 14px; } .ga-view-label { display: none; } }
+
+    .ga-page { position: relative; z-index: 2; max-width: 1400px; margin: 0 auto; padding: 28px 24px 80px; }
+
+    .ga-topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      margin-bottom: 24px; flex-wrap: wrap;
+    }
+    .ga-topbar-title {
+      font-size: 1.1rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text);
+    }
+    .ga-topbar-title span { background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .ga-new-btn {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.07em;
+      background: var(--grad); color: #04091a; border: none; border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .ga-new-btn:hover { opacity: 0.88; }
+
+    /* List table */
+    .ga-list-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+      margin-bottom: 28px;
+    }
+    .ga-list-card-header {
+      padding: 14px 22px 12px;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .ga-list-card-title {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .ga-count {
+      font-size: 0.62rem; font-weight: 700; color: var(--text-3);
+      background: rgba(255,255,255,0.06); border-radius: 20px; padding: 2px 8px;
+    }
+    .ga-table-wrap { overflow-x: auto; }
+    table.ga-table { width: 100%; border-collapse: collapse; }
+    .ga-table th {
+      padding: 9px 18px; text-align: left;
+      font-size: 0.58rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--text-3); background: rgba(0,0,0,0.18); border-bottom: 1px solid var(--border-dim);
+      white-space: nowrap;
+    }
+    .ga-table td { padding: 11px 18px; border-bottom: 1px solid var(--border-dim); vertical-align: middle; }
+    .ga-table tr:last-child td { border-bottom: none; }
+    .ga-table tr:hover td { background: rgba(255,255,255,0.025); }
+    .ga-table .ga-col-title { font-size: 0.84rem; font-weight: 600; color: var(--text); max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ga-table .ga-col-date  { font-size: 0.70rem; color: var(--text-3); white-space: nowrap; }
+    .ga-table .ga-col-act   { white-space: nowrap; }
+    .ga-edit-btn {
+      font-size: 0.70rem; font-weight: 700; background: rgba(0,174,250,0.12); color: #00aefa;
+      border: 1px solid rgba(0,174,250,0.25); border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s; margin-right: 6px;
+    }
+    .ga-edit-btn:hover { background: rgba(0,174,250,0.22); }
+    .ga-del-btn-sm {
+      font-size: 0.70rem; font-weight: 700; background: rgba(255,60,60,0.10); color: #ff6b6b;
+      border: 1px solid rgba(255,60,60,0.20); border-radius: 7px; padding: 5px 12px; cursor: pointer;
+      transition: background 0.15s;
+    }
+    .ga-del-btn-sm:hover { background: rgba(255,60,60,0.20); }
+    .ga-empty-row td { text-align: center; padding: 36px; font-size: 0.84rem; color: var(--text-3); }
+
+    /* Editor */
+    .ga-editor-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      overflow: hidden;
+    }
+    .ga-editor-card.hidden { display: none; }
+
+    .ga-editor-top {
+      padding: 18px 22px 14px;
+      border-bottom: 1px solid var(--border-dim);
+      display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    }
+    .ga-editor-heading {
+      font-size: 0.65rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+      flex-shrink: 0;
+    }
+    .ga-editing-label {
+      font-size: 0.68rem; font-weight: 600; color: var(--text-3); flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .ga-save-status {
+      font-size: 0.64rem; font-weight: 600; color: var(--text-3); flex-shrink: 0;
+      transition: color 0.3s;
+    }
+    .ga-save-status.ok  { color: #00e676; }
+    .ga-save-status.err { color: #ff6b6b; }
+
+    .ga-fields {
+      padding: 16px 22px 0;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .ga-field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .ga-title-input {
+      flex: 1; min-width: 220px;
+      background: rgba(6,9,20,0.70); border: 1px solid var(--border-dim); border-radius: 9px;
+      color: var(--text); font-family: inherit; font-size: 1rem; font-weight: 700;
+      padding: 11px 14px; outline: none; transition: border-color 0.2s;
+    }
+    .ga-title-input::placeholder { color: var(--text-3); font-weight: 400; }
+    .ga-title-input:focus { border-color: rgba(0,174,250,0.45); }
+    .ga-date-input {
+      background: rgba(6,9,20,0.70); border: 1px solid var(--border-dim); border-radius: 9px;
+      color: var(--text); font-family: inherit; font-size: 0.88rem;
+      padding: 11px 14px; outline: none; transition: border-color 0.2s;
+      color-scheme: dark; min-width: 160px;
+    }
+    .ga-date-input:focus { border-color: rgba(0,174,250,0.45); }
+
+    /* Toolbar */
+    .ga-toolbar {
+      display: flex; align-items: center; gap: 2px; flex-wrap: wrap;
+      padding: 8px 22px;
+      border-bottom: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.15);
+    }
+    .ga-tb-btn {
+      font-size: 0.72rem; font-weight: 700; font-family: inherit;
+      background: none; border: 1px solid transparent; border-radius: 6px;
+      color: var(--text-2); padding: 5px 9px; cursor: pointer;
+      transition: color 0.15s, background 0.15s, border-color 0.15s;
+      white-space: nowrap; line-height: 1;
+    }
+    .ga-tb-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); border-color: var(--border-dim); }
+    .ga-tb-sep { width: 1px; height: 18px; background: var(--border-dim); margin: 0 4px; flex-shrink: 0; align-self: center; }
+
+    /* Split pane */
+    .ga-split {
+      display: flex;
+      min-height: 460px;
+    }
+    .ga-md-pane, .ga-preview-pane {
+      flex: 1; min-width: 0;
+      display: flex; flex-direction: column;
+    }
+    .ga-md-pane { border-right: 1px solid var(--border-dim); }
+    .ga-pane-label {
+      font-size: 0.55rem; font-weight: 800; letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--text-3); padding: 7px 16px; border-bottom: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.12);
+    }
+    .ga-md {
+      flex: 1;
+      width: 100%;
+      background: rgba(4,7,18,0.80);
+      border: none; outline: none; resize: none;
+      color: var(--text); font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84rem; line-height: 1.7;
+      padding: 18px 20px;
+      min-height: 420px;
+    }
+    .ga-md::placeholder { color: var(--text-3); }
+    .ga-preview-pane { overflow-y: auto; }
+    .ga-preview-scroll { padding: 18px 24px; }
+
+    /* Prose styles (matching updates.html card look) */
+    .gu-prose { line-height: 1.75; color: var(--text-2); font-size: 0.92rem; }
+    .gu-prose h1 { font-size: 1.4rem; font-weight: 800; background: var(--grad); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0 0 14px; line-height: 1.2; }
+    .gu-prose h2 { font-size: 1.1rem; font-weight: 700; color: var(--text); margin: 24px 0 9px; padding-bottom: 6px; border-bottom: 1px solid var(--border-dim); }
+    .gu-prose h3 { font-size: 0.96rem; font-weight: 700; color: var(--text-2); margin: 18px 0 6px; }
+    .gu-prose p  { margin: 0 0 10px; }
+    .gu-prose ul, .gu-prose ol { margin: 0 0 10px; padding-left: 20px; }
+    .gu-prose li { margin-bottom: 4px; }
+    .gu-prose li > ul, .gu-prose li > ol { margin-bottom: 0; margin-top: 3px; }
+    .gu-prose strong { font-weight: 700; color: #fff; }
+    .gu-prose em { color: var(--text-2); }
+    .gu-prose a { color: var(--grad-start); text-decoration: none; }
+    .gu-prose a:hover { text-decoration: underline; }
+    .gu-prose code {
+      font-family: 'Fira Code', 'Cascadia Code', 'Consolas', monospace;
+      font-size: 0.84em; background: rgba(0,174,250,0.10); color: #00fffb; border-radius: 4px; padding: 2px 6px;
+    }
+    .gu-prose pre {
+      background: rgba(6,9,20,0.80); border: 1px solid var(--border-dim); border-left: 3px solid var(--grad-start);
+      border-radius: 8px; padding: 14px 18px; overflow-x: auto; margin: 0 0 14px;
+    }
+    .gu-prose pre code { background: none; padding: 0; color: #e8f0fe; font-size: 0.84rem; }
+    .gu-prose blockquote {
+      border-left: 3px solid; border-image: linear-gradient(to bottom, #00aefa, #00fffb) 1;
+      margin: 0 0 14px; padding: 8px 14px; background: rgba(0,174,250,0.05); border-radius: 0 6px 6px 0;
+      color: var(--text-2); font-style: italic;
+    }
+    .gu-prose hr { border: none; height: 1px; background: linear-gradient(90deg, rgba(0,174,250,0.4), transparent); margin: 20px 0; }
+    .gu-prose table { width: 100%; border-collapse: collapse; font-size: 0.86rem; margin: 0 0 14px; }
+    .gu-prose th { background: rgba(0,174,250,0.10); color: var(--grad-start); font-weight: 700; text-align: left; padding: 8px 12px; font-size: 0.70rem; letter-spacing: 0.08em; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+    .gu-prose td { padding: 8px 12px; border-bottom: 1px solid var(--border-dim); color: var(--text); }
+    .gu-prose tr:last-child td { border-bottom: none; }
+
+    /* Footer bar */
+    .ga-footer-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--border-dim);
+      background: rgba(0,0,0,0.20);
+      flex-wrap: wrap;
+    }
+    .ga-btn-save {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: var(--grad); color: #04091a; border: none; border-radius: 9px;
+      padding: 10px 22px; cursor: pointer; transition: opacity 0.2s;
+    }
+    .ga-btn-save:hover { opacity: 0.88; }
+    .ga-btn-cancel {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: none; color: var(--text-2); border: 1px solid var(--border-dim); border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: color 0.2s, border-color 0.2s;
+    }
+    .ga-btn-cancel:hover { color: var(--text); border-color: rgba(0,174,250,0.3); }
+    .ga-footer-spacer { flex: 1; }
+    .ga-btn-delete {
+      font-size: 0.76rem; font-weight: 700; font-family: inherit; letter-spacing: 0.06em;
+      background: rgba(255,60,60,0.10); color: #ff6b6b; border: 1px solid rgba(255,60,60,0.22); border-radius: 9px;
+      padding: 10px 18px; cursor: pointer; transition: background 0.2s;
+    }
+    .ga-btn-delete:hover { background: rgba(255,60,60,0.22); }
+    .ga-btn-delete.hidden { display: none; }
+
+    /* Toast */
+    .ga-toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
+      background: rgba(16,25,50,0.96); border: 1px solid var(--border); border-radius: 10px;
+      padding: 11px 22px; font-size: 0.78rem; font-weight: 600; color: var(--text);
+      backdrop-filter: blur(12px); z-index: 99; pointer-events: none;
+      opacity: 0; transition: opacity 0.25s, transform 0.25s;
+    }
+    .ga-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .ga-toast.success { border-color: rgba(0,230,118,0.35); color: #00e676; }
+    .ga-toast.error   { border-color: rgba(255,107,107,0.35); color: #ff6b6b; }
+
+    @media (max-width: 760px) {
+      .ga-page { padding: 18px 14px 60px; }
+      .ga-split { flex-direction: column; min-height: auto; }
+      .ga-md-pane { border-right: none; border-bottom: 1px solid var(--border-dim); }
+      .ga-md { min-height: 280px; }
+      .ga-preview-scroll { padding: 14px 16px; }
+      .ga-fields { padding: 12px 14px 0; }
+      .ga-toolbar { padding: 8px 14px; }
+      .ga-footer-bar { padding: 12px 14px; }
+      .ga-editor-top { padding: 14px 14px 10px; }
+      .ga-list-card-header { padding: 12px 14px 10px; }
+      .ga-table th, .ga-table td { padding: 9px 12px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ga-bg" id="ga-bg"></div>
+
+  <header>
+    <div class="header-inner">
+      <div class="header-left">
+        <a class="logo" href="https://www.anichesstracker.com/" rel="noopener">
+          <span class="logo-icon" id="logo-icon" style="display:none">♟</span>
+          <img id="logo-img" class="logo-img" src="" alt="Logo" style="display:none"
+               onerror="this.style.display='none';document.getElementById('logo-icon').style.display='';localStorage.removeItem('anichess-logo')">
+          <script>(function(){var l=localStorage.getItem('anichess-logo'),i=document.getElementById('logo-img'),ic=document.getElementById('logo-icon');if(l&&i&&ic){i.src=l;i.style.display='block';}else if(ic){ic.style.display='';}})()</script>
+          <div class="logo-text-group">
+            <span class="logo-name">ANICHESS <span class="logo-accent">TRACKER</span></span>
+          </div>
+        </a>
+        <span class="admin-badge">Admin</span>
+      </div>
+      <div class="header-right">
+        <a class="ga-view-btn" href="/updates.html" target="_blank" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M6.5 1H12v5.5M12 1L5 8M3 2H1.5A.5.5 0 001 2.5v9a.5.5 0 00.5.5h9a.5.5 0 00.5-.5V10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="ga-view-label">View Live Page</span>
+        </a>
+        <a class="ga-view-btn" href="/admin.html" rel="noopener">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M1 7l4-4 3 3 4-5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="ga-view-label">Admin Panel</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="ga-page">
+    <div class="ga-topbar">
+      <div class="ga-topbar-title">Game Updates <span>Admin</span></div>
+      <button class="ga-new-btn" onclick="newUpdate()">+ New Update</button>
+    </div>
+
+    <!-- Update list -->
+    <div class="ga-list-card">
+      <div class="ga-list-card-header">
+        <span class="ga-list-card-title">All Updates</span>
+        <span class="ga-count" id="ga-count">0</span>
+      </div>
+      <div class="ga-table-wrap">
+        <table class="ga-table" id="ga-table">
+          <thead>
+            <tr>
+              <th>Title / Version</th>
+              <th>Date</th>
+              <th>Updated</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="ga-tbody">
+            <tr class="ga-empty-row"><td colspan="4">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Editor -->
+    <div class="ga-editor-card hidden" id="ga-editor-card">
+      <div class="ga-editor-top">
+        <span class="ga-editor-heading">Editor</span>
+        <span class="ga-editing-label" id="ga-editing-label">New Update</span>
+        <span class="ga-save-status" id="ga-save-status"></span>
+      </div>
+      <div class="ga-fields">
+        <div class="ga-field-row">
+          <input class="ga-title-input" id="ga-title" type="text" placeholder="Title or version (e.g. Season 8 Patch 1.3)…" autocomplete="off" />
+          <input class="ga-date-input" id="ga-date" type="date" />
+        </div>
+      </div>
+      <div class="ga-toolbar">
+        <button class="ga-tb-btn" onclick="ins('**','**','bold text')" title="Bold"><b>B</b></button>
+        <button class="ga-tb-btn" style="font-style:italic" onclick="ins('*','*','italic text')" title="Italic"><i>I</i></button>
+        <button class="ga-tb-btn" onclick="ins('~~','~~','strikethrough')" title="Strikethrough"><s>S</s></button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insLine('## ')" title="Heading">H2</button>
+        <button class="ga-tb-btn" onclick="insLine('### ')" title="Sub-heading">H3</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insLine('- ')" title="Bullet list">• List</button>
+        <button class="ga-tb-btn" onclick="insLine('1. ')" title="Numbered list">1. List</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="ins('\`','\`','code')" title="Inline code">&#96;c&#96;</button>
+        <button class="ga-tb-btn" onclick="insLine('> ')" title="Blockquote">❝</button>
+        <button class="ga-tb-btn" onclick="insLine('---')" title="Divider">—</button>
+        <div class="ga-tb-sep"></div>
+        <button class="ga-tb-btn" onclick="insLink()" title="Link">🔗 Link</button>
+      </div>
+      <div class="ga-split">
+        <div class="ga-md-pane">
+          <div class="ga-pane-label">Markdown</div>
+          <textarea class="ga-md" id="ga-md" placeholder="Write release notes in Markdown…&#10;&#10;## What's New&#10;- Added spell X&#10;- Fixed bug Y&#10;&#10;## Balance Changes&#10;- Spell A: damage reduced by 10%" spellcheck="true"></textarea>
+        </div>
+        <div class="ga-preview-pane">
+          <div class="ga-pane-label">Preview</div>
+          <div class="ga-preview-scroll">
+            <div class="gu-prose" id="ga-preview">
+              <span style="color:var(--text-3);font-size:0.82rem">Preview will appear here…</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="ga-footer-bar">
+        <button class="ga-btn-save" onclick="saveUpdate()">Save Update</button>
+        <button class="ga-btn-cancel" onclick="cancelEdit()">Cancel</button>
+        <div class="ga-footer-spacer"></div>
+        <button class="ga-btn-delete hidden" id="ga-delete-btn" onclick="deleteUpdate()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ga-toast" id="ga-toast"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    marked.use({ breaks: true, gfm: true });
+
+    let updates = [];
+    let editingId = null;
+
+    async function loadBg() {
+      try {
+        const r = await fetch('/api/bracket-background');
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!d.exists || !d.filename) return;
+        document.getElementById('ga-bg').style.backgroundImage = 'url(/' + d.filename + ')';
+      } catch {}
+    }
+
+    async function applyLogo() {
+      const logoImg  = document.getElementById('logo-img');
+      const logoIcon = document.getElementById('logo-icon');
+      if (!logoImg || !logoIcon) return;
+      const cached = localStorage.getItem('anichess-logo');
+      if (cached) { logoImg.src = cached; logoImg.style.display = 'block'; logoIcon.style.display = 'none'; }
+      try {
+        const res = await fetch('/api/logo');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.exists && data.filename) {
+          const p = `/${data.filename}`;
+          localStorage.setItem('anichess-logo', p);
+          logoImg.src = p; logoImg.style.display = 'block'; logoIcon.style.display = 'none';
+        } else {
+          localStorage.removeItem('anichess-logo');
+          logoImg.style.display = 'none'; logoIcon.style.display = '';
+        }
+      } catch {}
+    }
+
+    function esc(s) {
+      return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function fmtDate(str) {
+      if (!str) return '—';
+      try {
+        const d = new Date(str + (str.length === 10 ? 'T00:00:00' : ''));
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch { return str; }
+    }
+
+    function showToast(msg, type) {
+      const t = document.getElementById('ga-toast');
+      t.textContent = msg;
+      t.className = 'ga-toast ' + (type || '');
+      void t.offsetWidth;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    function setSaveStatus(msg, cls) {
+      const el = document.getElementById('ga-save-status');
+      el.textContent = msg;
+      el.className = 'ga-save-status' + (cls ? ' ' + cls : '');
+    }
+
+    function renderList() {
+      document.getElementById('ga-count').textContent = updates.length;
+      const tbody = document.getElementById('ga-tbody');
+      if (!updates.length) {
+        tbody.innerHTML = '<tr class="ga-empty-row"><td colspan="4">No updates yet. Click "+ New Update" to create one.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = updates.map(u => `
+        <tr>
+          <td class="ga-col-title">${esc(u.title || '(untitled)')}</td>
+          <td class="ga-col-date">${fmtDate(u.date)}</td>
+          <td class="ga-col-date">${u.updatedAt ? fmtDate(u.updatedAt) : fmtDate(u.createdAt)}</td>
+          <td class="ga-col-act">
+            <button class="ga-edit-btn" data-id="${esc(u.id)}">Edit</button>
+            <button class="ga-del-btn-sm" data-id="${esc(u.id)}">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+      tbody.querySelectorAll('.ga-edit-btn').forEach(btn => {
+        btn.addEventListener('click', () => selectUpdate(btn.dataset.id));
+      });
+      tbody.querySelectorAll('.ga-del-btn-sm').forEach(btn => {
+        btn.addEventListener('click', () => confirmDelete(btn.dataset.id));
+      });
+    }
+
+    function selectUpdate(id) {
+      const u = updates.find(x => x.id === id);
+      if (!u) return;
+      editingId = id;
+      document.getElementById('ga-title').value = u.title || '';
+      document.getElementById('ga-date').value = u.date || '';
+      document.getElementById('ga-md').value = u.content || '';
+      document.getElementById('ga-editing-label').textContent = u.title || '(untitled)';
+      document.getElementById('ga-delete-btn').classList.remove('hidden');
+      setSaveStatus('');
+      updatePreview();
+      showEditor();
+      window.scrollTo({ top: document.getElementById('ga-editor-card').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function newUpdate() {
+      editingId = null;
+      document.getElementById('ga-title').value = '';
+      document.getElementById('ga-date').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('ga-md').value = '';
+      document.getElementById('ga-editing-label').textContent = 'New Update';
+      document.getElementById('ga-delete-btn').classList.add('hidden');
+      setSaveStatus('');
+      updatePreview();
+      showEditor();
+      document.getElementById('ga-title').focus();
+      window.scrollTo({ top: document.getElementById('ga-editor-card').offsetTop - 80, behavior: 'smooth' });
+    }
+
+    function showEditor() {
+      document.getElementById('ga-editor-card').classList.remove('hidden');
+    }
+
+    function cancelEdit() {
+      document.getElementById('ga-editor-card').classList.add('hidden');
+      editingId = null;
+    }
+
+    function updatePreview() {
+      const md = document.getElementById('ga-md').value;
+      document.getElementById('ga-preview').innerHTML = md
+        ? marked.parse(md)
+        : '<span style="color:var(--text-3);font-size:0.82rem">Preview will appear here…</span>';
+    }
+
+    async function saveUpdate() {
+      const title   = document.getElementById('ga-title').value.trim();
+      const date    = document.getElementById('ga-date').value;
+      const content = document.getElementById('ga-md').value;
+      if (!title) { showToast('Please enter a title.', 'error'); document.getElementById('ga-title').focus(); return; }
+      if (!content.trim()) { showToast('Release notes content cannot be empty.', 'error'); document.getElementById('ga-md').focus(); return; }
+
+      setSaveStatus('Saving…');
+      try {
+        const url    = editingId ? `/api/game-updates/${encodeURIComponent(editingId)}` : '/api/game-updates';
+        const method = editingId ? 'PUT' : 'POST';
+        const r = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+          body: JSON.stringify({ title, date, content }),
+        });
+        if (!r.ok) throw new Error(await r.text());
+        const saved = await r.json();
+        if (!editingId) editingId = saved.entry.id;
+        document.getElementById('ga-editing-label').textContent = title;
+        document.getElementById('ga-delete-btn').classList.remove('hidden');
+        setSaveStatus('Saved', 'ok');
+        showToast('Update saved!', 'success');
+        await loadUpdates();
+      } catch (e) {
+        setSaveStatus('Error', 'err');
+        showToast('Save failed: ' + String(e.message || e), 'error');
+      }
+    }
+
+    async function confirmDelete(id) {
+      const u = updates.find(x => x.id === id);
+      const name = u ? (u.title || 'this update') : 'this update';
+      if (!confirm(`Delete "${name}"? This cannot be undone.`)) return;
+      try {
+        const r = await fetch(`/api/game-updates/${encodeURIComponent(id)}`, {
+          method: 'DELETE', headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!r.ok) throw new Error(await r.text());
+        showToast('Update deleted.', 'success');
+        if (editingId === id) cancelEdit();
+        await loadUpdates();
+      } catch (e) {
+        showToast('Delete failed: ' + String(e.message || e), 'error');
+      }
+    }
+
+    function deleteUpdate() {
+      if (editingId) confirmDelete(editingId);
+    }
+
+    async function loadUpdates() {
+      try {
+        const r = await fetch('/api/game-updates');
+        if (!r.ok) throw new Error();
+        updates = await r.json();
+        renderList();
+      } catch {
+        document.getElementById('ga-tbody').innerHTML = '<tr class="ga-empty-row"><td colspan="4">Failed to load updates.</td></tr>';
+      }
+    }
+
+    /* Toolbar helpers */
+    function ins(pre, post, placeholder) {
+      const ta = document.getElementById('ga-md');
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const sel = ta.value.substring(s, e) || placeholder;
+      ta.setRangeText(pre + sel + post, s, e, 'end');
+      if (!ta.value.substring(s, e)) {
+        ta.selectionStart = s + pre.length;
+        ta.selectionEnd = s + pre.length + placeholder.length;
+      }
+      ta.focus();
+      updatePreview();
+    }
+
+    function insLine(prefix) {
+      const ta = document.getElementById('ga-md');
+      const s = ta.selectionStart;
+      const lineStart = ta.value.lastIndexOf('\n', s - 1) + 1;
+      ta.setRangeText(prefix, lineStart, lineStart, 'end');
+      ta.selectionStart = ta.selectionEnd = lineStart + prefix.length + (s - lineStart);
+      ta.focus();
+      updatePreview();
+    }
+
+    function insLink() {
+      const ta = document.getElementById('ga-md');
+      const s = ta.selectionStart, e = ta.selectionEnd;
+      const label = ta.value.substring(s, e) || 'link text';
+      const url = prompt('Link URL:');
+      if (url === null) { ta.focus(); return; }
+      const replacement = '[' + label + '](' + (url.trim() || 'url') + ')';
+      ta.setRangeText(replacement, s, e, 'end');
+      ta.selectionStart = ta.selectionEnd = s + replacement.length;
+      ta.focus();
+      updatePreview();
+    }
+
+    document.getElementById('ga-md').addEventListener('input', () => {
+      clearTimeout(window._previewTimer);
+      window._previewTimer = setTimeout(updatePreview, 120);
+    });
+
+    loadBg();
+    applyLogo();
+    loadUpdates();
+    document.getElementById('ga-date').value = new Date().toISOString().slice(0, 10);
+  </script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Embed mode: hide topbar + footer, remove min-height, top-align + center bracket */
+    .embed-mode body { min-height: 0; }
+    .embed-mode .bp-topbar { display: none; }
+    .embed-mode .bp-footer { display: none; }
+    .embed-mode .bp-page { justify-content: flex-start; align-items: center; padding: 24px 0 32px; }
+
+    /* ── Variables ── */
+    :root {
+      --conn:         rgba(0,174,250,0.50);
+      --conn-bright:  var(--accent);
+      --card-bg:      rgba(255,255,255,0.055);
+      --card-border:  rgba(255,255,255,0.10);
+      --win-bg:       rgba(0,174,250,0.10);
+      --gold:         #fbbf24;
+      /* match card sizing — must be consistent with connector math */
+      --mh: 130px;   /* height of one match card (2 rows × 65px) */
+      --qg: 24px;    /* gap between QF match cards in a pair */
+      /* derived: pair-h = 2*130 + 24 = 284px, arm = 65+12 = 77px, spacer = 65px */
+    }
+
+    /* ── Base ── */
+    html, body {
+      height: 100%;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: #090c16;
+      color: #e2e8f0;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Background layer ── */
+    .bp-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: var(--bg-preload, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      will-change: transform;
+      z-index: 0;
+    }
+    .bp-bg::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        to bottom,
+        rgba(6,9,20,0.88) 0%,
+        rgba(6,9,20,0.75) 40%,
+        rgba(6,9,20,0.88) 100%
+      );
+    }
+
+    /* ── Top bar ── */
+    .bp-topbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 13px 28px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      background: rgba(6,9,20,0.70);
+      backdrop-filter: blur(12px);
+      flex-shrink: 0;
+    }
+
+    .bp-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .bp-brand-icon {
+      height: 26px;
+      width: 26px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .bp-brand-name {
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: var(--text);
+      text-transform: uppercase;
+    }
+    .bp-brand-accent {
+      background: linear-gradient(90deg, #00aefa, #00fffb);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .bp-status {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .bp-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.30);
+      flex-shrink: 0;
+    }
+    .bp-dot.live {
+      background: #10b981;
+      animation: bpPulse 2s ease-in-out infinite;
+    }
+    .bp-dot.complete { background: var(--gold); }
+    @keyframes bpPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50%       { opacity: 0.45; transform: scale(0.82); }
+    }
+    .bp-status-text {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.40);
+    }
+    .bp-status-text.live     { color: #10b981; }
+    .bp-status-text.complete { color: var(--gold); }
+
+    /* ── Main area ── */
+    .bp-page {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 36px 28px 44px;
+      overflow-x: hidden;
+    }
+
+    /* ── Pending state ── */
+    .bp-pending {
+      text-align: center;
+      padding: 80px 40px;
+      max-width: 480px;
+    }
+    .bp-pending-icon { font-size: 3rem; margin-bottom: 20px; }
+    .bp-pending-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+      white-space: pre-line;
+    }
+    .bp-pending-sub {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.38);
+      line-height: 1.55;
+    }
+
+    /* ── Stage wrapper ── */
+    .bp-stage-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      min-width: min-content;
+    }
+
+    /* ── Round label row ── */
+    .bp-label-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 0;
+      margin-bottom: 18px;
+      width: 100%;
+    }
+    .bp-rl {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.30);
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Bracket stage ── */
+    .bp-stage {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+    }
+
+    /* ── QF column ── */
+    .bp-qf-col {
+      display: flex;
+      flex-direction: column;
+      gap: var(--qg);
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* ── H connectors ── */
+    .bp-h {
+      height: 1.5px;
+      background: var(--conn);
+      align-self: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Pair connector (2 QF → 1 SF) ──
+     * pair-h  = 2*130 + 24 = 284px
+     * spacer  = 130/2      = 65px
+     * arm     = 65 + 24/2  = 77px
+     */
+    .bp-pconn {
+      width: 22px;
+      height: 284px;
+      align-self: center;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .bp-pconn-s  { height: 65px; flex-shrink: 0; }
+    .bp-pconn-t  { height: 77px; flex-shrink: 0; border-top: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-pconn-b  { height: 77px; flex-shrink: 0; border-bottom: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    /* mirror for right side */
+    .bp-pconn.r .bp-pconn-t { border-right: none; border-left: 1.5px solid var(--conn); }
+    .bp-pconn.r .bp-pconn-b { border-right: none; border-left: 1.5px solid var(--conn); }
+
+    /* ── SF wrap ── */
+    .bp-sf { align-self: center; flex-shrink: 0; }
+
+    /* ── Center column ── */
+    .bp-center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 0 20px;
+      /* GCW + 2×20px padding = total center column inline width */
+      flex-shrink: 0;
+    }
+
+    .bp-title {
+      text-align: center;
+      line-height: 1.15;
+    }
+    .bp-title-text {
+      font-size: 2.0rem;
+      font-weight: 800;
+      color: #fff;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      white-space: pre-line;
+    }
+
+    .bp-gf-wrap { text-align: center; }
+    .bp-gf-label {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(0,174,250,0.65);
+      margin-bottom: 10px;
+    }
+
+    /* ── Champion ── */
+    .bp-champion {
+      text-align: center;
+    }
+    .bp-champion-avatar {
+      width: 108px;
+      height: 108px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto;
+      font-size: 2.70rem;
+      border: 3px solid var(--gold);
+      box-shadow: 0 0 22px rgba(251,191,36,0.40);
+    }
+    .bp-champion-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .bp-champion-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.80;
+      margin: 10px 0 4px;
+    }
+    .bp-champion-name {
+      font-size: 1.36rem;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    /* ── Match card ── */
+    .bp-card {
+      width: 338px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 11px;
+      overflow: hidden;
+      flex-shrink: 0;
+      transition: border-color 0.2s;
+    }
+    .bp-card.gf {
+      width: 380px;
+      background: rgba(255,255,255,0.07);
+      border-color: rgba(0,174,250,0.28);
+      box-shadow: 0 0 28px rgba(0,174,250,0.08);
+    }
+    .bp-card.done { border-color: rgba(255,255,255,0.14); }
+
+    /* ── Player rows ── */
+    .bp-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 17px;
+      height: 65px;
+      position: relative;
+      overflow: hidden;
+    }
+    .bp-card .bp-player:first-child {
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .bp-player.winner {
+      background: var(--win-bg);
+    }
+    .bp-player.winner::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--conn-bright);
+      border-radius: 0 2px 2px 0;
+    }
+    .bp-player.loser { opacity: 0.40; }
+    .bp-player.tbd   { opacity: 0.32; }
+
+    .bp-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.94rem;
+      font-weight: 800;
+      color: #fff;
+      flex-shrink: 0;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+    .bp-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .bp-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .bp-flag {
+      position: absolute;
+      bottom: -10px;
+      right: -10px;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      border: 2px solid #12162a;
+      pointer-events: none;
+    }
+    .bp-side-left .bp-flag {
+      right: auto;
+      left: -10px;
+    }
+    .bp-seed {
+      font-size: 0.83rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.38);
+      min-width: 31px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    .bp-name {
+      flex: 1;
+      font-size: 1.14rem;
+      font-weight: 600;
+      color: #dde4f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      min-width: 0;
+      padding-bottom: 3px;
+      line-height: 1.5;
+    }
+    .bp-name.wallet {
+      font-size: 1.0rem;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+    .bp-score {
+      font-size: 1.20rem;
+      font-weight: 700;
+      color: rgba(255,255,255,0.70);
+      min-width: 29px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+    .bp-score.win { color: var(--conn-bright); }
+
+    /* ── Top 4 Finalists panel ── */
+    .bp-top4-wrap { width: 100%; }
+    .bp-top4-label {
+      font-size: 0.70rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .bp-top4-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 0 14px;
+      height: 62px;
+      background: rgba(251,191,36,0.06);
+      border: 1px solid rgba(251,191,36,0.16);
+      border-radius: 10px;
+      margin-bottom: 6px;
+    }
+    .bp-top4-player:last-child { margin-bottom: 0; }
+    .bp-top4-player.tbd {
+      background: var(--card-bg);
+      border-color: var(--card-border);
+      opacity: 0.5;
+    }
+    .bp-top4-crown {
+      font-size: 1.05rem;
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .bp-top4-sep { height: 8px; }
+
+    /* ── 3rd place section ── */
+    .bp-third {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    .bp-third-label {
+      font-size: 0.58rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.28);
+    }
+
+    /* ── QF→SF connector for 16-player bracket (602px: s142+t159+b159+s142) ── */
+    .bp-qfsf-conn {
+      width: 22px;
+      height: 602px;
+      align-self: center;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+    }
+    .bp-qfsf-s { height: 142px; flex-shrink: 0; }
+    .bp-qfsf-t { height: 159px; flex-shrink: 0; border-top: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-qfsf-b { height: 159px; flex-shrink: 0; border-bottom: 1.5px solid var(--conn); border-right: 1.5px solid var(--conn); }
+    .bp-qfsf-conn.r .bp-qfsf-t { border-right: none; border-left: 1.5px solid var(--conn); }
+    .bp-qfsf-conn.r .bp-qfsf-b { border-right: none; border-left: 1.5px solid var(--conn); }
+
+    /* ── Bottom bar ── */
+    .bp-screenshot-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0,174,250,0.12);
+      border: 1px solid rgba(0,174,250,0.30);
+      color: #00aefa;
+      border-radius: 8px;
+      padding: 6px 14px;
+      font-size: 0.70rem;
+      font-weight: 700;
+      font-family: inherit;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+      white-space: nowrap;
+    }
+    .bp-screenshot-btn:hover { background: rgba(0,174,250,0.22); border-color: rgba(0,174,250,0.55); }
+    .bp-screenshot-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bp-screenshot-btn svg { flex-shrink: 0; }
+
+    .bp-footer {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 11px 24px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      flex-shrink: 0;
+    }
+    .bp-footer-text {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.25);
+    }
+    .bp-footer-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.18);
+    }
+
+    /* ── Mobile ── */
+
+    /* B-1 + B-2 + B-3 — topbar, screenshot button, back link */
+    @media (max-width: 540px) {
+      .bp-topbar { padding: 10px 16px; flex-wrap: wrap; gap: 8px; }
+      .bp-brand-name { font-size: 0.68rem; }
+      .bp-screenshot-btn { padding: 10px 12px; min-height: 44px; font-size: 0.66rem; }
+
+    }
+    @media (max-width: 380px) {
+      .bp-brand { display: none; }
+    }
+
+    /* B-5 — pending state at 480px */
+    @media (max-width: 480px) {
+      .bp-pending-title { font-size: 1.2rem; letter-spacing: 0.03em; }
+      .bp-pending-sub   { font-size: 0.80rem; }
+      .bp-pending       { padding: 48px 24px; }
+    }
+
+    /* B-6 — champion avatar at 480px */
+    @media (max-width: 480px) {
+      .bp-champion-avatar { width: 80px; height: 80px; font-size: 2rem; }
+      .bp-champion-name   { font-size: 1.1rem; }
+    }
+
+    /* B-7 — tournament title text at 480px */
+    @media (max-width: 480px) {
+      .bp-title-text { font-size: 1.4rem; word-break: break-word; white-space: normal; }
+    }
+
+    /* ── Scale host — sized by JS to match visual dimensions of scaled bracket ── */
+    .bp-scale-host { flex-shrink: 0; }
+
+    /* ── Mobile navigator component ── */
+    .bp-round-nav {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      display: flex;
+      align-items: center;
+      background: rgba(6,9,20,0.92);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      height: 56px;
+      flex-shrink: 0;
+    }
+    .bp-rnav-btn {
+      width: 44px;
+      height: 44px;
+      background: transparent;
+      border: none;
+      color: rgba(255,255,255,0.55);
+      font-size: 1.6rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+      flex-shrink: 0;
+      font-family: inherit;
+      line-height: 1;
+    }
+    .bp-rnav-btn:hover { color: #fff; }
+    .bp-rnav-btn:disabled { color: rgba(255,255,255,0.18); cursor: default; }
+    .bp-rnav-center {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .bp-rnav-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.75);
+    }
+    .bp-rnav-dots {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .bp-rnav-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.22);
+      transition: background 0.2s, transform 0.2s;
+      flex-shrink: 0;
+    }
+    .bp-rnav-dot.active {
+      background: #00aefa;
+      transform: scale(1.35);
+    }
+
+    /* ── Mobile layout (≤1023px) ── */
+    @media (max-width: 1023px) {
+      /* Page layout */
+      .bp-page {
+        overflow-x: hidden;
+        padding: 0 0 44px;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      /* Tournament title — shown above cards */
+      .bp-title { padding: 20px 16px 8px; width: 100%; }
+      .bp-title-text { font-size: 1.30rem; white-space: normal; word-break: break-word; }
+      .bp-gf-label { display: none; }
+
+      /* Hide the stage and label row structure — we use stacked cards instead */
+      .bp-stage     { flex-direction: column; align-items: center; gap: 0; }
+      .bp-label-row { display: none; }
+
+      /* Hide all connectors */
+      .bp-pconn, .bp-qfsf-conn, .bp-h, .bp-pconn-s, .bp-pconn-t, .bp-pconn-b,
+      .bp-qfsf-s, .bp-qfsf-t, .bp-qfsf-b { display: none !important; }
+
+      /* Round panels — each round is a vertical stack */
+      .bp-round-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 16px 16px 8px;
+        gap: 12px;
+      }
+      .bp-round-panel.hidden { display: none; }
+
+      /* Cards fill viewport width */
+      .bp-card, .bp-card.gf {
+        width: min(calc(100vw - 32px), 400px);
+        border-radius: 10px;
+      }
+
+      /* Player rows */
+      .bp-player { height: 58px; padding: 0 14px; }
+
+      /* Avatar */
+      .bp-avatar { width: 40px; height: 40px; font-size: 0.86rem; }
+      .bp-flag { width: 22px; height: 22px; bottom: -8px; right: -8px; }
+
+      /* Typography */
+      .bp-name        { font-size: 0.96rem; padding-bottom: 3px; }
+      .bp-name.wallet { font-size: 0.84rem; }
+      .bp-score       { font-size: 1.05rem; }
+      .bp-seed        { font-size: 0.76rem; min-width: 28px; }
+
+      /* QF columns — remove flex-direction (they become vertical stacks via round panels) */
+      .bp-qf-col { flex-direction: column; gap: 12px; align-self: auto; }
+
+      /* SF wrap — stacks naturally */
+      .bp-sf { align-self: auto; }
+
+      /* 3rd place section */
+      .bp-third { padding: 16px 16px 0; width: 100%; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+      .bp-third-label { margin: 8px 0 4px; }
+
+      /* Champion block */
+      .bp-champion { margin-top: 24px; }
+      .bp-champion-avatar { width: 80px; height: 80px; font-size: 2rem; }
+      .bp-champion-name   { font-size: 1.10rem; }
+
+      /* Top 4 panel */
+      .bp-top4-player { height: 56px; padding: 0 12px; }
+    }

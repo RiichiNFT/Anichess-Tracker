@@ -1,14 +1,25 @@
+require('dotenv').config();
 const express = require('express');
+const helmet = require('helmet');
 const axios = require('axios');
 const cron = require('node-cron');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 const multer = require('multer');
+const { randomUUID } = require('crypto');
 
 // Simple in-process rate limiter for /api/refresh (no extra dep required)
 function makeRateLimiter(windowMs, maxRequests) {
   const hits = new Map(); // ip -> [timestamp, ...]
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, times] of hits.entries()) {
+      const recent = times.filter(t => now - t < windowMs);
+      if (recent.length === 0) hits.delete(ip);
+      else hits.set(ip, recent);
+    }
+  }, 10 * 60 * 1000).unref();
   return (req, res, next) => {
     const ip = req.ip || req.connection.remoteAddress || 'unknown';
     const now = Date.now();
@@ -24,21 +35,43 @@ function makeRateLimiter(windowMs, maxRequests) {
 }
 // Allow at most 2 manual refreshes per IP per minute
 const refreshRateLimit = makeRateLimiter(60 * 1000, 2);
+// Allow at most 30 admin actions per IP per minute
+const adminRateLimit = makeRateLimiter(60 * 1000, 30);
 
 const app = express();
-const PORT = 4000;
+const PORT = parseInt(process.env.PORT || '4000', 10);
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "cdn.jsdelivr.net", "www.googletagmanager.com", "www.google-analytics.com"],
+      scriptSrcAttr: ["'unsafe-inline'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
+      fontSrc: ["'self'", "fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "https:", "flagcdn.com", "*.flagcdn.com", "avatar.anichess.com", "*.anichess.com"],
+      connectSrc: ["'self'", "www.google-analytics.com"],
+      frameSrc: ["'self'"],
+      frameAncestors: ["'self'", "*"],
+    },
+  },
+  crossOriginResourcePolicy: false,   // avatar images served cross-origin
+  frameguard: false,                  // bracket-public.html supports ?embed=1 on external sites
+}));
 
 const WALLETS_FILE       = path.join(__dirname, 'watched-wallets.json');
 const WINS_FILE          = path.join(__dirname, 'wins-store.json');
 const FRONTEND_DIR       = path.join(__dirname, '..', 'frontend');
 const BADGES_DIR         = path.join(FRONTEND_DIR, 'badges');
 const BRANDING_DIR       = path.join(__dirname, 'branding');
+const FINALS_AVATARS_DIR = path.join(FRONTEND_DIR, 'finals-avatars');
 
-if (!fs.existsSync(BADGES_DIR))   fs.mkdirSync(BADGES_DIR,   { recursive: true });
-if (!fs.existsSync(BRANDING_DIR)) fs.mkdirSync(BRANDING_DIR, { recursive: true });
+if (!fs.existsSync(BADGES_DIR))         fs.mkdirSync(BADGES_DIR,         { recursive: true });
+if (!fs.existsSync(BRANDING_DIR))       fs.mkdirSync(BRANDING_DIR,       { recursive: true });
+if (!fs.existsSync(FINALS_AVATARS_DIR)) fs.mkdirSync(FINALS_AVATARS_DIR, { recursive: true });
 
 const VALID_TIERS        = new Set(['pawn','knight','bishop','rook','queen','king','legend']);
-const BG_EXTS            = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const BG_EXTS            = ['.webp', '.jpg', '.jpeg', '.png', '.gif'];
 const LOGO_EXTS          = ['.jpg', '.jpeg', '.png', '.webp', '.svg'];
 const TOURNAMENT_DETAILS_FILE  = path.join(__dirname, 'tournament-details.json');
 const QUALIFIERS_FILE          = path.join(__dirname, 'qualifiers.json');
@@ -49,6 +82,13 @@ const PLAYER_META_FILE         = path.join(__dirname, 'player-meta.json');
 const MANUAL_FINALISTS_FILE    = path.join(__dirname, 'manual-finalists.json');
 const SITE_STATE_FILE          = path.join(__dirname, 'site-state.json');
 const RESULTS_STATUS_FILE      = path.join(__dirname, 'results-status.json'); // legacy migration source
+const MATCH_BASELINE_FILE      = path.join(__dirname, 'match-baseline.json');
+const TOURNAMENT_CONFIG_FILE   = path.join(__dirname, 'tournament-config.json');
+const PAST_EVENTS_FILE         = path.join(__dirname, 'past-events.json');
+const GUIDES_FILE              = path.join(__dirname, 'guides.json');
+const GAME_UPDATES_FILE        = path.join(__dirname, 'game-updates.json');
+const FINALS_FILE              = path.join(__dirname, 'finals-data.json');
+const PLAYER_CACHE_FILE        = path.join(__dirname, 'player-cache.json');
 
 const VALID_STATES = ['leaderboard', 'finalizing', 'confirmed'];
 
@@ -84,8 +124,15 @@ function findTournamentLogo() {
   return null;
 }
 
+function deleteImageFiles(dir, prefix, exts) {
+  exts.forEach(ext => {
+    const f = path.join(dir, `${prefix}${ext}`);
+    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
+  });
+}
+
 function loadTournamentDetails() {
-  try { return JSON.parse(fs.readFileSync(TOURNAMENT_DETAILS_FILE, 'utf8')); } catch { return { details: '' }; }
+  try { return JSON.parse(fs.readFileSync(TOURNAMENT_DETAILS_FILE, 'utf8')); } catch { return { day1: '', day2: '', finals: '' }; }
 }
 
 function saveTournamentDetails(data) {
@@ -94,8 +141,8 @@ function saveTournamentDetails(data) {
 }
 
 const EMPTY_QUALIFIERS = {
-  qualifier1: { first: '', second: '', third: '' },
-  qualifier2: { first: '', second: '', third: '' },
+  qualifier1: { label: 'Top 3 · LICHESS QUALIFIERS III', confirmed: false, first: '', second: '', third: '' },
+  qualifier2: { label: 'Top 3 · Lichess Team Battle',    confirmed: false, first: '', second: '', third: '' },
 };
 
 function loadQualifiers() {
@@ -127,12 +174,91 @@ function saveExcludedWallets(list) {
   catch (err) { console.error('[saveExcludedWallets] Write failed:', err.message); throw err; }
 }
 
+const DEFAULT_ROUND_FORMATS = { r16: 1, qf: 1, sf: 3, '3rd': 3, gf: 5 };
+
 function loadBrackets() {
-  try { return JSON.parse(fs.readFileSync(BRACKETS_FILE, 'utf8')); }
-  catch { return { status: 'setup', playerCount: 8, seeds: [], rounds: [], champion: null, bracketName: '' }; }
+  try {
+    const data = JSON.parse(fs.readFileSync(BRACKETS_FILE, 'utf8'));
+    if (!data.roundFormats) data.roundFormats = { ...DEFAULT_ROUND_FORMATS };
+    return data;
+  } catch {
+    return { status: 'setup', playerCount: 8, seeds: [], rounds: [], champion: null, bracketName: '', roundFormats: { ...DEFAULT_ROUND_FORMATS } };
+  }
 }
 function saveBrackets(data) {
   fs.writeFileSync(BRACKETS_FILE, JSON.stringify(data, null, 2));
+}
+
+function loadTournamentConfig() {
+  try { return JSON.parse(fs.readFileSync(TOURNAMENT_CONFIG_FILE, 'utf8')); }
+  catch {
+    return {
+      tournamentNumber: 2, name: 'Anichess Rising Stars Tournament #2',
+      finalDate: 'May 23, 2026', finalTime: '13:00 UTC', prizePool: '$600 USD',
+      cutoffTimestamp: 1779408000, cutoffDisplay: 'MAY 21ST · UTC 00:00',
+      qualifyCount: 16, registrationUrl: 'https://forms.gle/EpSddHt3G7DauEiu5',
+      lichessQualifierUrl: 'https://lichess.org/tournament/eQiOIvDu',
+      qualifier1Label: 'Top 3 · LICHESS QUALIFIERS III',
+      qualifier2Label: 'Top 3 · Lichess Team Battle',
+      discordUrl: 'https://discord.com/invite/anichess',
+    };
+  }
+}
+function saveTournamentConfig(data) {
+  fs.writeFileSync(TOURNAMENT_CONFIG_FILE, JSON.stringify(data, null, 2));
+}
+
+function loadPastEvents() {
+  try { return JSON.parse(fs.readFileSync(PAST_EVENTS_FILE, 'utf8')); }
+  catch { return []; }
+}
+function savePastEvents(data) {
+  fs.writeFileSync(PAST_EVENTS_FILE, JSON.stringify(data, null, 2));
+}
+function loadGuides() {
+  try { return JSON.parse(fs.readFileSync(GUIDES_FILE, 'utf8')); }
+  catch { return []; }
+}
+function saveGuides(data) {
+  fs.writeFileSync(GUIDES_FILE, JSON.stringify(data, null, 2));
+}
+function loadGameUpdates() {
+  try { return JSON.parse(fs.readFileSync(GAME_UPDATES_FILE, 'utf8')); }
+  catch { return []; }
+}
+function saveGameUpdates(data) {
+  fs.writeFileSync(GAME_UPDATES_FILE, JSON.stringify(data, null, 2));
+}
+
+const FINALS_DEFAULT_PLAYERS = [
+  { id: 1, wallet: '', name: '', title: '', country: '' },
+  { id: 2, wallet: '', name: '', title: '', country: '' },
+  { id: 3, wallet: '', name: '', title: '', country: '' },
+  { id: 4, wallet: '', name: '', title: '', country: '' },
+  { id: 5, wallet: '', name: '', title: '', country: '' },
+  { id: 6, wallet: '', name: '', title: '', country: '' },
+];
+const FINALS_DEFAULT_ROUNDS = Array.from({ length: 5 }, (_, i) => ({
+  n: i + 1,
+  games: [
+    { white: null, black: null, result: null },
+    { white: null, black: null, result: null },
+    { white: null, black: null, result: null },
+  ],
+}));
+function loadFinals() {
+  try { return JSON.parse(fs.readFileSync(FINALS_FILE, 'utf8')); }
+  catch {
+    return {
+      status: 'upcoming',
+      players: FINALS_DEFAULT_PLAYERS.map(p => ({ ...p })),
+      rounds: FINALS_DEFAULT_ROUNDS.map(r => ({ ...r, games: r.games.map(g => ({ ...g })) })),
+      grandFinal: { p1: null, p2: null, result: null },
+    };
+  }
+}
+function saveFinals(data) {
+  fs.writeFileSync(FINALS_FILE, JSON.stringify(data, null, 2));
 }
 
 const badgeUpload = multer({
@@ -227,6 +353,17 @@ const pdfUpload = multer({
   limits: { fileSize: 20 * 1024 * 1024 },
 });
 
+const finalsAvatarUpload = multer({
+  storage: multer.memoryStorage(),
+  fileFilter: (req, file, cb) => {
+    if (!/^image\/(png|jpeg|webp|gif)$/.test(file.mimetype)) {
+      return cb(new Error('Only image files allowed (PNG, JPG, WebP, GIF)'));
+    }
+    cb(null, true);
+  },
+  limits: { fileSize: 5 * 1024 * 1024 },
+});
+
 const LEADERBOARD_URL       = 'https://apiv2.pvp.anichess.com/rating/leaderboard';
 const PLAYER_RATING_URL     = 'https://apiv2.pvp.anichess.com/player/rating';
 const MATCH_HISTORY_PAG_URL = 'https://apiv2.pvp.anichess.com/player/match-history-pagination';
@@ -235,27 +372,49 @@ const GAMBIT_URL            = 'https://apiv2.pvp.anichess.com/match/gambit-leade
 
 const ANICHESS_HEADERS = { Origin: 'https://anichess.com', Referer: 'https://anichess.com/' };
 
-const CUTOFF_MS  = 1778284800 * 1000; // May 8 2026 00:00:00 UTC — leaderboard locks after this
+const CUTOFF_MS  = parseInt(process.env.CUTOFF_TIMESTAMP || '1778284800', 10) * 1000;
 
-const ADMIN_USER = 'admin';
-const ADMIN_PASS = 'dropofmagic2026';
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS;
 
-function requireAdmin(req, res, next) {
-  const auth = req.headers['authorization'];
-  if (!auth || !auth.startsWith('Basic ')) {
-    res.set('WWW-Authenticate', 'Basic realm="Anichess Admin"');
-    return res.status(401).send('Authentication required');
-  }
-  const [user, pass] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
-  if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
-    res.set('WWW-Authenticate', 'Basic realm="Anichess Admin"');
-    return res.status(401).send('Invalid credentials');
-  }
-  next();
+if (!ADMIN_PASS) {
+  console.error('[Fatal] ADMIN_PASS env var is not set. Create backend/.env — see .env.example');
+  process.exit(1);
+}
+if (!ADMIN_USER) {
+  console.error('[Fatal] ADMIN_USER env var is not set. Create backend/.env — see .env.example');
+  process.exit(1);
 }
 
+function requireAdmin(req, res, next) {
+  adminRateLimit(req, res, () => {
+    const auth = req.headers['authorization'];
+    if (!auth || !auth.startsWith('Basic ')) {
+      res.set('WWW-Authenticate', 'Basic realm="Anichess Admin"');
+      return res.status(401).send('Authentication required');
+    }
+    const [user, ...rest] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
+    const pass = rest.join(':');
+    if (user !== ADMIN_USER || pass !== ADMIN_PASS) {
+      res.set('WWW-Authenticate', 'Basic realm="Anichess Admin"');
+      return res.status(401).send('Invalid credentials');
+    }
+    // CSRF: require custom header on state-changing requests
+    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+      if (req.headers['x-requested-with'] !== 'XMLHttpRequest') {
+        return res.status(403).json({ error: 'CSRF check failed' });
+      }
+    }
+    next();
+  });
+}
+
+const ALLOWED_ORIGINS = ['https://anichesstracker.com', 'https://www.anichesstracker.com'];
+if (process.env.NODE_ENV !== 'production') {
+  ALLOWED_ORIGINS.push('http://localhost:4000');
+}
 app.use(cors({
-  origin: ['https://anichesstracker.com', 'https://www.anichesstracker.com', 'http://localhost:4000'],
+  origin: ALLOWED_ORIGINS,
   credentials: true,
 }));
 app.use(express.json());
@@ -271,11 +430,8 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // Root redirect based on site state
-app.get('/', (req, res, next) => {
-  const { state } = loadSiteState();
-  if (state === 'finalizing') return res.redirect('/preview.html');
-  if (state === 'confirmed')  return res.redirect('/results.html');
-  next();
+app.get('/', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'magnus.html'));
 });
 
 // results.html: public only when state=confirmed
@@ -286,8 +442,8 @@ app.get('/results.html', (req, res, next) => {
   res.sendFile(path.join(FRONTEND_DIR, 'results.html'));
 });
 
-// Protect admin panel before static middleware intercepts it
-app.get('/admin.html', requireAdmin, (req, res) => {
+// Admin panel — auth is handled client-side; all API mutations still require requireAdmin
+app.get('/admin.html', (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'admin.html'));
 });
 
@@ -304,35 +460,99 @@ app.get('/brackets.html', requireAdmin, (req, res) => {
   res.sendFile(path.join(FRONTEND_DIR, 'brackets.html'));
 });
 
+// Guides pages — admin-only
+app.get('/guides.html', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'guides.html'));
+});
+app.get('/guides-admin.html', requireAdmin, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'guides-admin.html'));
+});
+
+app.get('/magnus.html', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'magnus.html'));
+});
+
+app.get('/updates.html', (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'updates.html'));
+});
+
+app.get('/updates-admin.html', requireAdmin, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'updates-admin.html'));
+});
+
+app.get('/magnus-finals-admin.html', requireAdmin, (req, res) => {
+  res.sendFile(path.join(FRONTEND_DIR, 'magnus-finals-admin.html'));
+});
+
 app.use(express.static(FRONTEND_DIR));
 
 let playerCache = {};
 let lastRefreshed = null;
 
+// Restore playerCache from disk immediately so names/avatars are available on startup
+// before the async refreshPlayerData() call finishes.
+try {
+  const saved = JSON.parse(fs.readFileSync(PLAYER_CACHE_FILE, 'utf8'));
+  if (saved && typeof saved === 'object') {
+    playerCache = saved;
+    console.log(`[Startup] Restored playerCache for ${Object.keys(playerCache).length} players from disk`);
+  }
+} catch { /* file not yet created — first run */ }
+
+let _walletsCache = null;
+let _winsStoreCache = null;
 function loadWallets() {
-  try { return JSON.parse(fs.readFileSync(WALLETS_FILE, 'utf8')); } catch { return []; }
+  if (_walletsCache !== null) return _walletsCache;
+  try { _walletsCache = JSON.parse(fs.readFileSync(WALLETS_FILE, 'utf8')); }
+  catch { _walletsCache = []; }
+  return _walletsCache;
 }
 
 function saveWallets(wallets) {
-  try { fs.writeFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2)); }
+  try {
+    fs.writeFileSync(WALLETS_FILE, JSON.stringify(wallets, null, 2));
+    _walletsCache = wallets;
+  }
   catch (err) { console.error('[saveWallets] Write failed:', err.message); throw err; }
 }
 
 function loadWinsStore() {
-  try { return JSON.parse(fs.readFileSync(WINS_FILE, 'utf8')); } catch { return {}; }
+  if (_winsStoreCache !== null) return _winsStoreCache;
+  try { _winsStoreCache = JSON.parse(fs.readFileSync(WINS_FILE, 'utf8')); }
+  catch { _winsStoreCache = {}; }
+  return _winsStoreCache;
 }
 
 function saveWinsStore(store) {
-  try { fs.writeFileSync(WINS_FILE, JSON.stringify(store, null, 2)); }
+  try {
+    fs.writeFileSync(WINS_FILE, JSON.stringify(store, null, 2));
+    _winsStoreCache = store;
+  }
   catch (err) { console.error('[saveWinsStore] Write failed:', err.message); throw err; }
 }
 
+function loadMatchBaseline() {
+  try { return JSON.parse(fs.readFileSync(MATCH_BASELINE_FILE, 'utf8')); } catch { return { timestamp: null, baselines: {} }; }
+}
+
+function saveMatchBaseline(data) {
+  try { fs.writeFileSync(MATCH_BASELINE_FILE, JSON.stringify(data, null, 2)); }
+  catch (err) { console.error('[saveMatchBaseline] Write failed:', err.message); throw err; }
+}
+
+let _playerMetaCache = null;
 function loadPlayerMeta() {
-  try { return JSON.parse(fs.readFileSync(PLAYER_META_FILE, 'utf8')); } catch { return {}; }
+  if (_playerMetaCache !== null) return _playerMetaCache;
+  try { _playerMetaCache = JSON.parse(fs.readFileSync(PLAYER_META_FILE, 'utf8')); }
+  catch { _playerMetaCache = {}; }
+  return _playerMetaCache;
 }
 
 function savePlayerMeta(meta) {
-  try { fs.writeFileSync(PLAYER_META_FILE, JSON.stringify(meta, null, 2)); }
+  try {
+    fs.writeFileSync(PLAYER_META_FILE, JSON.stringify(meta, null, 2));
+    _playerMetaCache = meta;
+  }
   catch (err) { console.error('[savePlayerMeta] Write failed:', err.message); throw err; }
 }
 
@@ -370,7 +590,7 @@ async function fetchLeaderboard() {
   try {
     const res = await axios.get(LEADERBOARD_URL, { headers: ANICHESS_HEADERS, timeout: 10000 });
     return res.data?.data || [];
-  } catch { return []; }
+  } catch (err) { console.error('[fetchLeaderboard]', err.message); return []; }
 }
 
 async function fetchPlayerRating(wallet) {
@@ -399,7 +619,7 @@ async function fetchRankedWinsSince(wallet, lastMatchId) {
         headers: ANICHESS_HEADERS,
         timeout: 15000,
       });
-    } catch { break; }
+    } catch (err) { console.error('[fetchRankedWinsSince] pagination failed:', err.message); break; }
 
     const data = res.data?.data;
     const items = data?.matchHistories || [];
@@ -420,6 +640,43 @@ async function fetchRankedWinsSince(wallet, lastMatchId) {
   return { newWins, maxMatchId };
 }
 
+// Count matches by type that ended on or after cutoffIso (newest-first pagination).
+// Stops as soon as a match is found before the cutoff — efficient for recent baselines.
+async function countMatchesAfterTimestamp(wallet, cutoffIso) {
+  const cutoff = new Date(cutoffIso).getTime();
+  const limit = 50;
+  let offset = 0;
+  const counts = { RANK: 0, GAMBIT: 0, M8_ARENA: 0, QUICK: 0, FRIEND: 0 };
+
+  while (true) {
+    let res;
+    try {
+      res = await axios.get(`${MATCH_HISTORY_PAG_URL}/${wallet}`, {
+        params: { offset, limit },
+        headers: ANICHESS_HEADERS,
+        timeout: 15000,
+      });
+    } catch (err) { console.error('[countMatchesAfterTimestamp] pagination failed:', err.message); break; }
+
+    const data = res.data?.data;
+    const items = data?.matchHistories || [];
+    const total = data?.totalMatches || 0;
+    if (!items.length) break;
+
+    let reachedBefore = false;
+    for (const m of items) {
+      const t = m.gameEndTimestamp ? new Date(m.gameEndTimestamp).getTime() : 0;
+      if (t < cutoff) { reachedBefore = true; break; }
+      if (m.matchType in counts) counts[m.matchType]++;
+    }
+
+    if (reachedBefore || offset + items.length >= total) break;
+    offset += items.length;
+  }
+
+  return counts;
+}
+
 async function fetchProfiles(walletAddresses) {
   if (walletAddresses.length === 0) return [];
   const BATCH = 20;
@@ -433,7 +690,7 @@ async function fetchProfiles(walletAddresses) {
         timeout: 10000,
       });
       all.push(...(res.data?.list || []));
-    } catch { /* skip failed batch */ }
+    } catch (err) { console.error('[fetchProfiles] batch failed:', err.message); }
   }
   return all;
 }
@@ -442,7 +699,7 @@ async function fetchGambitLeaderboard() {
   try {
     const res = await axios.get(GAMBIT_URL, { headers: ANICHESS_HEADERS, timeout: 10000 });
     return res.data?.data || [];
-  } catch { return []; }
+  } catch (err) { console.error('[fetchGambitLeaderboard]', err.message); return []; }
 }
 
 function parseMatches(matchesArr) {
@@ -476,8 +733,8 @@ async function refreshPlayerData() {
     });
 
     const [ratingResults, profiles] = await Promise.all([
-      Promise.all(wallets.map(w => fetchPlayerRating(w).then(d => ({ wallet: w, data: d })).catch(() => ({ wallet: w, data: null })))),
-      fetchProfiles(wallets).catch(() => []),
+      Promise.all(wallets.map(w => fetchPlayerRating(w).then(d => ({ wallet: w, data: d })).catch(err => { console.error('[refreshPlayerData] fetchPlayerRating failed for', w, err.message); return { wallet: w, data: null }; }))),
+      fetchProfiles(wallets).catch(err => { console.error('[refreshPlayerData] fetchProfiles failed:', err.message); return []; }),
     ]);
 
     const profilesByWallet = {};
@@ -496,7 +753,8 @@ async function refreshPlayerData() {
         try {
           const { newWins, maxMatchId } = await fetchRankedWinsSince(w, stored.lastMatchId);
           return { wallet: w, newWins, maxMatchId };
-        } catch {
+        } catch (err) {
+          console.error('[refreshPlayerData] fetchRankedWinsSince failed for', w, err.message);
           return { wallet: w, newWins: 0, maxMatchId: stored.lastMatchId };
         }
       })
@@ -567,6 +825,9 @@ async function refreshPlayerData() {
 
     lastRefreshed = new Date().toISOString();
     console.log(`[Refresh] Updated ${Object.keys(playerCache).length} players at ${lastRefreshed}`);
+    // Persist cache to disk so it survives server restarts
+    try { fs.writeFileSync(PLAYER_CACHE_FILE, JSON.stringify(playerCache)); }
+    catch (e) { console.error('[Refresh] Failed to save player cache:', e.message); }
   } catch (err) {
     console.error('[Refresh] Error:', err.message);
   }
@@ -625,6 +886,7 @@ app.get('/api/players', (req, res) => {
   });
 
   players.forEach((p, i) => { p.localRank = p.rating != null ? i + 1 : null; });
+  res.set('Cache-Control', 'no-store');
   res.json(players);
 });
 
@@ -739,26 +1001,39 @@ app.get('/api/player-countries', (req, res) => {
 
 app.post('/api/player-meta/:wallet', requireAdmin, (req, res) => {
   const raw = req.params.wallet;
-  if (!/^0x[0-9a-fA-F]{40}$/.test(raw)) {
-    return res.status(400).json({ error: 'Invalid wallet address format' });
-  }
+  if (!raw || raw.length > 200) return res.status(400).json({ error: 'Invalid key' });
   const key = raw.toLowerCase();
-  const country = (req.body.country || '').trim().toUpperCase().slice(0, 2);
+  const { country, alias } = req.body;
   const meta = loadPlayerMeta();
-  if (country) {
-    meta[key] = { ...meta[key], country };
-  } else {
-    if (meta[key]) {
-      delete meta[key].country;
-      if (Object.keys(meta[key]).length === 0) delete meta[key];
-    }
+  if (!meta[key]) meta[key] = {};
+
+  if (country !== undefined) {
+    const c = (country || '').trim().toUpperCase().slice(0, 2);
+    if (c) meta[key].country = c; else delete meta[key].country;
   }
+  if (alias !== undefined) {
+    const a = (alias || '').trim().slice(0, 100);
+    if (a) meta[key].alias = a; else delete meta[key].alias;
+  }
+
+  if (Object.keys(meta[key]).length === 0) delete meta[key];
   try {
     savePlayerMeta(meta);
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to save player metadata' });
   }
+});
+
+// Public endpoint — returns only aliases, no auth required
+app.get('/api/player-aliases', (req, res) => {
+  const meta = loadPlayerMeta();
+  const result = {};
+  for (const [key, val] of Object.entries(meta)) {
+    if (val.alias) result[key] = val.alias;
+  }
+  res.set('Cache-Control', 'no-store');
+  res.json(result);
 });
 
 app.get('/api/refresh', refreshRateLimit, async (req, res) => {
@@ -782,6 +1057,7 @@ app.post('/api/admin/force-refresh', requireAdmin, async (req, res) => {
 // ── Site state ───────────────────────────────────────────────────────────────
 
 app.get('/api/site-state', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
   res.json(loadSiteState());
 });
 
@@ -802,12 +1078,14 @@ app.get('/api/results-status', (req, res) => {
 app.get('/api/session', (req, res) => {
   const auth = req.headers['authorization'];
   if (!auth || !auth.startsWith('Basic ')) return res.json({ admin: false });
-  const [user, pass] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
+  const [user, ...rest] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
+  const pass = rest.join(':');
   res.json({ admin: user === ADMIN_USER && pass === ADMIN_PASS });
 });
 
 app.get('/api/results-data', (req, res, next) => {
   if (loadSiteState().state !== 'confirmed') return requireAdmin(req, res, next);
+  next();
 }, (req, res) => {
   const norm = w => (w || '').trim().toLowerCase();
   const { state } = loadSiteState();
@@ -855,6 +1133,7 @@ app.get('/api/results-data', (req, res, next) => {
       .slice(0, 2);
   }
 
+  res.set('Cache-Control', 'public, max-age=30');
   res.json({
     state,
     qualifier1: q1.map(lookup),
@@ -885,6 +1164,57 @@ app.post('/api/manual-finalists', requireAdmin, (req, res) => {
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to save manual finalists' });
+  }
+});
+
+// ── Match baseline (wildcard qualifying period start) ────────────────────────
+
+app.get('/api/match-baseline', (req, res) => {
+  res.json(loadMatchBaseline());
+});
+
+app.post('/api/match-baseline/snapshot', requireAdmin, async (req, res) => {
+  const wallets = loadWallets();
+  const customTs = req.body?.timestamp && !isNaN(Date.parse(req.body.timestamp))
+    ? new Date(req.body.timestamp).toISOString()
+    : null;
+  const timestamp = customTs || new Date().toISOString();
+  const usePagination = customTs && new Date(customTs) < Date.now();
+
+  const baselines = {};
+
+  await Promise.all(wallets.map(async w => {
+    const key = w.toLowerCase();
+    const p = playerCache[key];
+    if (!p || !p.matches) return;
+
+    if (usePagination) {
+      // Accurate: subtract matches played after the cutoff from current totals
+      const after = await countMatchesAfterTimestamp(w, timestamp);
+      baselines[key] = {
+        RANK:     Math.max(0, (p.matches.RANK     || 0) - (after.RANK     || 0)),
+        GAMBIT:   Math.max(0, (p.matches.GAMBIT   || 0) - (after.GAMBIT   || 0)),
+        M8_ARENA: Math.max(0, (p.matches.M8_ARENA || 0) - (after.M8_ARENA || 0)),
+        QUICK:    Math.max(0, (p.matches.QUICK    || 0) - (after.QUICK    || 0)),
+        FRIEND:   Math.max(0, (p.matches.FRIEND   || 0) - (after.FRIEND   || 0)),
+      };
+    } else {
+      baselines[key] = {
+        RANK:     p.matches.RANK     || 0,
+        GAMBIT:   p.matches.GAMBIT   || 0,
+        M8_ARENA: p.matches.M8_ARENA || 0,
+        QUICK:    p.matches.QUICK    || 0,
+        FRIEND:   p.matches.FRIEND   || 0,
+      };
+    }
+  }));
+
+  const data = { timestamp, baselines };
+  try {
+    saveMatchBaseline(data);
+    res.json({ ok: true, timestamp: data.timestamp, count: Object.keys(baselines).length });
+  } catch {
+    res.status(500).json({ error: 'Failed to save match baseline' });
   }
 });
 
@@ -925,10 +1255,7 @@ app.get('/api/background', (req, res) => {
 });
 
 app.post('/api/background', requireAdmin, (req, res) => {
-  BG_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `bg-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'bg-image', BG_EXTS);
   bgUpload.single('background')(req, res, err => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file received' });
@@ -937,10 +1264,7 @@ app.post('/api/background', requireAdmin, (req, res) => {
 });
 
 app.delete('/api/background', requireAdmin, (req, res) => {
-  BG_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `bg-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'bg-image', BG_EXTS);
   res.json({ ok: true });
 });
 
@@ -958,10 +1282,7 @@ app.get('/api/logo', (req, res) => {
 });
 
 app.post('/api/logo', requireAdmin, (req, res) => {
-  LOGO_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `logo-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'logo-image', LOGO_EXTS);
   logoUpload.single('logo')(req, res, err => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file received' });
@@ -970,10 +1291,7 @@ app.post('/api/logo', requireAdmin, (req, res) => {
 });
 
 app.delete('/api/logo', requireAdmin, (req, res) => {
-  LOGO_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `logo-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'logo-image', LOGO_EXTS);
   res.json({ ok: true });
 });
 
@@ -981,18 +1299,17 @@ app.delete('/api/logo', requireAdmin, (req, res) => {
 
 app.get('/api/tournament', (req, res) => {
   const logoFile = findTournamentLogo();
-  const { details } = loadTournamentDetails();
+  const { day1, day2, finals } = loadTournamentDetails();
   res.json({
     logo: logoFile ? { exists: true, filename: logoFile } : { exists: false, filename: null },
-    details: details || '',
+    day1: day1 || '',
+    day2: day2 || '',
+    finals: finals || '',
   });
 });
 
 app.post('/api/tournament/logo', requireAdmin, (req, res) => {
-  LOGO_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `tournament-logo${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'tournament-logo', LOGO_EXTS);
   tournamentLogoUpload.single('logo')(req, res, err => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file received' });
@@ -1001,18 +1318,19 @@ app.post('/api/tournament/logo', requireAdmin, (req, res) => {
 });
 
 app.delete('/api/tournament/logo', requireAdmin, (req, res) => {
-  LOGO_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `tournament-logo${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'tournament-logo', LOGO_EXTS);
   res.json({ ok: true });
 });
 
 app.post('/api/tournament/details', requireAdmin, (req, res) => {
-  const { details } = req.body;
-  if (typeof details !== 'string') return res.status(400).json({ error: 'details must be a string' });
+  const { day1, day2, finals } = req.body;
+  if (typeof day1 !== 'string' || typeof day2 !== 'string' || typeof finals !== 'string')
+    return res.status(400).json({ error: 'day1, day2, and finals must be strings' });
+  if (day1.length > 8000) return res.status(400).json({ error: 'Day 1 text too long (max 8000 chars)' });
+  if (day2.length > 8000) return res.status(400).json({ error: 'Day 2 text too long (max 8000 chars)' });
+  if (finals.length > 8000) return res.status(400).json({ error: 'Finals text too long (max 8000 chars)' });
   try {
-    saveTournamentDetails({ details });
+    saveTournamentDetails({ day1, day2, finals });
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to save tournament details (disk error)' });
@@ -1062,7 +1380,7 @@ app.post('/api/excluded-wallets', requireAdmin, (req, res) => {
   const valid = addresses
     .filter(a => typeof a === 'string')
     .map(a => a.trim().toLowerCase())
-    .filter(a => /^0x[0-9a-f]{40}$/.test(a));
+    .filter(a => /^0x[0-9a-fA-F]{40}$/i.test(a));
   try {
     saveExcludedWallets(valid);
     res.json({ ok: true, count: valid.length });
@@ -1122,16 +1440,36 @@ app.get('/api/status', (req, res) => {
 
 // ── Brackets ──────────────────────────────────────────────────────────────────
 
-app.get('/api/brackets', (req, res) => res.json(loadBrackets()));
+app.get('/api/brackets', (req, res) => {
+  const event = (req.query.event || '').replace(/[^a-z0-9-]/g, '');
+  if (event) {
+    const archivePath = path.join(__dirname, `brackets-${event}.json`);
+    if (!fs.existsSync(archivePath)) return res.status(404).json({ error: 'Event not found' });
+    try { return res.json(JSON.parse(fs.readFileSync(archivePath, 'utf8'))); }
+    catch { return res.status(500).json({ error: 'Failed to read archived bracket' }); }
+  }
+  res.json(loadBrackets());
+});
 
 app.post('/api/brackets/setup', requireAdmin, (req, res) => {
-  const { playerCount, seeds } = req.body;
+  const { playerCount, seeds, placementMode } = req.body;
   if (![8, 16].includes(playerCount)) return res.status(400).json({ error: 'playerCount must be 8 or 16' });
   if (!Array.isArray(seeds)) return res.status(400).json({ error: 'seeds array required' });
+  for (let i = 0; i < seeds.length; i++) {
+    const s = seeds[i];
+    if (s === null || typeof s !== 'object' || Array.isArray(s)) {
+      return res.status(400).json({ error: `Seed at index ${i} must be a plain object` });
+    }
+    // Accept both EVM wallet addresses and plain player names
+    if (typeof s.wallet !== 'string') {
+      return res.status(400).json({ error: `Seed at index ${i} has a missing player identifier` });
+    }
+  }
   const data = loadBrackets();
   data.playerCount = playerCount;
   data.seeds = seeds;
   data.status = 'setup';
+  if (placementMode === 'manual' || placementMode === 'auto') data.placementMode = placementMode;
   try { saveBrackets(data); res.json({ ok: true }); }
   catch { res.status(500).json({ error: 'Failed to save bracket' }); }
 });
@@ -1147,7 +1485,7 @@ app.post('/api/brackets/generate', requireAdmin, (req, res) => {
     if (empty.length > 0) {
       return res.status(400).json({ error: `${empty.length} seed slot(s) are empty` });
     }
-    data.rounds = generateBracketRounds(data.seeds, pc);
+    data.rounds = generateBracketRounds(data.seeds, pc, data.roundFormats || {}, data.placementMode);
     data.status = 'active';
     data.champion = null;
     saveBrackets(data);
@@ -1160,6 +1498,12 @@ app.post('/api/brackets/generate', requireAdmin, (req, res) => {
 
 app.post('/api/brackets/game', requireAdmin, (req, res) => {
   const { roundId, matchIndex, result } = req.body;
+  if (typeof roundId !== 'string' || roundId.trim().length === 0 || roundId.length > 50) {
+    return res.status(400).json({ error: 'roundId must be a non-empty string (max 50 chars)' });
+  }
+  if (!Number.isInteger(matchIndex) || matchIndex < 0) {
+    return res.status(400).json({ error: 'matchIndex must be a non-negative integer' });
+  }
   if (!['p1', 'p2', 'draw'].includes(result)) return res.status(400).json({ error: 'result must be p1, p2, or draw' });
   const data = loadBrackets();
   const round = data.rounds.find(r => r.id === roundId);
@@ -1224,6 +1568,36 @@ app.post('/api/brackets/name', requireAdmin, (req, res) => {
   } catch { res.status(500).json({ error: 'Failed to save name' }); }
 });
 
+app.post('/api/brackets/formats', requireAdmin, (req, res) => {
+  const { formats } = req.body;
+  if (!formats || typeof formats !== 'object' || Array.isArray(formats)) {
+    return res.status(400).json({ error: 'formats must be a plain object' });
+  }
+  const VALID_IDS = new Set(['r16', 'qf', 'sf', '3rd', 'gf']);
+  const VALID_BO  = new Set([1, 3, 5]);
+  const sanitized = {};
+  for (const [id, bo] of Object.entries(formats)) {
+    if (!VALID_IDS.has(id)) return res.status(400).json({ error: `Unknown round id: ${id}` });
+    if (!VALID_BO.has(Number(bo))) return res.status(400).json({ error: `bestOf for '${id}' must be 1, 3, or 5` });
+    sanitized[id] = Number(bo);
+  }
+  try {
+    const data = loadBrackets();
+    data.roundFormats = { ...DEFAULT_ROUND_FORMATS, ...sanitized };
+    // Hot-patch existing live rounds so winsNeeded updates immediately
+    if (Array.isArray(data.rounds)) {
+      data.rounds.forEach(r => {
+        if (sanitized[r.id] !== undefined) {
+          r.bestOf = sanitized[r.id];
+          r.winsNeeded = Math.ceil(sanitized[r.id] / 2);
+        }
+      });
+    }
+    saveBrackets(data);
+    res.json({ ok: true, roundFormats: data.roundFormats });
+  } catch { res.status(500).json({ error: 'Failed to save formats' }); }
+});
+
 app.get('/api/bracket-background', (req, res) => {
   const filename = findBracketBgImage();
   if (!filename) return res.json({ exists: false, filename: null });
@@ -1234,10 +1608,7 @@ app.get('/api/bracket-background', (req, res) => {
 });
 
 app.post('/api/bracket-background', requireAdmin, (req, res) => {
-  BG_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `bracket-bg-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'bracket-bg-image', BG_EXTS);
   bracketBgUpload.single('background')(req, res, err => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'No file received' });
@@ -1246,28 +1617,26 @@ app.post('/api/bracket-background', requireAdmin, (req, res) => {
 });
 
 app.delete('/api/bracket-background', requireAdmin, (req, res) => {
-  BG_EXTS.forEach(ext => {
-    const f = path.join(FRONTEND_DIR, `bracket-bg-image${ext}`);
-    try { if (fs.existsSync(f)) fs.unlinkSync(f); } catch {}
-  });
+  deleteImageFiles(FRONTEND_DIR, 'bracket-bg-image', BG_EXTS);
   res.json({ ok: true });
 });
 
-function generateBracketRounds(seeds, playerCount) {
+function generateBracketRounds(seeds, playerCount, formats = {}, placementMode = 'auto') {
   const winsNeeded = bo => Math.ceil(bo / 2);
   const makeMatch = id => ({ id, p1: null, p2: null, games: [], score: { p1: 0, p2: 0 }, winner: null, loser: null, status: 'pending' });
+  const bo = id => formats[id] ?? DEFAULT_ROUND_FORMATS[id] ?? 1;
 
   const roundDefs = playerCount === 16 ? [
-    { id: 'r16', name: 'Round of 16', bestOf: 1, matchCount: 8 },
-    { id: 'qf',  name: 'Quarterfinals', bestOf: 1, matchCount: 4 },
-    { id: 'sf',  name: 'Semifinals', bestOf: 3, matchCount: 2 },
-    { id: '3rd', name: 'Third Place', bestOf: 3, matchCount: 1, isThirdPlace: true },
-    { id: 'gf',  name: 'Grand Final', bestOf: 5, matchCount: 1 },
+    { id: 'r16', name: 'Round of 16',  bestOf: bo('r16'), matchCount: 8 },
+    { id: 'qf',  name: 'Quarterfinals', bestOf: bo('qf'),  matchCount: 4 },
+    { id: 'sf',  name: 'Semifinals',    bestOf: bo('sf'),  matchCount: 2 },
+    { id: '3rd', name: 'Third Place',   bestOf: bo('3rd'), matchCount: 1, isThirdPlace: true },
+    { id: 'gf',  name: 'Grand Final',   bestOf: bo('gf'),  matchCount: 1 },
   ] : [
-    { id: 'qf',  name: 'Quarterfinals', bestOf: 1, matchCount: 4 },
-    { id: 'sf',  name: 'Semifinals', bestOf: 3, matchCount: 2 },
-    { id: '3rd', name: 'Third Place', bestOf: 3, matchCount: 1, isThirdPlace: true },
-    { id: 'gf',  name: 'Grand Final', bestOf: 5, matchCount: 1 },
+    { id: 'qf',  name: 'Quarterfinals', bestOf: bo('qf'),  matchCount: 4 },
+    { id: 'sf',  name: 'Semifinals',    bestOf: bo('sf'),  matchCount: 2 },
+    { id: '3rd', name: 'Third Place',   bestOf: bo('3rd'), matchCount: 1, isThirdPlace: true },
+    { id: 'gf',  name: 'Grand Final',   bestOf: bo('gf'),  matchCount: 1 },
   ];
 
   const rounds = roundDefs.map(d => ({
@@ -1278,21 +1647,19 @@ function generateBracketRounds(seeds, playerCount) {
 
   const s = seeds.map(sd => sd.wallet ? { wallet: sd.wallet, seed: sd.seed } : null);
 
-  if (playerCount === 16) {
-    const pairs = [[0,15],[7,8],[3,12],[4,11],[1,14],[6,9],[2,13],[5,10]];
-    const firstRound = rounds[0].matches;
-    pairs.forEach(([a, b], i) => {
-      firstRound[i].p1 = s[a]; firstRound[i].p2 = s[b];
-      if (firstRound[i].p1 && firstRound[i].p2) firstRound[i].status = 'upcoming';
-    });
-  } else {
-    const pairs = [[0,7],[3,4],[1,6],[2,5]];
-    const firstRound = rounds[0].matches;
-    pairs.forEach(([a, b], i) => {
-      firstRound[i].p1 = s[a]; firstRound[i].p2 = s[b];
-      if (firstRound[i].p1 && firstRound[i].p2) firstRound[i].status = 'upcoming';
-    });
-  }
+  const autoPairs16 = [[0,15],[7,8],[3,12],[4,11],[1,14],[6,9],[2,13],[5,10]];
+  const autoPairs8  = [[0,7],[3,4],[1,6],[2,5]];
+  const manualPairs = (n) => Array.from({ length: n / 2 }, (_, i) => [i * 2, i * 2 + 1]);
+
+  const pairs = placementMode === 'manual'
+    ? manualPairs(playerCount)
+    : (playerCount === 16 ? autoPairs16 : autoPairs8);
+
+  const firstRound = rounds[0].matches;
+  pairs.forEach(([a, b], i) => {
+    firstRound[i].p1 = s[a]; firstRound[i].p2 = s[b];
+    if (firstRound[i].p1 && firstRound[i].p2) firstRound[i].status = 'upcoming';
+  });
   return rounds;
 }
 
@@ -1408,6 +1775,204 @@ function clearPropagated(data, fromRoundId, matchIndex) {
   }
 }
 
+// ── Tournament Config ──────────────────────────────────────────────────────
+
+app.get('/api/tournament-config', (req, res) => { res.set('Cache-Control', 'no-cache'); res.json(loadTournamentConfig()); });
+
+app.post('/api/tournament-config', requireAdmin, (req, res) => {
+  const body = req.body;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return res.status(400).json({ error: 'Body must be a plain object' });
+  }
+  const ALLOWED_KEYS = new Set([
+    'tournamentNumber', 'name', 'finalDate', 'finalTime', 'prizePool',
+    'cutoffTimestamp', 'cutoffDisplay', 'qualifyCount', 'registrationUrl',
+    'lichessQualifierUrl', 'qualifier1Label', 'qualifier2Label', 'discordUrl',
+  ]);
+  const NUMBER_FIELDS = new Set(['tournamentNumber', 'cutoffTimestamp', 'qualifyCount']);
+  const sanitized = {};
+  for (const key of ALLOWED_KEYS) {
+    if (!(key in body)) continue;
+    const val = body[key];
+    if (NUMBER_FIELDS.has(key)) {
+      if (typeof val !== 'number') {
+        return res.status(400).json({ error: `Field '${key}' must be a number` });
+      }
+    } else {
+      if (typeof val !== 'string') {
+        return res.status(400).json({ error: `Field '${key}' must be a string` });
+      }
+      if (val.length > 500) {
+        return res.status(400).json({ error: `Field '${key}' exceeds 500 character limit` });
+      }
+    }
+    sanitized[key] = val;
+  }
+  try { saveTournamentConfig(sanitized); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Game Updates ───────────────────────────────────────────────────────────
+
+app.get('/api/game-updates', (req, res) => {
+  res.set('Cache-Control', 'public, max-age=30');
+  res.json(loadGameUpdates());
+});
+
+app.post('/api/game-updates', requireAdmin, (req, res) => {
+  const { title, date, content } = req.body || {};
+  if (!title || typeof title !== 'string' || !title.trim()) return res.status(400).json({ error: 'title is required' });
+  if (!content || typeof content !== 'string' || !content.trim()) return res.status(400).json({ error: 'content is required' });
+  if (content.length > 20000) return res.status(400).json({ error: 'content too long (max 20000 chars)' });
+  const updates = loadGameUpdates();
+  const entry = {
+    id: Date.now().toString(36),
+    title: title.trim().slice(0, 200),
+    date: date && typeof date === 'string' ? date.trim().slice(0, 20) : new Date().toISOString().slice(0, 10),
+    content: content.trim(),
+    createdAt: new Date().toISOString(),
+  };
+  updates.unshift(entry);
+  try { saveGameUpdates(updates); res.json({ ok: true, entry }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/game-updates/:id', requireAdmin, (req, res) => {
+  const { title, date, content } = req.body || {};
+  if (!title || typeof title !== 'string' || !title.trim()) return res.status(400).json({ error: 'title is required' });
+  if (!content || typeof content !== 'string' || !content.trim()) return res.status(400).json({ error: 'content is required' });
+  if (content.length > 20000) return res.status(400).json({ error: 'content too long (max 20000 chars)' });
+  const updates = loadGameUpdates();
+  const idx = updates.findIndex(u => u.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Not found' });
+  updates[idx] = {
+    ...updates[idx],
+    title: title.trim().slice(0, 200),
+    date: date && typeof date === 'string' ? date.trim().slice(0, 20) : updates[idx].date,
+    content: content.trim(),
+    updatedAt: new Date().toISOString(),
+  };
+  try { saveGameUpdates(updates); res.json({ ok: true, entry: updates[idx] }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/game-updates/:id', requireAdmin, (req, res) => {
+  const updates = loadGameUpdates();
+  const filtered = updates.filter(u => u.id !== req.params.id);
+  if (filtered.length === updates.length) return res.status(404).json({ error: 'Not found' });
+  try { saveGameUpdates(filtered); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Past Events ────────────────────────────────────────────────────────────
+
+app.get('/api/past-events', (req, res) => { res.set('Cache-Control', 'public, max-age=30'); res.json(loadPastEvents()); });
+
+app.post('/api/past-events', requireAdmin, (req, res) => {
+  if (!Array.isArray(req.body)) return res.status(400).json({ error: 'Body must be an array' });
+  if (req.body.length > 100) return res.status(400).json({ error: 'Array must not exceed 100 events' });
+  const ALLOWED_EVENT_KEYS = new Set([
+    'id', 'name', 'date', 'bracketUrl', 'bracketFile', 'resultsUrl',
+    'winner', 'prizePool', 'playerCount', 'youtubeUrl', 'thumbnailUrl',
+    'qualifier1', 'qualifier2',
+  ]);
+  const sanitizedEvents = [];
+  for (let i = 0; i < req.body.length; i++) {
+    const event = req.body[i];
+    if (!event || typeof event !== 'object' || Array.isArray(event)) {
+      return res.status(400).json({ error: `Element at index ${i} must be a plain object` });
+    }
+    const sanitizedEvent = {};
+    for (const key of ALLOWED_EVENT_KEYS) {
+      if (!(key in event)) continue;
+      const val = event[key];
+      if (typeof val !== 'string') {
+        return res.status(400).json({ error: `Field '${key}' at index ${i} must be a string` });
+      }
+      if (val.length > 500) {
+        return res.status(400).json({ error: `Field '${key}' at index ${i} exceeds 500 character limit` });
+      }
+      sanitizedEvent[key] = val;
+    }
+    sanitizedEvents.push(sanitizedEvent);
+  }
+  try { savePastEvents(sanitizedEvents); res.json({ ok: true }); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Bracket Archive ────────────────────────────────────────────────────────
+
+app.post('/api/brackets/archive/:eventId', requireAdmin, (req, res) => {
+  const eventId = (req.params.eventId || '').replace(/[^a-z0-9-]/g, '');
+  if (!eventId) return res.status(400).json({ error: 'Invalid event ID' });
+  if (eventId.length > 100) return res.status(400).json({ error: 'Event ID too long' });
+  try {
+    const data = loadBrackets();
+    const bracketDest = path.join(__dirname, `brackets-${eventId}.json`);
+    fs.writeFileSync(bracketDest, JSON.stringify(data, null, 2));
+    // Snapshot current player cache to frontend static file for bracket viewer
+    const players = Object.values(playerCache).map((p, i) => ({ ...p, localRank: i + 1 }));
+    const playerDest = path.join(FRONTEND_DIR, `players-${eventId}.json`);
+    fs.writeFileSync(playerDest, JSON.stringify(players, null, 2));
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── Guides ────────────────────────────────────────────────────────────────
+
+function isAdminReq(req) {
+  const auth = req.headers['authorization'];
+  if (!auth || !auth.startsWith('Basic ')) return false;
+  const [user, pass] = Buffer.from(auth.slice(6), 'base64').toString('utf8').split(':');
+  return user === ADMIN_USER && pass === ADMIN_PASS;
+}
+
+app.get('/api/guides', (req, res) => {
+  const guides = loadGuides();
+  res.json(isAdminReq(req) ? guides : guides.filter(g => g.published));
+});
+
+app.get('/api/guides/:id', (req, res) => {
+  const guide = loadGuides().find(g => g.id === req.params.id);
+  if (!guide) return res.status(404).json({ error: 'Not found' });
+  if (!guide.published && !isAdminReq(req)) return res.status(404).json({ error: 'Not found' });
+  res.json(guide);
+});
+
+app.post('/api/guides', requireAdmin, (req, res) => {
+  const { title, category, excerpt, content, published } = req.body || {};
+  if (!title || !content) return res.status(400).json({ error: 'title and content are required' });
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  const now = Math.floor(Date.now() / 1000);
+  const guide = { id: randomUUID(), title, slug, category: category || 'General', excerpt: excerpt || '', content, published: !!published, createdAt: now, updatedAt: now };
+  try { const list = loadGuides(); list.push(guide); saveGuides(list); res.json(guide); }
+  catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/guides/:id', requireAdmin, (req, res) => {
+  try {
+    const list = loadGuides();
+    const idx = list.findIndex(g => g.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    const { title, category, excerpt, content, published } = req.body || {};
+    const slug = title ? title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : list[idx].slug;
+    list[idx] = { ...list[idx], ...(title !== undefined && { title, slug }), ...(category !== undefined && { category }), ...(excerpt !== undefined && { excerpt }), ...(content !== undefined && { content }), ...(published !== undefined && { published: !!published }), updatedAt: Math.floor(Date.now() / 1000) };
+    saveGuides(list);
+    res.json(list[idx]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/guides/:id', requireAdmin, (req, res) => {
+  try {
+    const list = loadGuides();
+    const idx = list.findIndex(g => g.id === req.params.id);
+    if (idx === -1) return res.status(404).json({ error: 'Not found' });
+    list.splice(idx, 1);
+    saveGuides(list);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
 cron.schedule('*/5 * * * *', () => {
   if (Date.now() >= CUTOFF_MS) {
     console.log('[Cron] Past cutoff — skipping refresh');
@@ -1417,9 +1982,130 @@ cron.schedule('*/5 * * * *', () => {
   refreshPlayerData();
 });
 
+// Profile name refresh — runs every 30 min regardless of cutoff so usernames
+// stay current even after the qualifying period ends.
+cron.schedule('*/30 * * * *', () => {
+  console.log('[Cron] 30-min profile refresh...');
+  refreshPlayerData();
+});
+
 // Catch any unhandled promise rejections so they don't crash the process silently
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('[UnhandledRejection]', reason);
+  console.error('[UnhandledRejection] Unhandled promise rejection:', reason);
+  process.exit(1);
+});
+
+// ── Finals (Road to Magnus Finals · Jun 16) ─────────────────────────────────
+app.get('/api/finals', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  res.json(loadFinals());
+});
+
+app.post('/api/finals/status', requireAdmin, (req, res) => {
+  const { status } = req.body;
+  if (!['upcoming', 'active', 'complete'].includes(status)) return res.status(400).json({ error: 'Invalid status' });
+  const data = loadFinals();
+  data.status = status;
+  saveFinals(data);
+  res.json({ ok: true });
+});
+
+app.post('/api/finals/players', requireAdmin, (req, res) => {
+  const { players } = req.body;
+  if (!Array.isArray(players) || players.length !== 6) return res.status(400).json({ error: 'Must provide exactly 6 players' });
+  const data = loadFinals();
+  const existing = data.players || [];
+  data.players = players.map((p, i) => ({
+    id: i + 1,
+    wallet: /^0x[0-9a-fA-F]{40}$/i.test(p.wallet || '') ? p.wallet.toLowerCase() : '',
+    name: (p.name || '').trim().slice(0, 100),
+    title: (p.title || '').trim().slice(0, 20),
+    country: (p.country || '').trim().toUpperCase().slice(0, 2),
+    avatar: existing[i]?.avatar || null,
+  }));
+  saveFinals(data);
+  res.json({ ok: true });
+});
+
+app.post('/api/finals/round', requireAdmin, (req, res) => {
+  const { round, games } = req.body;
+  if (!Number.isInteger(round) || round < 1 || round > 5) return res.status(400).json({ error: 'Invalid round (1–5)' });
+  if (!Array.isArray(games) || games.length !== 3) return res.status(400).json({ error: 'Must provide exactly 3 games' });
+  const data = loadFinals();
+  data.rounds[round - 1].games = games.map(g => ({
+    white: Number.isInteger(g.white) && g.white >= 1 && g.white <= 6 ? g.white : null,
+    black: Number.isInteger(g.black) && g.black >= 1 && g.black <= 6 ? g.black : null,
+    result: ['white', 'black', 'draw', null].includes(g.result) ? g.result : null,
+  }));
+  saveFinals(data);
+  res.json({ ok: true });
+});
+
+app.post('/api/finals/game', requireAdmin, (req, res) => {
+  const { round, game, result } = req.body;
+  if (!Number.isInteger(round) || round < 1 || round > 5) return res.status(400).json({ error: 'Invalid round' });
+  if (!Number.isInteger(game) || game < 0 || game > 2) return res.status(400).json({ error: 'Invalid game index (0–2)' });
+  if (!['white', 'black', 'draw', null].includes(result)) return res.status(400).json({ error: 'Invalid result' });
+  const data = loadFinals();
+  data.rounds[round - 1].games[game].result = result;
+  saveFinals(data);
+  res.json({ ok: true });
+});
+
+app.post('/api/finals/grand-final', requireAdmin, (req, res) => {
+  const { p1, p2, result } = req.body;
+  if (!['p1', 'p2', 'draw', null].includes(result)) return res.status(400).json({ error: 'Invalid result' });
+  const data = loadFinals();
+  data.grandFinal = {
+    p1: Number.isInteger(p1) && p1 >= 1 && p1 <= 6 ? p1 : null,
+    p2: Number.isInteger(p2) && p2 >= 1 && p2 <= 6 ? p2 : null,
+    result: result || null,
+  };
+  saveFinals(data);
+  res.json({ ok: true });
+});
+
+app.post('/api/finals/avatar/:id', requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id) || id < 1 || id > 6) return res.status(400).json({ error: 'Invalid player id (1–6)' });
+  finalsAvatarUpload.single('avatar')(req, res, err => {
+    if (err) return res.status(400).json({ error: err.message });
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const mimeToExt = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/webp': '.webp', 'image/gif': '.gif' };
+    const ext = mimeToExt[req.file.mimetype] || '.png';
+    // Remove any previous avatar files for this player
+    try {
+      fs.readdirSync(FINALS_AVATARS_DIR)
+        .filter(f => f.startsWith(`player-${id}.`))
+        .forEach(f => fs.unlinkSync(path.join(FINALS_AVATARS_DIR, f)));
+    } catch {}
+    const filename = `player-${id}${ext}`;
+    fs.writeFileSync(path.join(FINALS_AVATARS_DIR, filename), req.file.buffer);
+    const avatarUrl = `/finals-avatars/${filename}`;
+    const data = loadFinals();
+    const player = (data.players || []).find(p => p.id === id);
+    if (player) player.avatar = avatarUrl;
+    saveFinals(data);
+    res.json({ ok: true, avatar: avatarUrl });
+  });
+});
+
+app.delete('/api/finals/avatar/:id', requireAdmin, (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id) || id < 1 || id > 6) return res.status(400).json({ error: 'Invalid player id (1–6)' });
+  const data = loadFinals();
+  const player = (data.players || []).find(p => p.id === id);
+  if (player?.avatar) {
+    const filename = path.basename(player.avatar);
+    try { fs.unlinkSync(path.join(FINALS_AVATARS_DIR, filename)); } catch {}
+    player.avatar = null;
+    saveFinals(data);
+  }
+  res.json({ ok: true });
+});
+
+app.get('/health', (req, res) => {
+  res.json({ ok: true, uptime: Math.floor(process.uptime()) });
 });
 
 app.listen(PORT, () => {
