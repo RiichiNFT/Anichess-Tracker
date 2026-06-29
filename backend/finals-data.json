@@ -155,6 +155,9 @@
   "grandFinal": {
     "p1": 4,
     "p2": 6,
-    "result": "p1"
+    "result": "p1",
+    "format": "bo5",
+    "scoreP1": 3,
+    "scoreP2": 2
   }
 }

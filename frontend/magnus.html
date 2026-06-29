@@ -928,28 +928,28 @@
         <div class="finals-cta-shine"></div>
         <div class="finals-cta-body">
           <div class="finals-cta-eyebrow">
-            <span class="finals-cta-badge"><span class="finals-cta-badge-dot"></span>Finals · Day 3</span>
+            <span class="finals-cta-badge"><span class="finals-cta-badge-dot"></span>Concluded · Day 3 Finals</span>
             <span class="finals-cta-date">Jun 16, 2026</span>
           </div>
-          <div class="finals-cta-title">Road to Magnus Finals</div>
-          <div class="finals-cta-sub">6-Player Round Robin · Live Scoreboard</div>
+          <div class="finals-cta-title">🏆 Champion — Oleg Badmatsyrenov (Ellaijio)</div>
+          <div class="finals-cta-sub">Road to Magnus Finals · View Final Standings</div>
           <div class="finals-cta-countdown" id="finals-countdown"></div>
         </div>
         <div class="finals-cta-arrow">→</div>
       </a>
 
-      <a class="stream-cta" href="https://www.twitch.tv/openseagg" target="_blank" rel="noopener">
+      <a class="stream-cta" href="/replay.html?event=magnus-finals">
         <div class="stream-cta-dot"></div>
         <div class="stream-cta-text">
-          <span class="stream-cta-label">Watch Live on Twitch</span>
-          <span class="stream-cta-sub">twitch.tv/openseagg · Magnus in action</span>
+          <span class="stream-cta-label">Watch Match Replays</span>
+          <span class="stream-cta-sub">All Finals games · round robin + grand finals</span>
         </div>
         <span class="stream-cta-arrow">→</span>
       </a>
 
-      <a class="bracket-cta" href="/bracket-public.html">
+      <a class="bracket-cta" href="/bracket.html?event=magnus-day2">
         <span class="bracket-cta-text">
-          <span class="bracket-cta-label">View Day 2 Live Bracket</span>
+          <span class="bracket-cta-label">View Day 2 Knockout Bracket</span>
           <span class="bracket-cta-sub">See all matches &amp; results</span>
         </span>
         <span class="bracket-cta-arrow">→</span>
@@ -989,7 +989,7 @@
       function tick() {
         const diff = TARGET - Date.now();
         if (diff <= 0) {
-          el.innerHTML = '<span class="finals-cta-countdown-live">Live Now</span>';
+          el.innerHTML = '<span class="finals-cta-countdown-label">View Final Standings →</span>';
           return;
         }
         const h = Math.floor(diff / 3600000);

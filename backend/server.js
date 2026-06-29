@@ -253,7 +253,7 @@ function loadFinals() {
       status: 'upcoming',
       players: FINALS_DEFAULT_PLAYERS.map(p => ({ ...p })),
       rounds: FINALS_DEFAULT_ROUNDS.map(r => ({ ...r, games: r.games.map(g => ({ ...g })) })),
-      grandFinal: { p1: null, p2: null, result: null },
+      grandFinal: { p1: null, p2: null, result: null, format: 'bo1', scoreP1: 0, scoreP2: 0 },
     };
   }
 }
@@ -430,8 +430,11 @@ app.get('/favicon.ico', (req, res) => {
 });
 
 // Root redirect based on site state
-app.get('/', (req, res) => {
-  res.sendFile(path.join(FRONTEND_DIR, 'magnus.html'));
+app.get('/', (req, res, next) => {
+  const { state } = loadSiteState();
+  if (state === 'finalizing') return res.redirect('/preview.html');
+  if (state === 'confirmed')  return res.redirect('/results.html');
+  next();
 });
 
 // results.html: public only when state=confirmed
@@ -2053,13 +2056,25 @@ app.post('/api/finals/game', requireAdmin, (req, res) => {
 });
 
 app.post('/api/finals/grand-final', requireAdmin, (req, res) => {
-  const { p1, p2, result } = req.body;
-  if (!['p1', 'p2', 'draw', null].includes(result)) return res.status(400).json({ error: 'Invalid result' });
+  const { p1, p2, result, format, scoreP1, scoreP2 } = req.body;
+  if (!['p1', 'p2', 'draw', null, undefined].includes(result)) return res.status(400).json({ error: 'Invalid result' });
+  const fmt = ['bo1', 'bo3', 'bo5'].includes(format) ? format : 'bo1';
+  const clinch = fmt === 'bo5' ? 3 : fmt === 'bo3' ? 2 : 1;
+  const clampScore = s => (Number.isInteger(s) && s >= 0 && s <= clinch ? s : 0);
+  const s1 = fmt === 'bo1' ? 0 : clampScore(scoreP1);
+  const s2 = fmt === 'bo1' ? 0 : clampScore(scoreP2);
+  // For multi-game formats the winner is derived from the series score; BO1 keeps the explicit pick.
+  const finalResult = fmt === 'bo1'
+    ? (result || null)
+    : (s1 > s2 ? 'p1' : s2 > s1 ? 'p2' : null);
   const data = loadFinals();
   data.grandFinal = {
     p1: Number.isInteger(p1) && p1 >= 1 && p1 <= 6 ? p1 : null,
     p2: Number.isInteger(p2) && p2 >= 1 && p2 <= 6 ? p2 : null,
-    result: result || null,
+    result: finalResult,
+    format: fmt,
+    scoreP1: s1,
+    scoreP2: s2,
   };
   saveFinals(data);
   res.json({ ok: true });

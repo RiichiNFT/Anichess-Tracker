@@ -900,9 +900,12 @@
       const playerMap = new Map();
       players.forEach(p => playerMap.set(p.id, p));
 
+      const gfFmt = gf.format || 'bo1';
+      const gfBoN = gfFmt === 'bo5' ? 5 : gfFmt === 'bo3' ? 3 : 1;
+
       const card = el('div', 'mf-gf');
       const cardHdr = el('div', 'mf-gf-header');
-      cardHdr.innerHTML = `<span class="mf-gf-label">⬥&nbsp;&nbsp;Grand Final — Best of 1&nbsp;&nbsp;⬥</span>`;
+      cardHdr.innerHTML = `<span class="mf-gf-label">⬥&nbsp;&nbsp;Grand Final — Best of ${gfBoN}&nbsp;&nbsp;⬥</span>`;
       card.appendChild(cardHdr);
 
       // Determine the two finalists — only auto-derive from standings once the event is complete
@@ -940,9 +943,12 @@
 
         const vsDiv = el('div', 'mf-gf-vs');
         vsDiv.innerHTML = `<div class="mf-gf-vs-text">vs</div>`;
-        if (gf.result) {
+        const hasSeriesScore = gfFmt !== 'bo1' && ((gf.scoreP1 || 0) > 0 || (gf.scoreP2 || 0) > 0);
+        if (gf.result || hasSeriesScore) {
           const resSpan = el('span', 'mf-gf-result-text');
-          resSpan.textContent = gf.result === 'p1' ? '1 — 0' : gf.result === 'p2' ? '0 — 1' : '½ — ½';
+          resSpan.textContent = gfFmt !== 'bo1'
+            ? `${gf.scoreP1 || 0} — ${gf.scoreP2 || 0}`
+            : (gf.result === 'p1' ? '1 — 0' : gf.result === 'p2' ? '0 — 1' : '½ — ½');
           vsDiv.appendChild(resSpan);
         }
         body.appendChild(vsDiv);

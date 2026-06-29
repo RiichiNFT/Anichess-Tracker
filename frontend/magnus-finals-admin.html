@@ -136,6 +136,16 @@
     /* Grand final */
     .gf-grid { display:grid; grid-template-columns:1fr 28px 1fr 140px; align-items:center; gap:8px; padding:4px 0; }
     @media(max-width:640px){ .gf-grid{ grid-template-columns:1fr 20px 1fr; grid-template-rows:auto auto; } .gf-result-btns{ grid-column:1/-1; } }
+    .gf-format-row { display:flex; align-items:center; gap:10px; margin:6px 0 12px; flex-wrap:wrap; }
+    .gf-format-label { font-size:0.7rem; font-weight:800; letter-spacing:0.06em; text-transform:uppercase; color:var(--text-3); }
+    .gf-format-select { padding:6px 10px; border-radius:6px; border:1px solid var(--border); background:rgba(255,255,255,0.04); color:var(--text); font-family:inherit; font-size:0.8rem; font-weight:700; cursor:pointer; }
+    .gf-format-hint { font-size:0.7rem; color:var(--text-3); }
+    .gf-score-row { display:flex; align-items:center; gap:8px; }
+    .gf-score-side { font-size:0.62rem; font-weight:800; letter-spacing:0.05em; color:var(--text-3); width:20px; flex-shrink:0; }
+    .gf-stepper { display:flex; align-items:center; gap:5px; }
+    .gf-step-btn { width:24px; height:26px; border-radius:6px; border:1px solid var(--border); background:transparent; color:var(--text); font-size:0.95rem; font-weight:800; line-height:1; cursor:pointer; font-family:inherit; }
+    .gf-step-btn:hover { border-color:rgba(255,255,255,0.25); }
+    .gf-score-val { min-width:18px; text-align:center; font-size:1rem; font-weight:800; color:var(--text); }
 
     /* Toast */
     #toast {
@@ -297,8 +307,17 @@
 
   <!-- GRAND FINAL -->
   <div class="section">
-    <div class="section-title">Grand Final (BO1)</div>
-    <p class="sub" style="margin-top:-8px">Top 2 from Round Robin. Specify the players and enter the result.</p>
+    <div class="section-title">Grand Final</div>
+    <p class="sub" style="margin-top:-8px">Top 2 from Round Robin. Choose the match format, set the players, then enter the result.</p>
+    <div class="gf-format-row">
+      <label class="gf-format-label" for="gf-format">Format</label>
+      <select id="gf-format" class="gf-format-select">
+        <option value="bo1">Best of 1</option>
+        <option value="bo3">Best of 3</option>
+        <option value="bo5">Best of 5</option>
+      </select>
+      <span class="gf-format-hint" id="gf-format-hint"></span>
+    </div>
     <div class="gf-grid" id="gf-grid">
       <!-- injected by JS -->
     </div>
@@ -718,7 +737,29 @@
   }
 
   // ── Grand Final ──
+  function gfClinch(fmt) { return fmt === 'bo5' ? 3 : fmt === 'bo3' ? 2 : 1; }
+
+  function mkScoreRow(side, val, max) {
+    const row = document.createElement('div'); row.className = 'gf-score-row';
+    const lbl = document.createElement('span'); lbl.className = 'gf-score-side'; lbl.textContent = side.toUpperCase();
+    const st = document.createElement('div'); st.className = 'gf-stepper';
+    const dec = document.createElement('button'); dec.type = 'button'; dec.className = 'gf-step-btn'; dec.textContent = '−';
+    const num = document.createElement('span'); num.className = 'gf-score-val'; num.dataset.gfScore = side; num.textContent = String(val);
+    const inc = document.createElement('button'); inc.type = 'button'; inc.className = 'gf-step-btn'; inc.textContent = '+';
+    dec.addEventListener('click', () => { const v = parseInt(num.textContent) || 0; if (v > 0) num.textContent = String(v - 1); });
+    inc.addEventListener('click', () => { const v = parseInt(num.textContent) || 0; if (v < max) num.textContent = String(v + 1); });
+    st.appendChild(dec); st.appendChild(num); st.appendChild(inc);
+    row.appendChild(lbl); row.appendChild(st);
+    return row;
+  }
+
   function renderGrandFinal(gf, players) {
+    const fmt = gf.format || 'bo1';
+    const fmtSel = document.getElementById('gf-format');
+    if (fmtSel) fmtSel.value = fmt;
+    const hint = document.getElementById('gf-format-hint');
+    if (hint) hint.textContent = fmt === 'bo1' ? 'Single game — pick the winner.' : `First to ${gfClinch(fmt)} game wins.`;
+
     const grid = document.getElementById('gf-grid');
     grid.innerHTML = '';
 
@@ -741,37 +782,54 @@
     const vs = document.createElement('div'); vs.className = 'vs-sep'; vs.textContent = 'vs'; grid.appendChild(vs);
     grid.appendChild(mkSel(gf.p2, 'Player 2'));
 
-    const btns = document.createElement('div'); btns.className = 'result-btns gf-result-btns';
-    [['p1','P1 Wins'],['draw','Draw'],['p2','P2 Wins'],['clear','✕']].forEach(([val, lbl]) => {
-      const btn = document.createElement('button');
-      btn.className = 'result-btn' + (gf.result === val ? ` sel-${val === 'p1' ? 'white' : val === 'p2' ? 'black' : 'draw'}` : val === 'clear' ? ' sel-clear' : '');
-      btn.textContent = lbl;
-      btn.dataset.gfResult = val;
-      btns.appendChild(btn);
-    });
-    grid.appendChild(btns);
+    if (fmt === 'bo1') {
+      const btns = document.createElement('div'); btns.className = 'result-btns gf-result-btns';
+      [['p1','P1 Wins'],['draw','Draw'],['p2','P2 Wins'],['clear','✕']].forEach(([val, lbl]) => {
+        const btn = document.createElement('button');
+        btn.className = 'result-btn' + (gf.result === val ? ` sel-${val === 'p1' ? 'white' : val === 'p2' ? 'black' : 'draw'}` : val === 'clear' ? ' sel-clear' : '');
+        btn.textContent = lbl;
+        btn.dataset.gfResult = val;
+        btns.appendChild(btn);
+      });
+      grid.appendChild(btns);
+    } else {
+      const max = gfClinch(fmt);
+      const wrap = document.createElement('div'); wrap.className = 'gf-result-btns';
+      wrap.style.display = 'flex'; wrap.style.flexDirection = 'column'; wrap.style.gap = '6px';
+      wrap.appendChild(mkScoreRow('p1', Math.min(gf.scoreP1 || 0, max), max));
+      wrap.appendChild(mkScoreRow('p2', Math.min(gf.scoreP2 || 0, max), max));
+      grid.appendChild(wrap);
+    }
   }
 
   async function saveGrandFinal() {
-    const p1Sel = document.querySelector('[data-gf-side="Player 1"]');
-    const p2Sel = document.querySelector('[data-gf-side="Player 2"]');
-    const resultBtn = document.querySelector('.gf-result-btns .result-btn.sel-white, .gf-result-btns .result-btn.sel-black, .gf-result-btns .result-btn.sel-draw');
+    const p1 = parseInt(document.querySelector('[data-gf-side="Player 1"]')?.value) || null;
+    const p2 = parseInt(document.querySelector('[data-gf-side="Player 2"]')?.value) || null;
+    const fmt = document.getElementById('gf-format')?.value || 'bo1';
 
-    const p1 = parseInt(p1Sel?.value) || null;
-    const p2 = parseInt(p2Sel?.value) || null;
-    const result = resultBtn ? resultBtn.dataset.gfResult : null;
-    const finalResult = result === 'clear' ? null : result;
+    const payload = { p1, p2, format: fmt };
+    if (fmt === 'bo1') {
+      const resultBtn = document.querySelector('.gf-result-btns .result-btn.sel-white, .gf-result-btns .result-btn.sel-black, .gf-result-btns .result-btn.sel-draw');
+      const result = resultBtn ? resultBtn.dataset.gfResult : null;
+      payload.result = result === 'clear' ? null : result;
+      payload.scoreP1 = 0; payload.scoreP2 = 0;
+    } else {
+      const s1 = parseInt(document.querySelector('[data-gf-score="p1"]')?.textContent) || 0;
+      const s2 = parseInt(document.querySelector('[data-gf-score="p2"]')?.textContent) || 0;
+      payload.scoreP1 = s1; payload.scoreP2 = s2;
+      payload.result = s1 > s2 ? 'p1' : s2 > s1 ? 'p2' : null;
+    }
 
     try {
-      const r = await apiPost('/api/finals/grand-final', { p1, p2, result: finalResult });
+      const r = await apiPost('/api/finals/grand-final', payload);
       if (!r.ok) { toast('Failed to save grand final', true); return; }
-      currentData.grandFinal = { p1, p2, result: finalResult };
+      currentData.grandFinal = { ...payload };
       toast('Grand Final saved');
       markSaved();
     } catch(e) { if (e.message !== '401') toast('Error', true); }
   }
 
-  // GF result button click handler (delegated)
+  // GF result button click handler (delegated — BO1 only)
   document.getElementById('gf-grid').addEventListener('click', e => {
     const btn = e.target.closest('.gf-result-btns .result-btn');
     if (!btn) return;
@@ -780,6 +838,14 @@
     btn.dataset.gfResult !== 'clear'
       ? btn.classList.add(btn.dataset.gfResult === 'p1' ? 'sel-white' : btn.dataset.gfResult === 'p2' ? 'sel-black' : 'sel-draw')
       : btn.classList.add('sel-clear');
+  });
+
+  // Format switch re-renders the result entry (win buttons ↔ score steppers)
+  document.getElementById('gf-format').addEventListener('change', () => {
+    const p1 = parseInt(document.querySelector('[data-gf-side="Player 1"]')?.value) || null;
+    const p2 = parseInt(document.querySelector('[data-gf-side="Player 2"]')?.value) || null;
+    const fmt = document.getElementById('gf-format').value;
+    renderGrandFinal({ ...(currentData.grandFinal || {}), p1, p2, format: fmt }, currentData.players || []);
   });
 
   // ── Avatar upload / remove ──
