@@ -1,16 +1,18 @@
 {
   "qualifier1": {
-    "label": "Top 3 · LICHESS QUALIFIERS III",
+    "label": "Top 3 · Lichess Qualifiers V",
+    "url": "https://lichess.org/tournament/UTZ5RSLY",
     "confirmed": true,
-    "first": "0x3d0cc8a30b4089a105eafa10f2e135f7f7d8fe7d",
-    "second": "0x4e82a2b817ddfb36d51eb0a656efaaea9c31b869",
-    "third": "0x814ba0de90545210d27efab7dfa9d90be6de67cb"
+    "first": "",
+    "second": "0x9411c7fbceeb17265f1639dd98336b99d60a1def",
+    "third": "0xedbfbf83f589656605e66992b54624f78b71ada5"
   },
   "qualifier2": {
-    "label": "Top 3 · Lichess Team Battle",
+    "label": "Top 3 · Lichess Qualifiers VI",
+    "url": "",
     "confirmed": true,
-    "first": "0x4f6fb706bd31c12523f8a4aacd46d834a5641cde",
-    "second": "0x966d2e6d0252c0bfdf85760b3e55057229049a7a",
-    "third": "0x6d12304569474f2b36ff0ad353912a16cb2e2849"
+    "first": "0xb94e622c6ffacd2f988d360f350048cd392a86a1",
+    "second": "0xc98d90d7d1f23540f61139a1f81ca1735f5d3fa9",
+    "third": ""
   }
 }

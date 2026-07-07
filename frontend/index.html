@@ -3,26 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Anichess Tracker — Live Leaderboard</title>
-  <meta name="description" content="Live ranked leaderboard for the Anichess community — real-time standings sorted by rating, updated continuously.">
+  <title>Anichess Tracker — Rising Stars Tournament #3</title>
+  <meta name="description" content="Live leaderboard and tournament tracker for Anichess Rising Stars #3 — a competitive spell-chess tournament with a $600 USD prize pool in CHECK tokens.">
   <!-- Open Graph -->
   <meta property="og:type"        content="website">
   <meta property="og:url"         content="https://anichesstracker.com/">
-  <meta property="og:title"       content="Anichess Tracker — Live Leaderboard">
-  <meta property="og:description" content="Live ranked leaderboard for the Anichess community. Real-time standings, updated continuously.">
+  <meta property="og:title"       content="Anichess Tracker — Rising Stars Tournament #3">
+  <meta property="og:description" content="Live leaderboard and bracket tracker for Anichess Rising Stars #3. $600 USD prize pool. 16 finalists compete on Jul 12, 2026.">
   <meta property="og:image"       content="https://anichesstracker.com/og-preview.png">
   <meta name="twitter:card"       content="summary_large_image">
-  <meta name="twitter:title"      content="Anichess Tracker — Live Leaderboard">
-  <meta name="twitter:description" content="Live ranked standings for the Anichess community.">
+  <meta name="twitter:title"      content="Anichess Tracker — Rising Stars #3">
+  <meta name="twitter:description" content="Live standings and bracket for the Anichess Rising Stars #3 tournament. $600 USD in CHECK tokens up for grabs.">
   <meta name="twitter:image"      content="https://anichesstracker.com/og-preview.png">
-  <!-- JSON-LD -->
+  <!-- JSON-LD Event schema -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Anichess Tracker",
+    "@type": "SportsEvent",
+    "name": "Anichess Rising Stars Tournament #3",
+    "startDate": "2026-07-12T12:00:00Z",
+    "location": { "@type": "VirtualLocation", "url": "https://anichess.com/" },
+    "organizer": { "@type": "Organization", "name": "Anichess", "url": "https://anichess.com/" },
     "url": "https://anichesstracker.com/",
-    "description": "Live ranked leaderboard for the Anichess community."
+    "description": "Single-elimination spell-chess tournament for newcomer players. $600 USD prize pool in CHECK tokens.",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD", "availability": "https://schema.org/InStock" }
   }
   </script>
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-C5P8BG33DT"></script>
@@ -83,17 +87,67 @@
     <div class="hero-banner">
       <div class="hero-banner-inner">
         <div class="hero-banner-left">
-          <div class="hero-eyebrow">ANICHESS TRACKER</div>
-          <h1 class="hero-title"><strong>Live Leaderboard</strong></h1>
+          <div class="hero-eyebrow">ANICHESS RISING STARS</div>
+          <h1 class="hero-title"><strong id="hero-tournament-num">Tournament #3</strong></h1>
           <div class="hero-divider"></div>
-          <p class="hero-explainer">Real-time ranked standings for the Anichess community, sorted by rating and updated continuously throughout the day.</p>
+          <div class="hero-meta">
+            <span class="hero-prize" id="hero-prize">$600 USD</span>
+            <span class="hero-sep">·</span>
+            <span>16 Players</span>
+            <span class="hero-sep">·</span>
+            <span id="hero-date">Jul 12, 2026</span>
+          </div>
+          <p class="hero-explainer">Real-time standings for the Anichess newcomer tournament. Top 8 by rating + top 2 by matches played since Jun 1 qualify for the finals, alongside the Lichess Qualifiers. Prize paid in CHECK tokens.</p>
           <div class="hero-ctas">
-            <a class="hero-cta-primary" href="https://www.anichess.com" target="_blank" rel="noopener" data-track="Hero Play" data-track-category="conversion">♟ Play Anichess</a>
-            <a class="hero-cta-secondary" href="/past-events.html" data-track="Hero Past Events" data-track-category="navigation">Past Events →</a>
+            <a class="hero-cta-primary" href="/tournament.html" data-track="Hero Tournament Details" data-track-category="conversion">📋 Tournament Details</a>
+            <a class="hero-cta-secondary" href="https://forms.gle/9XGbYmgyP6PNHQbA7" target="_blank" rel="noopener" id="hero-register-link" data-track="Hero Register" data-track-category="conversion">Register →</a>
+          </div>
+        </div>
+        <div class="hero-banner-right">
+          <div class="hero-prize-card">
+            <div class="hero-prize-label">PRIZE POOL</div>
+            <div class="hero-prize-amount" id="hero-prize-big">$600</div>
+            <div class="hero-prize-currency">USD in CHECK</div>
           </div>
         </div>
       </div>
     </div>
+
+    <div class="section-heading-wrap">
+      <div class="section-heading-group">
+        <div class="upcoming-event-tag">
+          <span class="upcoming-event-dot"></span>
+          <span>UPCOMING EVENT</span>
+        </div>
+        <h2 class="section-heading">Anichess Rising Stars <strong id="tournament-num">Tournament #3</strong></h2>
+        <div class="prize-pool-tag" id="prize-pool-tag">$600 USD Prize Pool</div>
+        <p class="section-heading-sub">16 players qualify for the playoff finals · <strong id="final-date-time">Jul 12, 2026 · 12:00 UTC</strong> · Live Stream on <a class="section-heading-link" href="https://discord.com/invite/anichess" target="_blank" rel="noopener">Discord</a></p>
+      </div>
+    </div>
+
+    <div class="eligibility-banner">
+      <div class="eligibility-row">
+        <span class="eligibility-item">
+          <span class="eligibility-label">New Players Only</span>
+          <span class="eligibility-tooltip-wrap">
+            <span class="eligibility-tooltip-icon">!</span>
+            <span class="eligibility-tooltip-box">Top 4 finishers from past Rising Stars Tournaments are not eligible.</span>
+          </span>
+        </span>
+        <span class="eligibility-sep"></span>
+        <span class="eligibility-item">
+          <span class="eligibility-label">REGISTER </span>
+          <a class="eligibility-link" id="register-link" href="https://forms.gle/EpSddHt3G7DauEiu5" target="_blank" rel="noopener" data-track="Register" data-track-category="conversion">HERE</a>
+        </span>
+        <span class="eligibility-sep"></span>
+        <span class="eligibility-item">
+          <span class="eligibility-label">Submission Cutoff</span>
+          <span class="eligibility-value cutoff" id="cutoff-display">JUL 10 · UTC 00:00</span>
+          <span class="eligibility-note">(SUBMISSIONS AFTER CUTOFF APPLIES FOR NEXT TOURNAMENT)</span>
+        </span>
+      </div>
+    </div>
+    <div id="qualified-section" class="hidden"></div>
 
     <div class="table-card">
       <div class="table-card-header">
@@ -105,6 +159,7 @@
         </div>
         <div class="table-card-title-row">
           <div class="table-card-subtitle">Sorted by rating · Tracked wallets only<span id="last-updated" style="font-size:0.75rem;color:var(--text-3);margin-left:8px;"></span></div>
+          <span class="qualify-badge">✦ TOP 8 QUALIFIES FOR PLAYOFF</span>
         </div>
       </div>
       <div class="table-wrap">

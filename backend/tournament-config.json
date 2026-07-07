@@ -1,10 +1,12 @@
 {
-  "tournamentNumber": 2,
-  "finalDate": "May 24, 2026",
+  "tournamentNumber": 3,
+  "finalDate": "Jul 12, 2026",
   "finalTime": "12:00 UTC",
   "prizePool": "$600 USD",
-  "cutoffTimestamp": 1779494400,
-  "cutoffDisplay": "May 22 at 00:00 UTC",
+  "cutoffTimestamp": 1783641600,
+  "cutoffDisplay": "Jul 10 at 00:00 UTC",
   "registrationUrl": "https://forms.gle/9XGbYmgyP6PNHQbA7",
-  "lichessQualifierUrl": ""
+  "lichessQualifierUrl": "",
+  "qualifier1Label": "Top 3 \u00b7 Lichess Qualifiers V",
+  "qualifier2Label": "Top 3 \u00b7 Lichess Qualifiers VI"
 }

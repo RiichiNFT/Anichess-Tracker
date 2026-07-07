@@ -132,7 +132,7 @@ function deleteImageFiles(dir, prefix, exts) {
 }
 
 function loadTournamentDetails() {
-  try { return JSON.parse(fs.readFileSync(TOURNAMENT_DETAILS_FILE, 'utf8')); } catch { return { day1: '', day2: '', finals: '' }; }
+  try { return JSON.parse(fs.readFileSync(TOURNAMENT_DETAILS_FILE, 'utf8')); } catch { return { details: '' }; }
 }
 
 function saveTournamentDetails(data) {
@@ -1302,12 +1302,10 @@ app.delete('/api/logo', requireAdmin, (req, res) => {
 
 app.get('/api/tournament', (req, res) => {
   const logoFile = findTournamentLogo();
-  const { day1, day2, finals } = loadTournamentDetails();
+  const { details } = loadTournamentDetails();
   res.json({
     logo: logoFile ? { exists: true, filename: logoFile } : { exists: false, filename: null },
-    day1: day1 || '',
-    day2: day2 || '',
-    finals: finals || '',
+    details: details || '',
   });
 });
 
@@ -1326,14 +1324,11 @@ app.delete('/api/tournament/logo', requireAdmin, (req, res) => {
 });
 
 app.post('/api/tournament/details', requireAdmin, (req, res) => {
-  const { day1, day2, finals } = req.body;
-  if (typeof day1 !== 'string' || typeof day2 !== 'string' || typeof finals !== 'string')
-    return res.status(400).json({ error: 'day1, day2, and finals must be strings' });
-  if (day1.length > 8000) return res.status(400).json({ error: 'Day 1 text too long (max 8000 chars)' });
-  if (day2.length > 8000) return res.status(400).json({ error: 'Day 2 text too long (max 8000 chars)' });
-  if (finals.length > 8000) return res.status(400).json({ error: 'Finals text too long (max 8000 chars)' });
+  const { details } = req.body;
+  if (typeof details !== 'string') return res.status(400).json({ error: 'details must be a string' });
+  if (details.length > 20000) return res.status(400).json({ error: 'details text too long (max 20000 chars)' });
   try {
-    saveTournamentDetails({ day1, day2, finals });
+    saveTournamentDetails({ details });
     res.json({ ok: true });
   } catch {
     res.status(500).json({ error: 'Failed to save tournament details (disk error)' });

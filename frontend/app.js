@@ -6,7 +6,7 @@ if (document.documentElement.classList.contains('bg-preloaded')) {
 }
 let absentSet = new Set();
 let lastFetchTime = 0;
-let CUTOFF_MS = 1779494400 * 1000;    // May 23 2026 00:00:00 UTC (overridden from API)
+let CUTOFF_MS = 1783641600 * 1000;    // Jul 10 2026 00:00:00 UTC (overridden from API)
 let tournamentConfig = null;
 
 // Sort state — persists across refreshes within the session
@@ -276,8 +276,12 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = [], mat
     { key: 'third',  cls: 'bronze', label: '3rd' },
   ];
 
-  const hasQ1 = qualifiers.qualifier1?.confirmed === true;
-  const hasQ2 = qualifiers.qualifier2?.confirmed === true;
+  // A qualifier shows its top-3 wallets once they're entered (or explicitly confirmed);
+  // otherwise it shows the "upcoming" card with the Lichess tournament link.
+  const q1HasWallets = !!(qualifiers.qualifier1?.first || qualifiers.qualifier1?.second || qualifiers.qualifier1?.third);
+  const q2HasWallets = !!(qualifiers.qualifier2?.first || qualifiers.qualifier2?.second || qualifiers.qualifier2?.third);
+  const hasQ1 = qualifiers.qualifier1?.confirmed === true || q1HasWallets;
+  const hasQ2 = qualifiers.qualifier2?.confirmed === true || q2HasWallets;
   const hasWC = wildcards && wildcards.length > 0;
 
   if (isResultsFinal() && !hasQ1 && !hasQ2 && !hasWC && top8.length === 0) { section.classList.add('hidden'); return; }
@@ -368,7 +372,7 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = [], mat
     <div class="qualified-card">
       <div class="qualified-card-header">
         <span class="qualified-card-title">Confirmed Finalists</span>
-        <span class="qualified-card-sub">Players confirmed for the final stage · May 23, 2026</span>
+        <span class="qualified-card-sub">Players confirmed for the final stage · ${esc((tournamentConfig && tournamentConfig.finalDate) || 'Jul 12, 2026')}</span>
       </div>
       <div class="qualified-body">
         ${hasQ1 ? renderEvent(qualifiers.qualifier1, q1Label) : ''}
@@ -378,17 +382,23 @@ function renderQualifiedSection(qualifiers, playerMap, wildcards, top8 = [], mat
       <p class="qualified-absence-note">Note: In the event of an absence, the next highest rated player outside the top 8 will be selected instead.</p>
     </div>` : '';
 
-  const upcomingCard = !hasQ2 ? `
+  const q1Url = qualifiers.qualifier1?.url || lichessUrl;
+  const q2Url = qualifiers.qualifier2?.url || lichessUrl;
+  const upcomingItems = [];
+  if (!hasQ1) upcomingItems.push({ label: q1Label, url: q1Url });
+  if (!hasQ2) upcomingItems.push({ label: q2Label, url: q2Url });
+  const upcomingCard = upcomingItems.length ? `
     <div class="qualified-card">
       <div class="qualified-card-header">
         <span class="qualified-card-title">UPCOMING QUALIFIERS</span>
         <span class="qualified-card-sub">Compete to earn your spot in the finals</span>
       </div>
       <div class="qualified-body">
+        ${upcomingItems.map((it, i) => `${i > 0 ? '<div class="qualifier-divider"></div>' : ''}
         <div class="qualifier-event qualifier-event-half">
-          <div class="qualifier-event-label">${esc(q2Label)}</div>
-          <a class="qs-lichess-link" href="${esc(lichessUrl)}" target="_blank" rel="noopener">View Details</a>
-        </div>
+          <div class="qualifier-event-label">${esc(it.label)}</div>
+          <a class="qs-lichess-link" href="${esc(it.url)}" target="_blank" rel="noopener">View Details</a>
+        </div>`).join('')}
       </div>
     </div>` : '';
 
@@ -498,6 +508,7 @@ async function fetchPlayers() {
     if (configRaw) {
       tournamentConfig = configRaw;
       if (configRaw.cutoffTimestamp) CUTOFF_MS = configRaw.cutoffTimestamp * 1000;
+      if (window.__applyFinalizedState) window.__applyFinalizedState();
       const numEl    = document.getElementById('tournament-num');
       const prizeEl  = document.getElementById('prize-pool-tag');
       const dateEl   = document.getElementById('final-date-time');
@@ -553,9 +564,19 @@ async function fetchPlayers() {
       return (b.RANK || 0) + (b.GAMBIT || 0) + (b.M8_ARENA || 0) + (b.QUICK || 0) + (b.FRIEND || 0);
     };
     const matchesSinceBaseline = p => Math.max(0, totalMatchCount(p) - baselineTotal(p.wallet));
-    // Wild cards: top 2 by matches since baseline, excluding top 8 and manually excluded wallets
+    // Wallets already locked into a Lichess qualifier → excluded from wild-card consideration (no double-listing)
+    const qualifierSet = new Set(
+      [qualifiers.qualifier1, qualifiers.qualifier2]
+        .flatMap(q => (q ? [q.first, q.second, q.third] : []))
+        .filter(Boolean)
+        .map(w => w.toLowerCase())
+    );
+    // Wild cards: top 2 by matches since baseline, excluding top 8, qualifier players, and manually excluded wallets
     const wildcards   = active
-      .filter(p => !top8wallets.has(p.wallet.toLowerCase()) && !excludedSet.has(p.wallet.toLowerCase()))
+      .filter(p => {
+        const w = p.wallet.toLowerCase();
+        return !top8wallets.has(w) && !excludedSet.has(w) && !qualifierSet.has(w);
+      })
       .sort((a, b) => matchesSinceBaseline(b) - matchesSinceBaseline(a))
       .slice(0, 2);
 
@@ -845,19 +866,23 @@ applyBackground();
 fetchPlayers();
 initSortHeaders();
 
-if (isPastCutoff()) {
+// Apply the "results being finalized" UI only when genuinely past the (config-driven) cutoff.
+// Re-applied after the tournament config loads, so a stale initial CUTOFF_MS never shows it early.
+function applyFinalizedState() {
+  const finalized = isPastCutoff();
   const btn = document.getElementById('refresh-btn');
-  if (btn) { btn.disabled = true; btn.title = 'Results being finalized — no further updates'; }
-  document.getElementById('finalized-banner')?.classList.remove('hidden');
+  if (btn) { btn.disabled = finalized; btn.title = finalized ? 'Results being finalized — no further updates' : ''; }
+  document.getElementById('finalized-banner')?.classList.toggle('hidden', !finalized);
   const footer = document.querySelector('footer span:nth-child(3)');
-  if (footer) footer.textContent = 'Results Being Finalized';
-
-  // Replace "TOP 8 QUALIFIES FOR PLAYOFF" badge with ENDED badge in the leaderboard
-  const qualifyBadge = document.querySelector('.qualify-badge');
-  if (qualifyBadge) {
-    qualifyBadge.className = 'qs-cutoff-badge qs-cutoff-ended';
-    qualifyBadge.innerHTML = '<span><strong>ENDED</strong></span>';
+  if (footer && finalized) footer.textContent = 'Results Being Finalized';
+  if (finalized) {
+    const qualifyBadge = document.querySelector('.qualify-badge');
+    if (qualifyBadge && !qualifyBadge.classList.contains('qs-cutoff-ended')) {
+      qualifyBadge.className = 'qs-cutoff-badge qs-cutoff-ended';
+      qualifyBadge.innerHTML = '<span><strong>ENDED</strong></span>';
+    }
   }
-} else {
-  setInterval(fetchPlayers, REFRESH_INTERVAL);
 }
+window.__applyFinalizedState = applyFinalizedState;
+applyFinalizedState();
+if (!isPastCutoff()) setInterval(fetchPlayers, REFRESH_INTERVAL);

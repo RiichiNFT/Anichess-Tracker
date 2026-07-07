@@ -637,6 +637,8 @@
             <div style="margin-bottom:14px">
               <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Section Label</label>
               <input id="q1-label" type="text" placeholder="Top 3 · LICHESS QUALIFIERS III" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin:10px 0 4px">Lichess Tournament URL</label>
+              <input id="q1-url" type="url" placeholder="https://lichess.org/tournament/…" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div>
@@ -675,6 +677,8 @@
             <div style="margin-bottom:14px">
               <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin-bottom:4px">Section Label</label>
               <input id="q2-label" type="text" placeholder="Top 3 · Lichess Team Battle" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
+              <label style="font-size:0.74rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-2);display:block;margin:10px 0 4px">Lichess Tournament URL</label>
+              <input id="q2-url" type="url" placeholder="https://lichess.org/tournament/…" style="width:100%;background:var(--dark);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-size:0.85rem;outline:none;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'" />
             </div>
             <div style="display:flex;flex-direction:column;gap:10px">
               <div>
@@ -827,33 +831,12 @@
       </div>
       <div class="panel-body">
         <p style="font-size:0.8rem;color:var(--text-2);margin-bottom:18px">
-          Plain text shown on the Tournament Details page. Each tab has its own text box. Line breaks and <code>Key: Value</code> formatting are preserved.
+          Plain text shown on the Tournament Details page. Line breaks and <code>Key: Value</code> formatting are preserved; numbered headings (<code>1. Section</code>) and pipe-separated prize rows (<code>1st: $200 | 2nd: $120</code>) render automatically.
         </p>
 
-        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Day 1 — Qualifying Arena</div>
-        <textarea id="tournament-day1-input"
-          placeholder="Enter Day 1 qualifier details…&#10;&#10;e.g. Date, format, prize pool, rules…"
-          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
-                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
-                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
-                 transition:border-color 0.2s;margin-bottom:20px"
-          onfocus="this.style.borderColor='var(--accent)'"
-          onblur="this.style.borderColor='var(--border)'"></textarea>
-
-        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Day 2 — Knockout Bracket</div>
-        <textarea id="tournament-day2-input"
-          placeholder="Enter Day 2 knockout bracket details…&#10;&#10;e.g. Match format, participants, rules…"
-          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
-                 border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
-                 font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
-                 transition:border-color 0.2s;margin-bottom:20px"
-          onfocus="this.style.borderColor='var(--accent)'"
-          onblur="this.style.borderColor='var(--border)'"></textarea>
-
-        <div style="font-size:0.72rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">Finals</div>
-        <textarea id="tournament-finals-input"
-          placeholder="Enter finals details…&#10;&#10;e.g. Date, format, prize pool, rules…"
-          style="width:100%;min-height:200px;background:var(--surface-2);border:1px solid var(--border);
+        <textarea id="tournament-details-input"
+          placeholder="ANICHESS RISING STARS TOURNAMENT #3&#10;1. General Information&#10;Platform: …"
+          style="width:100%;min-height:480px;background:var(--surface-2);border:1px solid var(--border);
                  border-radius:10px;padding:14px 16px;color:var(--text);font-family:inherit;
                  font-size:0.88rem;line-height:1.7;resize:vertical;outline:none;
                  transition:border-color 0.2s"
@@ -1756,12 +1739,14 @@
       const absentSet = new Set(absent.map(w => w.toLowerCase()));
 
       document.getElementById('q1-label').value  = data.qualifier1?.label  || '';
+      document.getElementById('q1-url').value    = data.qualifier1?.url    || '';
       document.getElementById('q1-first').value  = data.qualifier1?.first  || '';
       document.getElementById('q1-second').value = data.qualifier1?.second || '';
       document.getElementById('q1-third').value  = data.qualifier1?.third  || '';
       setQToggle(1, data.qualifier1?.confirmed ? 'confirmed' : 'upcoming');
 
       document.getElementById('q2-label').value  = data.qualifier2?.label  || '';
+      document.getElementById('q2-url').value    = data.qualifier2?.url    || '';
       document.getElementById('q2-first').value  = data.qualifier2?.first  || '';
       document.getElementById('q2-second').value = data.qualifier2?.second || '';
       document.getElementById('q2-third').value  = data.qualifier2?.third  || '';
@@ -1779,6 +1764,7 @@
       const body = {
         qualifier1: {
           label:     document.getElementById('q1-label').value.trim(),
+          url:       document.getElementById('q1-url').value.trim(),
           confirmed: qConfirmed[1],
           first:     document.getElementById('q1-first').value.trim(),
           second:    document.getElementById('q1-second').value.trim(),
@@ -1786,6 +1772,7 @@
         },
         qualifier2: {
           label:     document.getElementById('q2-label').value.trim(),
+          url:       document.getElementById('q2-url').value.trim(),
           confirmed: qConfirmed[2],
           first:     document.getElementById('q2-first').value.trim(),
           second:    document.getElementById('q2-second').value.trim(),
@@ -1864,18 +1851,10 @@
         current.innerHTML = '';
       }
 
-      // Also populate details textareas
-      if (data.day1 !== undefined) {
-        const ta = document.getElementById('tournament-day1-input');
-        if (ta && !ta._loaded) { ta.value = data.day1; ta._loaded = true; }
-      }
-      if (data.day2 !== undefined) {
-        const ta = document.getElementById('tournament-day2-input');
-        if (ta && !ta._loaded) { ta.value = data.day2; ta._loaded = true; }
-      }
-      if (data.finals !== undefined) {
-        const ta = document.getElementById('tournament-finals-input');
-        if (ta && !ta._loaded) { ta.value = data.finals; ta._loaded = true; }
+      // Also populate the details textarea
+      if (data.details !== undefined) {
+        const ta = document.getElementById('tournament-details-input');
+        if (ta && !ta._loaded) { ta.value = data.details; ta._loaded = true; }
       }
     }
 
@@ -2208,15 +2187,13 @@
 
     async function saveTournamentDetails() {
       const resultEl = document.getElementById('tournament-details-result');
-      const day1     = document.getElementById('tournament-day1-input').value;
-      const day2     = document.getElementById('tournament-day2-input').value;
-      const finals   = document.getElementById('tournament-finals-input').value;
+      const details = document.getElementById('tournament-details-input').value;
       resultEl.classList.add('hidden');
       try {
         const res = await fetch('/api/tournament/details', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify({ day1, day2, finals }),
+          body: JSON.stringify({ details }),
         });
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || 'Save failed');
@@ -2237,12 +2214,10 @@
         const res = await fetch('/api/tournament/details', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-          body: JSON.stringify({ day1: '', day2: '', finals: '' }),
+          body: JSON.stringify({ details: '' }),
         });
         if (!res.ok) throw new Error('Clear failed');
-        document.getElementById('tournament-day1-input').value = '';
-        document.getElementById('tournament-day2-input').value = '';
-        document.getElementById('tournament-finals-input').value = '';
+        document.getElementById('tournament-details-input').value = '';
         resultEl.className = 'result-banner result-success';
         resultEl.textContent = '✓ Tournament details cleared.';
         resultEl.classList.remove('hidden');
